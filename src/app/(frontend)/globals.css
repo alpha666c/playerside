@@ -157,6 +157,7 @@
   --color-coral-dim: var(--coral-dim);
   --color-gold: var(--gold);
   --color-paper: var(--paper);
+  --color-paper-dim: var(--paper-dim);
   --color-evidence: var(--evidence);
   --color-line: var(--line);
   --color-background: var(--background);
@@ -226,4 +227,104 @@ html {
 html[data-theme='dark'],
 html[data-theme='light'] {
   opacity: initial;
+}
+
+/*
+ * Homepage motion primitives — see brands/01-playerside/design/design-tokens.md
+ * "Motion principles": orchestrated, not scattered; prefers-reduced-motion
+ * collapses everything to plain opacity fades, never a transform.
+ */
+
+/* Ambient grain layer, matches homepage-concept.html's .grain */
+.grain-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  opacity: 0.05;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+/* Verification Seal stamp-in */
+@keyframes seal-stamp-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.3) rotate(-30deg);
+  }
+  60% {
+    opacity: 1;
+    transform: scale(1.14) rotate(-8deg);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) rotate(-10deg);
+  }
+}
+
+.seal-stamp {
+  opacity: 0;
+  transform: scale(0.4) rotate(-24deg);
+  transform-origin: center;
+  overflow: visible;
+}
+
+.seal-stamp[data-active='true'] {
+  animation: seal-stamp-in 0.7s cubic-bezier(0.2, 1.6, 0.4, 1) forwards;
+}
+
+.seal-stamp[data-reduced-motion='true'] {
+  transform: none;
+  transition: opacity 0.3s ease;
+}
+
+.seal-stamp[data-reduced-motion='true'][data-active='true'] {
+  animation: none;
+  opacity: 1;
+}
+
+/* Hero 3D card stack */
+.hero-stage {
+  perspective: 1400px;
+}
+
+.hero-stack {
+  transform-style: preserve-3d;
+  transition: transform 0.25s ease-out;
+}
+
+.hero-card {
+  backface-visibility: hidden;
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.45);
+}
+
+.hero-card-a {
+  transform: translate(-72%, -64%) rotateY(-14deg) rotateZ(-4deg) translateZ(40px);
+}
+.hero-card-b {
+  transform: translate(-38%, -40%) rotateY(6deg) rotateZ(2deg) translateZ(90px);
+}
+.hero-card-c {
+  transform: translate(-58%, -14%) rotateY(-4deg) rotateZ(-1deg) translateZ(10px);
+}
+
+@media (max-width: 900px) {
+  .hero-card-a {
+    transform: translate(-70%, -72%) rotateY(-8deg) rotateZ(-2deg) translateZ(18px);
+  }
+  .hero-card-b {
+    transform: translate(-38%, -42%) rotateY(3deg) rotateZ(1deg) translateZ(46px);
+  }
+  .hero-card-c {
+    transform: translate(-56%, -10%) rotateY(-2deg) rotateZ(-0.5deg) translateZ(4px);
+  }
+}
+
+/* Belt-and-braces safety net on top of the JS-level useReducedMotion checks:
+   collapse any transform-driven motion outright when the OS asks for it. */
+@media (prefers-reduced-motion: reduce) {
+  .hero-stack {
+    transform: none !important;
+    transition: none !important;
+  }
 }

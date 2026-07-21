@@ -112,10 +112,12 @@ export interface Config {
   globals: {
     header: Header;
     footer: Footer;
+    homepage: Homepage;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
+    homepage: HomepageSelect<false> | HomepageSelect<true>;
   };
   locale: null;
   widgets: {
@@ -1682,6 +1684,42 @@ export interface Footer {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage".
+ */
+export interface Homepage {
+  id: number;
+  heroEyebrow?: string | null;
+  heroHeadline?: string | null;
+  heroSubhead?: string | null;
+  heroPrimaryCtaLabel?: string | null;
+  heroPrimaryCtaHref?: string | null;
+  heroSecondaryCtaLabel?: string | null;
+  heroSecondaryCtaHref?: string | null;
+  stats?:
+    | {
+        value: string;
+        label: string;
+        id?: string | null;
+      }[]
+    | null;
+  sampleOperators?:
+    | {
+        name: string;
+        market: string;
+        score: number;
+        evidenceNote: string;
+        id?: string | null;
+      }[]
+    | null;
+  ctaHeading?: string | null;
+  ctaSubtext?: string | null;
+  ctaButtonLabel?: string | null;
+  ctaButtonHref?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
 export interface HeaderSelect<T extends boolean = true> {
@@ -1722,6 +1760,42 @@ export interface FooterSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "homepage_select".
+ */
+export interface HomepageSelect<T extends boolean = true> {
+  heroEyebrow?: T;
+  heroHeadline?: T;
+  heroSubhead?: T;
+  heroPrimaryCtaLabel?: T;
+  heroPrimaryCtaHref?: T;
+  heroSecondaryCtaLabel?: T;
+  heroSecondaryCtaHref?: T;
+  stats?:
+    | T
+    | {
+        value?: T;
+        label?: T;
+        id?: T;
+      };
+  sampleOperators?:
+    | T
+    | {
+        name?: T;
+        market?: T;
+        score?: T;
+        evidenceNote?: T;
+        id?: T;
+      };
+  ctaHeading?: T;
+  ctaSubtext?: T;
+  ctaButtonLabel?: T;
+  ctaButtonHref?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

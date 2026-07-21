@@ -1,4 +1,4 @@
-import type { CollectionSlug, GlobalSlug, Payload, PayloadRequest, File } from 'payload'
+import type { CollectionSlug, Payload, PayloadRequest, File } from 'payload'
 
 import { contactForm as contactFormData } from './contact-form'
 import { contact as contactPageData } from './contact-page'
@@ -20,7 +20,11 @@ const collections: CollectionSlug[] = [
   'search',
 ]
 
-const globals: GlobalSlug[] = ['header', 'footer']
+// Narrowed to a tuple (not `GlobalSlug[]`) so TS can discriminate each
+// `updateGlobal` call's `data` shape per slug — this seed endpoint only ever
+// resets the two nav globals, never the Homepage global (that's Playerside's
+// own marketing content, not part of the generic template demo seed).
+const globals = ['header', 'footer'] as const
 
 const categories = ['Technology', 'News', 'Finance', 'Design', 'Software', 'Engineering']
 
