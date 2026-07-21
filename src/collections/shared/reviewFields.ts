@@ -116,6 +116,14 @@ export const reviewCoreFields = (): Field[] => [
     },
   },
   {
+    name: 'communitySentimentNote',
+    type: 'textarea',
+    admin: {
+      description:
+        'Qualitative context only (grading-rubric.md "Qualitative context" section) — independent player sentiment, shown next to the score but never counted toward it. Deliberately a sibling of `scores`, not a member of it, so it is structurally impossible for computeOverallScore to read it.',
+    },
+  },
+  {
     name: 'isIllustrativeSample',
     type: 'checkbox',
     admin: {

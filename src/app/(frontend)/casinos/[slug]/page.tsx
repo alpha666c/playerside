@@ -11,6 +11,7 @@ import { ComplianceBlock } from '@/components/ComplianceBlock/ComplianceBlock'
 import { IllustrativeBanner } from '@/components/IllustrativeBanner/IllustrativeBanner'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
+import { QualitativeContext } from '@/components/QualitativeContext/QualitativeContext'
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
 import { traditionalRubric } from '@/rubrics/traditional'
 
@@ -94,10 +95,12 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
         </div>
       ) : null}
 
-      <div className="container max-w-[760px]">
-        <h2 className="mb-6 text-[22px] sm:text-[26px]">Full breakdown — nine categories</h2>
+      <div className="container mb-12 max-w-[760px] sm:mb-14">
+        <h2 className="mb-6 text-[22px] sm:text-[26px]">Full breakdown — eight categories</h2>
         <ScoreBreakdown rubric={traditionalRubric} scores={review.scores ?? {}} />
       </div>
+
+      <QualitativeContext note={review.communitySentimentNote} />
     </article>
   )
 }

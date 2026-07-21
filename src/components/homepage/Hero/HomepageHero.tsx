@@ -16,7 +16,7 @@ export const HomepageHero: React.FC<HomepageHeroProps> = ({ data }) => {
     ? data.stats
     : [
         { value: '0', label: 'Commission data seen by graders' },
-        { value: '9', label: 'Graded categories per operator' },
+        { value: '8', label: 'Graded categories per operator' },
         { value: '100%', label: 'Bonus terms stated exactly' },
       ]
 

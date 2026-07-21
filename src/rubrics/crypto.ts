@@ -2,10 +2,17 @@ import type { RubricCategory } from './traditional'
 
 /**
  * Crypto Casino grading rubric — mirrors
- * brands/01-playerside/categories/crypto-casino/grading-rubric.md (v1 [DRAFT]).
- * 10 categories, deliberately different from Traditional (ORG.md §3.4) —
- * license legitimacy split out and weighted heavier, provably-fair and
- * geo-compliance added. Changes are an ORG.md "ask first".
+ * brands/01-playerside/categories/crypto-casino/grading-rubric.md
+ * (v2 [LOCKED] — weights confirmed 2026-07-21). 9 categories, deliberately
+ * different from Traditional (ORG.md §3.4) — license legitimacy split out
+ * and weighted heavier, provably-fair and geo-compliance added. Changes are
+ * an ORG.md "ask first".
+ *
+ * Community sentiment is deliberately absent — see traditional.ts's note;
+ * same qualitative-context treatment, never scored. Per grading-rubric.md's
+ * own annotation, this specific removal was extended to Crypto by analogy
+ * with the Traditional decision rather than separately confirmed — treat as
+ * provisional even though the rest of this rubric is locked.
  */
 export const cryptoRubric: RubricCategory[] = [
   {
@@ -25,6 +32,12 @@ export const cryptoRubric: RubricCategory[] = [
     label: 'Withdrawals',
     weight: 14,
     measures: 'Crypto withdrawal speed, network fees, caps, fiat off-ramp options',
+  },
+  {
+    key: 'kycApproach',
+    label: 'KYC / verification approach',
+    weight: 14,
+    measures: 'Clarity and consistency of the stated policy — not strictness itself',
   },
   {
     key: 'provablyFair',
@@ -51,21 +64,9 @@ export const cryptoRubric: RubricCategory[] = [
     measures: 'Range and quality of games and providers',
   },
   {
-    key: 'kycApproach',
-    label: 'KYC / account-verification approach',
-    weight: 8,
-    measures: 'Clarity and consistency of the stated policy — not strictness itself',
-  },
-  {
     key: 'geoCompliance',
     label: 'Geo-compliance posture',
     weight: 6,
     measures: 'Does the operator itself exclude the regulated markets we do',
-  },
-  {
-    key: 'communitySentiment',
-    label: 'Community sentiment',
-    weight: 6,
-    measures: 'Independent sentiment, discounted for suspected fake reviews',
   },
 ]

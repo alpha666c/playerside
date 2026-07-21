@@ -11,6 +11,7 @@ import { ComplianceBlock } from '@/components/ComplianceBlock/ComplianceBlock'
 import { IllustrativeBanner } from '@/components/IllustrativeBanner/IllustrativeBanner'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
 import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
+import { QualitativeContext } from '@/components/QualitativeContext/QualitativeContext'
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
 import { cryptoRubric } from '@/rubrics/crypto'
 
@@ -93,10 +94,12 @@ export default async function CryptoCasinoReviewPage({ params: paramsPromise }: 
         </div>
       ) : null}
 
-      <div className="container max-w-[760px]">
-        <h2 className="mb-6 text-[22px] sm:text-[26px]">Full breakdown — ten categories</h2>
+      <div className="container mb-12 max-w-[760px] sm:mb-14">
+        <h2 className="mb-6 text-[22px] sm:text-[26px]">Full breakdown — nine categories</h2>
         <ScoreBreakdown rubric={cryptoRubric} scores={review.scores ?? {}} />
       </div>
+
+      <QualitativeContext note={review.communitySentimentNote} />
     </article>
   )
 }

@@ -1,26 +1,14 @@
+import { traditionalRubric } from '@/rubrics/traditional'
+
 /**
- * The real grading rubric — brands/01-playerside/categories/traditional/grading-rubric.md
- * (Traditional Casino category, v1 [DRAFT]). Categories are locked; weights are
- * explicitly open for revision per that file, used as-is here. Kept as a code
- * constant rather than a CMS field on purpose: it's the grading methodology
- * itself, sourced from a confidential, access-restricted spec file, not
- * day-to-day marketing copy — it should only change when the rubric does.
- *
- * Two columns, ordered by weight within each column (matches the reference
- * concept's layout), summing to 100%.
+ * Homepage methodology display — derived directly from `traditionalRubric`
+ * (the single source of truth, mirroring
+ * brands/01-playerside/categories/traditional/grading-rubric.md, v2
+ * [LOCKED] 2026-07-21) rather than a hand-copied duplicate, so this display
+ * can't silently drift from the rubric the way the old hardcoded constant
+ * did. Two columns of four, in rubric (descending-weight) order.
  */
 export const methodologyColumns: { label: string; weight: number }[][] = [
-  [
-    { label: 'Withdrawals', weight: 15 },
-    { label: 'Promotions & bonus transparency', weight: 15 },
-    { label: 'Support', weight: 12 },
-    { label: 'Licensing & regulatory standing', weight: 12 },
-    { label: 'KYC process', weight: 12 },
-  ],
-  [
-    { label: 'Game variety', weight: 10 },
-    { label: 'Live casino quality', weight: 8 },
-    { label: 'Deposits', weight: 8 },
-    { label: 'Community sentiment', weight: 8 },
-  ],
+  traditionalRubric.slice(0, 4).map(({ label, weight }) => ({ label, weight })),
+  traditionalRubric.slice(4).map(({ label, weight }) => ({ label, weight })),
 ]

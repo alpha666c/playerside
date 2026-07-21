@@ -803,9 +803,9 @@ export interface TraditionalCasinoReview {
     licenseAuthority: 'KSA' | 'Spelinspektionen' | 'GGL' | 'UKGC';
   };
   scores: {
-    withdrawals: {
+    promotions: {
       /**
-       * Methods offered, stated vs. actual processing time, any withdrawal caps
+       * How exactly and completely bonus terms are stated — not just how generous
        */
       score: number;
       /**
@@ -817,9 +817,9 @@ export interface TraditionalCasinoReview {
        */
       narrative: string;
     };
-    promotions: {
+    licensing: {
       /**
-       * How exactly and completely bonus terms are stated — not just how generous
+       * Current license status, past sanctions, complaint-resolution record
        */
       score: number;
       /**
@@ -845,9 +845,9 @@ export interface TraditionalCasinoReview {
        */
       narrative: string;
     };
-    licensing: {
+    withdrawals: {
       /**
-       * Current license status, past sanctions, complaint-resolution record
+       * Methods offered, stated vs. actual processing time, any withdrawal caps
        */
       score: number;
       /**
@@ -887,20 +887,6 @@ export interface TraditionalCasinoReview {
        */
       narrative: string;
     };
-    liveCasino: {
-      /**
-       * Studio quality, dealer languages, table limits, uptime
-       */
-      score: number;
-      /**
-       * Logged evidence reference — a number with no traceable source is not a valid score.
-       */
-      evidence: string;
-      /**
-       * The honest assessment for this category — what is actually good and actually bad.
-       */
-      narrative: string;
-    };
     deposits: {
       /**
        * Methods offered, minimums, processing speed, fees
@@ -915,9 +901,9 @@ export interface TraditionalCasinoReview {
        */
       narrative: string;
     };
-    communitySentiment: {
+    liveCasino: {
       /**
-       * Independent player sentiment, recency-weighted, fake-review-discounted
+       * Studio quality, dealer languages, table limits, uptime
        */
       score: number;
       /**
@@ -952,6 +938,10 @@ export interface TraditionalCasinoReview {
    * Computed from category scores × rubric weights — never hand-set.
    */
   overallScore?: number | null;
+  /**
+   * Qualitative context only (grading-rubric.md "Qualitative context" section) — independent player sentiment, shown next to the score but never counted toward it. Deliberately a sibling of `scores`, not a member of it, so it is structurally impossible for computeOverallScore to read it.
+   */
+  communitySentimentNote?: string | null;
   /**
    * Renders a prominent "illustrative sample, not a real operator" banner. Stays on until a page describes a real onboarded operator with real logged evidence.
    */
@@ -1033,6 +1023,20 @@ export interface CryptoCasinoReview {
        */
       narrative: string;
     };
+    kycApproach: {
+      /**
+       * Clarity and consistency of the stated policy — not strictness itself
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
     provablyFair: {
       /**
        * Verifiable fairness a user can actually check, not just a claim
@@ -1089,37 +1093,9 @@ export interface CryptoCasinoReview {
        */
       narrative: string;
     };
-    kycApproach: {
-      /**
-       * Clarity and consistency of the stated policy — not strictness itself
-       */
-      score: number;
-      /**
-       * Logged evidence reference — a number with no traceable source is not a valid score.
-       */
-      evidence: string;
-      /**
-       * The honest assessment for this category — what is actually good and actually bad.
-       */
-      narrative: string;
-    };
     geoCompliance: {
       /**
        * Does the operator itself exclude the regulated markets we do
-       */
-      score: number;
-      /**
-       * Logged evidence reference — a number with no traceable source is not a valid score.
-       */
-      evidence: string;
-      /**
-       * The honest assessment for this category — what is actually good and actually bad.
-       */
-      narrative: string;
-    };
-    communitySentiment: {
-      /**
-       * Independent sentiment, discounted for suspected fake reviews
        */
       score: number;
       /**
@@ -1154,6 +1130,10 @@ export interface CryptoCasinoReview {
    * Computed from category scores × rubric weights — never hand-set.
    */
   overallScore?: number | null;
+  /**
+   * Qualitative context only (grading-rubric.md "Qualitative context" section) — independent player sentiment, shown next to the score but never counted toward it. Deliberately a sibling of `scores`, not a member of it, so it is structurally impossible for computeOverallScore to read it.
+   */
+  communitySentimentNote?: string | null;
   /**
    * Renders a prominent "illustrative sample, not a real operator" banner. Stays on until a page describes a real onboarded operator with real logged evidence.
    */
@@ -1940,14 +1920,14 @@ export interface TraditionalCasinoReviewsSelect<T extends boolean = true> {
   scores?:
     | T
     | {
-        withdrawals?:
+        promotions?:
           | T
           | {
               score?: T;
               evidence?: T;
               narrative?: T;
             };
-        promotions?:
+        licensing?:
           | T
           | {
               score?: T;
@@ -1961,7 +1941,7 @@ export interface TraditionalCasinoReviewsSelect<T extends boolean = true> {
               evidence?: T;
               narrative?: T;
             };
-        licensing?:
+        withdrawals?:
           | T
           | {
               score?: T;
@@ -1982,13 +1962,6 @@ export interface TraditionalCasinoReviewsSelect<T extends boolean = true> {
               evidence?: T;
               narrative?: T;
             };
-        liveCasino?:
-          | T
-          | {
-              score?: T;
-              evidence?: T;
-              narrative?: T;
-            };
         deposits?:
           | T
           | {
@@ -1996,7 +1969,7 @@ export interface TraditionalCasinoReviewsSelect<T extends boolean = true> {
               evidence?: T;
               narrative?: T;
             };
-        communitySentiment?:
+        liveCasino?:
           | T
           | {
               score?: T;
@@ -2023,6 +1996,7 @@ export interface TraditionalCasinoReviewsSelect<T extends boolean = true> {
         narrative?: T;
       };
   overallScore?: T;
+  communitySentimentNote?: T;
   isIllustrativeSample?: T;
   generateSlug?: T;
   slug?: T;
@@ -2068,6 +2042,13 @@ export interface CryptoCasinoReviewsSelect<T extends boolean = true> {
               evidence?: T;
               narrative?: T;
             };
+        kycApproach?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
         provablyFair?:
           | T
           | {
@@ -2096,21 +2077,7 @@ export interface CryptoCasinoReviewsSelect<T extends boolean = true> {
               evidence?: T;
               narrative?: T;
             };
-        kycApproach?:
-          | T
-          | {
-              score?: T;
-              evidence?: T;
-              narrative?: T;
-            };
         geoCompliance?:
-          | T
-          | {
-              score?: T;
-              evidence?: T;
-              narrative?: T;
-            };
-        communitySentiment?:
           | T
           | {
               score?: T;
@@ -2137,6 +2104,7 @@ export interface CryptoCasinoReviewsSelect<T extends boolean = true> {
         narrative?: T;
       };
   overallScore?: T;
+  communitySentimentNote?: T;
   isIllustrativeSample?: T;
   generateSlug?: T;
   slug?: T;

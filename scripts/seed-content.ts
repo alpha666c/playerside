@@ -9,6 +9,10 @@
  * real commission data — nothing here or anywhere in this codebase touches
  * §3.2-restricted information).
  *
+ * Category scores match grading-rubric.md v2 [LOCKED 2026-07-21] — 8
+ * categories, Community sentiment removed from scoring and carried as
+ * `communitySentimentNote` (qualitative, display-only) instead.
+ *
  * Usage: npx cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-content.ts
  */
 import { config as loadEnv } from 'dotenv'
@@ -84,13 +88,9 @@ const auroraBay = {
       narrative:
         'Instant, free, and the method Dutch players actually use by default. Nothing to fault here.',
     },
-    communitySentiment: {
-      score: 8.9,
-      evidence: 'Trustpilot (412 reviews, 4.4/5) and two independent forums, sampled 07 Jul 2026, fake-review-discounted.',
-      narrative:
-        'Sentiment is strong and consistent across sources, with complaints clustering almost entirely around live-casino uptime — which matches what we independently observed, not a red flag on its own.',
-    },
   },
+  communitySentimentNote:
+    'Trustpilot (412 reviews, 4.4/5) and two independent forums, sampled 07 Jul 2026, fake-review-discounted: sentiment is strong and consistent across sources, with complaints clustering almost entirely around live-casino uptime — which matches what we independently observed, not a red flag on its own. Context only — not counted toward the score.',
   verdict: {
     whatsGood: [
       { point: 'Fastest verified withdrawals of any operator in this index' },
@@ -163,13 +163,9 @@ const northlight = {
       narrative:
         'Fast and fee-free for the standard UK deposit method. Nothing unusual to report either way.',
     },
-    communitySentiment: {
-      score: 8.5,
-      evidence: 'Trustpilot (298 reviews, 4.2/5), sampled 09 Jul 2026, fake-review-discounted.',
-      narrative:
-        'Generally positive, with recurring complaints specifically about support wait times — again, consistent with what we found directly rather than a surprise.',
-    },
   },
+  communitySentimentNote:
+    'Trustpilot (298 reviews, 4.2/5), sampled 09 Jul 2026, fake-review-discounted: generally positive, with recurring complaints specifically about support wait times — again, consistent with what we found directly rather than a surprise. Context only — not counted toward the score.',
   verdict: {
     whatsGood: [
       { point: 'The clearest bonus terms page we’ve tested — nothing left implicit' },
@@ -242,13 +238,9 @@ const ferrous = {
       narrative:
         'Standard and reliable for the Swedish market’s default payment method.',
     },
-    communitySentiment: {
-      score: 6.9,
-      evidence: 'Trustpilot (156 reviews, 3.6/5), sampled 09 Jul 2026, fake-review-discounted.',
-      narrative:
-        'Meaningfully lower than the other two operators we cover, with recurring, specific complaints about slow withdrawals and inconsistent support answers — matching our own test results closely enough that we don’t discount it as noise.',
-    },
   },
+  communitySentimentNote:
+    'Trustpilot (156 reviews, 3.6/5), sampled 09 Jul 2026, fake-review-discounted: meaningfully lower than the other two operators we cover, with recurring, specific complaints about slow withdrawals and inconsistent support answers — matching our own test results closely enough that we don’t discount it as noise. Context only — not counted toward the score.',
   verdict: {
     whatsGood: [
       { point: 'The largest, most varied game catalogue we’ve reviewed in this category' },
@@ -287,6 +279,7 @@ const run = async () => {
       compliance: op.compliance,
       summary: op.summary,
       scores: op.scores,
+      communitySentimentNote: op.communitySentimentNote,
       verdict: op.verdict,
       isIllustrativeSample: true,
       _status: 'published' as const,
@@ -415,10 +408,15 @@ const run = async () => {
       ctaSubtext: 'Playerside — commission-blind, evidence-logged, exact about the terms that matter.',
       ctaButtonHref: '/casinos',
       ctaButtonLabel: 'Browse casino reviews',
+      stats: [
+        { value: '0', label: 'Commission data seen by graders' },
+        { value: '8', label: 'Graded categories per operator' },
+        { value: '100%', label: 'Bonus terms stated exactly' },
+      ],
     },
     context: { disableRevalidate: true },
   })
-  payload.logger.info('Updated homepage CTA band.')
+  payload.logger.info('Updated homepage CTA band and stats.')
 
   payload.logger.info('Seed complete.')
   process.exit(0)
