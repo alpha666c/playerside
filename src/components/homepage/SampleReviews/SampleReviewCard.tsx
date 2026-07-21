@@ -12,6 +12,7 @@ export const SampleReviewCard: React.FC<{
   delayMs?: number
 }> = ({ name, score, evidenceNote, delayMs = 0 }) => {
   const [stampActive, setStampActive] = useState(false)
+  const [ruleOpen, setRuleOpen] = useState(false)
 
   return (
     <Reveal
@@ -31,6 +32,33 @@ export const SampleReviewCard: React.FC<{
       </div>
       <div className="mt-3.5 border-t border-line pt-3.5 font-mono text-[12px] text-evidence sm:text-[12.5px]">
         EVIDENCE: {evidenceNote}
+      </div>
+      {/* The Redacted Field: the one figure blacked out on our own documents is
+          the commission — activating it reveals the rule, never the number. */}
+      <div className="mt-3 border-t border-line pt-3">
+        <button
+          aria-expanded={ruleOpen}
+          className="flex w-full items-center gap-2 text-left font-mono text-[12px] text-paper-dim sm:text-[12.5px]"
+          onClick={() => setRuleOpen((open) => !open)}
+          type="button"
+        >
+          <span>COMMISSION:</span>
+          <span aria-hidden="true" className="redaction w-[8ch]" />
+          <span className="sr-only">withheld from graders — activate to see why</span>
+          <span
+            aria-hidden="true"
+            className="ml-auto text-[10px] uppercase tracking-[1px] text-evidence"
+          >
+            {ruleOpen ? 'Rule −' : 'Why? +'}
+          </span>
+        </button>
+        {ruleOpen ? (
+          <p className="mb-0 mt-2.5 text-[12.5px] leading-relaxed text-paper-dim">
+            Withheld from graders by design, not blacked out after the fact — the grading side has
+            no field this number could ever appear in. Scores are locked before commercial terms
+            exist.
+          </p>
+        ) : null}
       </div>
     </Reveal>
   )

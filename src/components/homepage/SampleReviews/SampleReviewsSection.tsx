@@ -15,6 +15,7 @@ export const SampleReviewsSection: React.FC<{ operators: Homepage['sampleOperato
       <div className="container">
         <SectionHead
           eyebrow="Example reviews"
+          folio="Exhibit 03 — Filed findings"
           heading="What a Playerside review actually shows."
         />
         <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">

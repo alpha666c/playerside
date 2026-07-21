@@ -9,6 +9,7 @@ export const MethodologySection: React.FC = () => (
     <div className="container">
       <SectionHead
         eyebrow="How we grade"
+        folio="Exhibit 01 — Scoring sheet"
         heading="Nine categories. Logged evidence. No exceptions."
       />
       <div className="grid gap-x-10 gap-y-3 sm:grid-cols-2">

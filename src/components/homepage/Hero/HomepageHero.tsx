@@ -5,7 +5,7 @@ import type { Homepage } from '@/payload-types'
 import { PillLink } from '@/components/PillButton'
 import { Eyebrow } from '@/components/homepage/shared/Eyebrow'
 import { Glow } from '@/components/homepage/shared/Glow'
-import { HeroCardStack } from './HeroCardStack'
+import { HeroBlind } from './HeroBlind'
 
 type HomepageHeroProps = {
   data: Homepage
@@ -19,12 +19,6 @@ export const HomepageHero: React.FC<HomepageHeroProps> = ({ data }) => {
         { value: '9', label: 'Graded categories per operator' },
         { value: '100%', label: 'Bonus terms stated exactly' },
       ]
-
-  const heroCards = (data.sampleOperators ?? []).slice(0, 3).map((operator) => ({
-    name: operator.name,
-    score: operator.score,
-    market: operator.market,
-  }))
 
   return (
     <header className="relative isolate grid gap-10 overflow-hidden px-4 pb-16 pt-16 sm:px-6 sm:pb-20 sm:pt-24 lg:grid-cols-[1.05fr_0.95fr] lg:items-center lg:gap-10 lg:px-8 lg:pb-24 lg:pt-28">
@@ -64,7 +58,7 @@ export const HomepageHero: React.FC<HomepageHeroProps> = ({ data }) => {
         </div>
       </div>
 
-      <HeroCardStack cards={heroCards} />
+      <HeroBlind />
     </header>
   )
 }

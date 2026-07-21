@@ -30,7 +30,12 @@ export default defineConfig({
   projects: [
     {
       name: 'chromium',
-      use: { ...devices['Desktop Chrome'], channel: 'chromium' },
+      use: {
+        ...devices['Desktop Chrome'],
+        // PW_CHROMIUM_CHANNEL=chrome runs against installed Google Chrome when
+        // the Playwright chromium download is unavailable (e.g. offline/slow CDN).
+        channel: process.env.PW_CHROMIUM_CHANNEL || 'chromium',
+      },
     },
   ],
   webServer: {
