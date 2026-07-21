@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 240" font-family="'Fraunces', Georgia, serif">
+  <defs>
+    <style>
+      .ink   { fill:#1A1420; }
+      .dusk  { fill:#2A2032; }
+      .ring-text { font-family:'Fraunces', Georgia, serif; font-size:15px; letter-spacing:4px; fill:#C9A15A; }
+    </style>
+    <path id="ringPath" d="M 120,120 m -78,0 a 78,78 0 1,1 156,0 a 78,78 0 1,1 -156,0" />
+  </defs>
+  <rect x="0" y="0" width="240" height="240" class="ink" />
+  <circle cx="120" cy="120" r="94" fill="none" stroke="#C9A15A" stroke-width="1.5" opacity="0.55"/>
+  <circle cx="120" cy="120" r="78" class="dusk" stroke="#C9A15A" stroke-width="2.5"/>
+  <text class="ring-text">
+    <textPath href="#ringPath" startOffset="0%">PLAYERSIDE &#183; VERIFIED &#183; PLAYERSIDE &#183; VERIFIED &#183;</textPath>
+  </text>
+  <path d="M86,122 L110,148 L156,94" fill="none" stroke="#FF5D45" stroke-width="11" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

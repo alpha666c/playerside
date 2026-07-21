@@ -1,7 +1,7 @@
 {
-  "name": "website",
+  "name": "playerside",
   "version": "1.0.0",
-  "description": "Website template for Payload",
+  "description": "Playerside — commission-blind casino reviews (Vertix Affiliating, Brand #1)",
   "license": "MIT",
   "type": "module",
   "scripts": {
