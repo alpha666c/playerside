@@ -24,7 +24,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <HeaderNav data={data} />
 
         <div className="flex items-center gap-3">
-          <PillLink className="hidden sm:inline-flex" href="/#reviews" variant="primary">
+          <PillLink className="hidden sm:inline-flex" href="/reviews" variant="primary">
             Browse reviews
           </PillLink>
           <MobileNav data={data} />

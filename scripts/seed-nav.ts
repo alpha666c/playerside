@@ -1,8 +1,13 @@
 /**
  * One-off script: populate the Header/Footer nav globals with real Playerside
- * links now that the homepage sections exist. Deliberately narrow — unlike
- * the full `/api/seed` endpoint (which resets the entire demo content set
- * from the Payload website template), this only touches the two nav globals.
+ * links. Deliberately narrow — unlike the full `/api/seed` endpoint (which
+ * resets the entire demo content set from the Payload website template),
+ * this only touches the two nav globals.
+ *
+ * Now points at real routes rather than homepage anchors wherever a real
+ * page exists (ORG.md §3.4 — category clarity means separate top-level nav
+ * entries, not one dropdown). "The wall" stays an anchor since the Pressure
+ * Test is a homepage-only showcase, not duplicated elsewhere.
  *
  * Usage: npx cross-env NODE_OPTIONS=--no-deprecation tsx scripts/seed-nav.ts
  */
@@ -15,30 +20,26 @@ loadEnv({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.
 const { getPayload } = await import('payload')
 const { default: configPromise } = await import('../src/payload.config')
 
+const navItems = [
+  { link: { type: 'custom' as const, label: 'How we grade', url: '/#method' } },
+  { link: { type: 'custom' as const, label: 'The wall', url: '/#wall' } },
+  { link: { type: 'custom' as const, label: 'Casino reviews', url: '/casinos' } },
+  { link: { type: 'custom' as const, label: 'Crypto reviews', url: '/crypto-casinos' } },
+  { link: { type: 'custom' as const, label: 'Bonuses', url: '/bonuses' } },
+]
+
 const run = async () => {
   const payload = await getPayload({ config: configPromise })
 
   await payload.updateGlobal({
     slug: 'header',
-    data: {
-      navItems: [
-        { link: { type: 'custom', label: 'How we grade', url: '/#method' } },
-        { link: { type: 'custom', label: 'The wall', url: '/#wall' } },
-        { link: { type: 'custom', label: 'Sample reviews', url: '/#reviews' } },
-      ],
-    },
+    data: { navItems },
     context: { disableRevalidate: true },
   })
 
   await payload.updateGlobal({
     slug: 'footer',
-    data: {
-      navItems: [
-        { link: { type: 'custom', label: 'How we grade', url: '/#method' } },
-        { link: { type: 'custom', label: 'The wall', url: '/#wall' } },
-        { link: { type: 'custom', label: 'Sample reviews', url: '/#reviews' } },
-      ],
-    },
+    data: { navItems },
     context: { disableRevalidate: true },
   })
 

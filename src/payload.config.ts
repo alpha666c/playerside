@@ -5,10 +5,14 @@ import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
 import { Categories } from './collections/Categories'
+import { CryptoCasinoReviews } from './collections/CryptoCasinoReviews'
 import { Media } from './collections/Media'
+import { NoWageringBonuses } from './collections/NoWageringBonuses'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
+import { TraditionalCasinoReviews } from './collections/TraditionalCasinoReviews'
 import { Users } from './collections/Users'
+import { WageringBonuses } from './collections/WageringBonuses'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { Homepage } from './Homepage/config'
@@ -63,7 +67,17 @@ export default buildConfig({
       connectionString: process.env.DATABASE_URL,
     },
   }),
-  collections: [Pages, Posts, Media, Categories, Users],
+  collections: [
+    Pages,
+    Posts,
+    Media,
+    Categories,
+    Users,
+    TraditionalCasinoReviews,
+    CryptoCasinoReviews,
+    WageringBonuses,
+    NoWageringBonuses,
+  ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, Homepage],
   plugins,

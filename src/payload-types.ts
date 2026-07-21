@@ -72,6 +72,10 @@ export interface Config {
     media: Media;
     categories: Category;
     users: User;
+    'traditional-casino-reviews': TraditionalCasinoReview;
+    'crypto-casino-reviews': CryptoCasinoReview;
+    'wagering-bonuses': WageringBonus;
+    'no-wagering-bonuses': NoWageringBonus;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -94,6 +98,10 @@ export interface Config {
     media: MediaSelect<false> | MediaSelect<true>;
     categories: CategoriesSelect<false> | CategoriesSelect<true>;
     users: UsersSelect<false> | UsersSelect<true>;
+    'traditional-casino-reviews': TraditionalCasinoReviewsSelect<false> | TraditionalCasinoReviewsSelect<true>;
+    'crypto-casino-reviews': CryptoCasinoReviewsSelect<false> | CryptoCasinoReviewsSelect<true>;
+    'wagering-bonuses': WageringBonusesSelect<false> | WageringBonusesSelect<true>;
+    'no-wagering-bonuses': NoWageringBonusesSelect<false> | NoWageringBonusesSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -776,6 +784,497 @@ export interface Form {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "traditional-casino-reviews".
+ */
+export interface TraditionalCasinoReview {
+  id: number;
+  name: string;
+  /**
+   * Markets where this operator holds the required national license. Never list an operator here without one (spec.md).
+   */
+  markets: ('nl' | 'se' | 'de' | 'uk')[];
+  compliance: {
+    /**
+     * Displayed on the page, not just linked (spec.md). Illustrative samples use an obviously-non-real SAMPLE-format.
+     */
+    licenseNumber: string;
+    licenseAuthority: 'KSA' | 'Spelinspektionen' | 'GGL' | 'UKGC';
+  };
+  scores: {
+    withdrawals: {
+      /**
+       * Methods offered, stated vs. actual processing time, any withdrawal caps
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    promotions: {
+      /**
+       * How exactly and completely bonus terms are stated — not just how generous
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    support: {
+      /**
+       * Channels, response time, resolution quality, language coverage
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    licensing: {
+      /**
+       * Current license status, past sanctions, complaint-resolution record
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    kyc: {
+      /**
+       * Speed, document requirements, clarity of what is needed upfront
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    gameVariety: {
+      /**
+       * Number and range of games, provider diversity, RTP transparency
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    liveCasino: {
+      /**
+       * Studio quality, dealer languages, table limits, uptime
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    deposits: {
+      /**
+       * Methods offered, minimums, processing speed, fees
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    communitySentiment: {
+      /**
+       * Independent player sentiment, recency-weighted, fake-review-discounted
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+  };
+  /**
+   * One-paragraph plain-language summary shown on listings.
+   */
+  summary: string;
+  verdict: {
+    whatsGood: {
+      point: string;
+      id?: string | null;
+    }[];
+    /**
+     * Required, minimum one row — a review with nothing bad to say is not finished.
+     */
+    whatsBad: {
+      point: string;
+      id?: string | null;
+    }[];
+    narrative: string;
+  };
+  /**
+   * Computed from category scores × rubric weights — never hand-set.
+   */
+  overallScore?: number | null;
+  /**
+   * Renders a prominent "illustrative sample, not a real operator" banner. Stays on until a page describes a real onboarded operator with real logged evidence.
+   */
+  isIllustrativeSample?: boolean | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crypto-casino-reviews".
+ */
+export interface CryptoCasinoReview {
+  id: number;
+  name: string;
+  compliance: {
+    /**
+     * Displayed on the page, verified against the live regulator register (spec.md). Illustrative samples use an obviously-non-real SAMPLE-format.
+     */
+    licenseNumber: string;
+    /**
+     * e.g. Curaçao GCB. Verified at scoring time, not onboarding.
+     */
+    licenseAuthority: string;
+    /**
+     * Must be checked — explicit statement this operator/content is not directed at NL/SE/DE/UK (spec.md hard exclusion).
+     */
+    notLicensedInRegulatedMarkets: boolean;
+    /**
+     * How a user can verify fairness themselves, if offered.
+     */
+    provablyFairInfo?: string | null;
+  };
+  scores: {
+    licenseLegitimacy: {
+      /**
+       * Is the license real, current, and verifiable right now — not just claimed
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    promotions: {
+      /**
+       * Exact terms, no exceptions — same bar as Traditional
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    withdrawals: {
+      /**
+       * Crypto withdrawal speed, network fees, caps, fiat off-ramp options
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    provablyFair: {
+      /**
+       * Verifiable fairness a user can actually check, not just a claim
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    support: {
+      /**
+       * Channels, response time, resolution quality
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    deposits: {
+      /**
+       * Supported chains/coins, minimums, confirmation-time requirements
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    gameVariety: {
+      /**
+       * Range and quality of games and providers
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    kycApproach: {
+      /**
+       * Clarity and consistency of the stated policy — not strictness itself
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    geoCompliance: {
+      /**
+       * Does the operator itself exclude the regulated markets we do
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+    communitySentiment: {
+      /**
+       * Independent sentiment, discounted for suspected fake reviews
+       */
+      score: number;
+      /**
+       * Logged evidence reference — a number with no traceable source is not a valid score.
+       */
+      evidence: string;
+      /**
+       * The honest assessment for this category — what is actually good and actually bad.
+       */
+      narrative: string;
+    };
+  };
+  /**
+   * One-paragraph plain-language summary shown on listings.
+   */
+  summary: string;
+  verdict: {
+    whatsGood: {
+      point: string;
+      id?: string | null;
+    }[];
+    /**
+     * Required, minimum one row — a review with nothing bad to say is not finished.
+     */
+    whatsBad: {
+      point: string;
+      id?: string | null;
+    }[];
+    narrative: string;
+  };
+  /**
+   * Computed from category scores × rubric weights — never hand-set.
+   */
+  overallScore?: number | null;
+  /**
+   * Renders a prominent "illustrative sample, not a real operator" banner. Stays on until a page describes a real onboarded operator with real logged evidence.
+   */
+  isIllustrativeSample?: boolean | null;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wagering-bonuses".
+ */
+export interface WageringBonus {
+  id: number;
+  title: string;
+  /**
+   * The reviewed operator this bonus belongs to.
+   */
+  operator: number | TraditionalCasinoReview;
+  /**
+   * Plain-language summary — the exact terms still live in the fields below.
+   */
+  summary: string;
+  /**
+   * Who qualifies — new players only, region restrictions, deposit method restrictions, etc.
+   */
+  eligibility: string;
+  /**
+   * Exact time limit to claim the bonus itself (separate from wagering clearance time, if applicable).
+   */
+  expiry: string;
+  /**
+   * Exact maximum withdrawal from bonus winnings, if capped. State "uncapped" explicitly if true — never leave blank.
+   */
+  maxWithdrawal: string;
+  /**
+   * Renders a prominent "illustrative sample, not a real offer" banner.
+   */
+  isIllustrativeSample?: boolean | null;
+  /**
+   * e.g. 35 for a 35x requirement.
+   */
+  wageringMultiplier: number;
+  /**
+   * What the multiplier is calculated against.
+   */
+  wageringAppliesTo: 'bonus_only' | 'bonus_plus_deposit';
+  /**
+   * Exact time limit to clear the wagering requirement, e.g. "30 days from credit".
+   */
+  wageringTimeLimit: string;
+  /**
+   * Which games count toward wagering, and at what rate — required per game category, not a blanket "all games".
+   */
+  contributingGames: {
+    gameCategory: string;
+    contributionPercent: number;
+    id?: string | null;
+  }[];
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "no-wagering-bonuses".
+ */
+export interface NoWageringBonus {
+  id: number;
+  title: string;
+  /**
+   * The reviewed operator this bonus belongs to.
+   */
+  operator: number | TraditionalCasinoReview;
+  /**
+   * Plain-language summary — the exact terms still live in the fields below.
+   */
+  summary: string;
+  /**
+   * Who qualifies — new players only, region restrictions, deposit method restrictions, etc.
+   */
+  eligibility: string;
+  /**
+   * Exact time limit to claim the bonus itself (separate from wagering clearance time, if applicable).
+   */
+  expiry: string;
+  /**
+   * Exact maximum withdrawal from bonus winnings, if capped. State "uncapped" explicitly if true — never leave blank.
+   */
+  maxWithdrawal: string;
+  /**
+   * Renders a prominent "illustrative sample, not a real offer" banner.
+   */
+  isIllustrativeSample?: boolean | null;
+  /**
+   * Exact amount or spins, e.g. "€25 no-deposit" or "50 free spins".
+   */
+  bonusAmount: string;
+  /**
+   * Even wager-free, winnings usually still have conditions before cashout (e.g. minimum deposit to unlock withdrawal, verification requirements). State them exactly, or state explicitly that none apply.
+   */
+  withdrawalConditions: string;
+  /**
+   * When enabled, the slug will auto-generate from the title field on save and autosave.
+   */
+  generateSlug?: boolean | null;
+  slug: string;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -983,6 +1482,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'users';
         value: number | User;
+      } | null)
+    | ({
+        relationTo: 'traditional-casino-reviews';
+        value: number | TraditionalCasinoReview;
+      } | null)
+    | ({
+        relationTo: 'crypto-casino-reviews';
+        value: number | CryptoCasinoReview;
+      } | null)
+    | ({
+        relationTo: 'wagering-bonuses';
+        value: number | WageringBonus;
+      } | null)
+    | ({
+        relationTo: 'no-wagering-bonuses';
+        value: number | NoWageringBonus;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -1348,6 +1863,274 @@ export interface UsersSelect<T extends boolean = true> {
         createdAt?: T;
         expiresAt?: T;
       };
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "traditional-casino-reviews_select".
+ */
+export interface TraditionalCasinoReviewsSelect<T extends boolean = true> {
+  name?: T;
+  markets?: T;
+  compliance?:
+    | T
+    | {
+        licenseNumber?: T;
+        licenseAuthority?: T;
+      };
+  scores?:
+    | T
+    | {
+        withdrawals?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        promotions?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        support?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        licensing?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        kyc?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        gameVariety?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        liveCasino?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        deposits?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        communitySentiment?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+      };
+  summary?: T;
+  verdict?:
+    | T
+    | {
+        whatsGood?:
+          | T
+          | {
+              point?: T;
+              id?: T;
+            };
+        whatsBad?:
+          | T
+          | {
+              point?: T;
+              id?: T;
+            };
+        narrative?: T;
+      };
+  overallScore?: T;
+  isIllustrativeSample?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "crypto-casino-reviews_select".
+ */
+export interface CryptoCasinoReviewsSelect<T extends boolean = true> {
+  name?: T;
+  compliance?:
+    | T
+    | {
+        licenseNumber?: T;
+        licenseAuthority?: T;
+        notLicensedInRegulatedMarkets?: T;
+        provablyFairInfo?: T;
+      };
+  scores?:
+    | T
+    | {
+        licenseLegitimacy?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        promotions?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        withdrawals?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        provablyFair?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        support?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        deposits?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        gameVariety?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        kycApproach?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        geoCompliance?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+        communitySentiment?:
+          | T
+          | {
+              score?: T;
+              evidence?: T;
+              narrative?: T;
+            };
+      };
+  summary?: T;
+  verdict?:
+    | T
+    | {
+        whatsGood?:
+          | T
+          | {
+              point?: T;
+              id?: T;
+            };
+        whatsBad?:
+          | T
+          | {
+              point?: T;
+              id?: T;
+            };
+        narrative?: T;
+      };
+  overallScore?: T;
+  isIllustrativeSample?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "wagering-bonuses_select".
+ */
+export interface WageringBonusesSelect<T extends boolean = true> {
+  title?: T;
+  operator?: T;
+  summary?: T;
+  eligibility?: T;
+  expiry?: T;
+  maxWithdrawal?: T;
+  isIllustrativeSample?: T;
+  wageringMultiplier?: T;
+  wageringAppliesTo?: T;
+  wageringTimeLimit?: T;
+  contributingGames?:
+    | T
+    | {
+        gameCategory?: T;
+        contributionPercent?: T;
+        id?: T;
+      };
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "no-wagering-bonuses_select".
+ */
+export interface NoWageringBonusesSelect<T extends boolean = true> {
+  title?: T;
+  operator?: T;
+  summary?: T;
+  eligibility?: T;
+  expiry?: T;
+  maxWithdrawal?: T;
+  isIllustrativeSample?: T;
+  bonusAmount?: T;
+  withdrawalConditions?: T;
+  generateSlug?: T;
+  slug?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

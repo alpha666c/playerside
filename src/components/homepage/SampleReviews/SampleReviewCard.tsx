@@ -1,5 +1,6 @@
 'use client'
 
+import Link from 'next/link'
 import React, { useState } from 'react'
 
 import { Reveal } from '@/components/Reveal'
@@ -10,7 +11,9 @@ export const SampleReviewCard: React.FC<{
   score: number
   evidenceNote: string
   delayMs?: number
-}> = ({ name, score, evidenceNote, delayMs = 0 }) => {
+  /** Links through to the full review page — omitted if no matching review is published yet. */
+  href?: string
+}> = ({ name, score, evidenceNote, delayMs = 0, href }) => {
   const [stampActive, setStampActive] = useState(false)
   const [ruleOpen, setRuleOpen] = useState(false)
 
@@ -60,6 +63,14 @@ export const SampleReviewCard: React.FC<{
           </p>
         ) : null}
       </div>
+      {href ? (
+        <Link
+          className="mt-4 inline-block font-mono text-[12px] uppercase tracking-[1px] text-gold underline underline-offset-2"
+          href={href}
+        >
+          Read the full review →
+        </Link>
+      ) : null}
     </Reveal>
   )
 }
