@@ -10,8 +10,8 @@ import { CategoryMarker } from '@/components/CategoryMarker/CategoryMarker'
 import { ComplianceBlock } from '@/components/ComplianceBlock/ComplianceBlock'
 import { IllustrativeBanner } from '@/components/IllustrativeBanner/IllustrativeBanner'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
+import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
-import { VerificationSeal } from '@/components/VerificationSeal/VerificationSeal'
 import { cryptoRubric } from '@/rubrics/crypto'
 
 export async function generateStaticParams() {
@@ -43,11 +43,11 @@ export default async function CryptoCasinoReviewPage({ params: paramsPromise }: 
       <div className="container mb-10 max-w-[760px] sm:mb-12">
         <CategoryMarker className="mb-4" kind="crypto" />
         {review.isIllustrativeSample ? <IllustrativeBanner subject="operator" /> : null}
-        <div className="mt-4 flex flex-wrap items-center gap-4">
+        <div className="mt-4 flex flex-wrap items-center gap-5">
           <h1 className="text-[30px] leading-[1.1] sm:text-[38px] lg:text-[46px]">
             {review.name}
           </h1>
-          <VerificationSeal active size={56} title={`${review.name} — verified score, evidence logged`} />
+          <MachinedSealLazy size={120} title={`${review.name} — verified score, evidence logged. Drag to inspect.`} />
         </div>
         {typeof review.overallScore === 'number' ? (
           <div className="mt-3 font-mono text-3xl text-gold sm:text-4xl">

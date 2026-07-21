@@ -57,20 +57,20 @@ export const Reveal: React.FC<RevealProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threshold])
 
-  return (
-    <Tag
-      ref={ref}
-      className={cn(
+  return React.createElement(
+    Tag,
+    {
+      className: cn(
         'transition-[opacity,transform] ease-out',
         reducedMotion
           ? 'duration-300 opacity-0 data-[visible=true]:opacity-100'
           : 'duration-700 opacity-0 translate-y-7 data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0',
         className,
-      )}
-      data-visible={visible}
-      style={!reducedMotion && delayMs ? { transitionDelay: `${delayMs}ms` } : undefined}
-    >
-      {children}
-    </Tag>
+      ),
+      'data-visible': visible,
+      ref,
+      style: !reducedMotion && delayMs ? { transitionDelay: `${delayMs}ms` } : undefined,
+    },
+    children,
   )
 }

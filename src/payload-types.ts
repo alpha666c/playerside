@@ -76,6 +76,7 @@ export interface Config {
     'crypto-casino-reviews': CryptoCasinoReview;
     'wagering-bonuses': WageringBonus;
     'no-wagering-bonuses': NoWageringBonus;
+    'agent-logs': AgentLog;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -102,6 +103,7 @@ export interface Config {
     'crypto-casino-reviews': CryptoCasinoReviewsSelect<false> | CryptoCasinoReviewsSelect<true>;
     'wagering-bonuses': WageringBonusesSelect<false> | WageringBonusesSelect<true>;
     'no-wagering-bonuses': NoWageringBonusesSelect<false> | NoWageringBonusesSelect<true>;
+    'agent-logs': AgentLogsSelect<false> | AgentLogsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1274,6 +1276,60 @@ export interface NoWageringBonus {
   _status?: ('draft' | 'published') | null;
 }
 /**
+ * Append-only agent activity log (logging-spec.md). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks) are retained indefinitely; operational events are not.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-logs".
+ */
+export interface AgentLog {
+  id: number;
+  event:
+    | 'research_fetch'
+    | 'draft_created'
+    | 'draft_edited'
+    | 'grade_assigned'
+    | 'qa_check'
+    | 'publish'
+    | 'unpublish'
+    | 'license_recheck';
+  timestamp: string;
+  agentId: string;
+  /**
+   * e.g. '01-playerside' (ORG.md brand directory naming).
+   */
+  brand: string;
+  /**
+   * Category within the brand, e.g. 'traditional' or 'crypto-casino'. Kept distinct from rubricCategory (logging-spec.md field naming note).
+   */
+  siteCategory?: string | null;
+  operator?: string | null;
+  pageId?: string | null;
+  rubricCategory?: string | null;
+  score?: number | null;
+  /**
+   * Link to the research fetch or source that justifies a grade_assigned event. Required whenever event is grade_assigned — enforced by hook, not just this description.
+   */
+  evidenceRef?: string | null;
+  /**
+   * Event-specific fields per logging-spec.md: source_url/extracted (research fetch), draft_version/inputs_used (draft events), qa_checks (per-field pass/fail + reason), qa_check_ref (publish/unpublish), previous_status/current_status/source_checked (license recheck).
+   */
+  details?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Computed from event type on every save — never hand-set.
+   */
+  retentionClass?: ('compliance' | 'operational') | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
@@ -1498,6 +1554,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'no-wagering-bonuses';
         value: number | NoWageringBonus;
+      } | null)
+    | ({
+        relationTo: 'agent-logs';
+        value: number | AgentLog;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2131,6 +2191,26 @@ export interface NoWageringBonusesSelect<T extends boolean = true> {
   updatedAt?: T;
   createdAt?: T;
   _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "agent-logs_select".
+ */
+export interface AgentLogsSelect<T extends boolean = true> {
+  event?: T;
+  timestamp?: T;
+  agentId?: T;
+  brand?: T;
+  siteCategory?: T;
+  operator?: T;
+  pageId?: T;
+  rubricCategory?: T;
+  score?: T;
+  evidenceRef?: T;
+  details?: T;
+  retentionClass?: T;
+  updatedAt?: T;
+  createdAt?: T;
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema

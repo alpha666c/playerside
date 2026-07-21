@@ -4,6 +4,7 @@ import path from 'path'
 import { buildConfig, PayloadRequest } from 'payload'
 import { fileURLToPath } from 'url'
 
+import { AgentLogs } from './collections/AgentLogs'
 import { Categories } from './collections/Categories'
 import { CryptoCasinoReviews } from './collections/CryptoCasinoReviews'
 import { Media } from './collections/Media'
@@ -77,6 +78,7 @@ export default buildConfig({
     CryptoCasinoReviews,
     WageringBonuses,
     NoWageringBonuses,
+    AgentLogs,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, Homepage],
