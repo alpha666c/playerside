@@ -16,6 +16,7 @@ export type AgentLogEvent =
 export type LogEventInput = {
   agentId: string
   brand: string
+  correctsEventId?: string
   details?: Record<string, unknown>
   event: AgentLogEvent
   evidenceRef?: string
@@ -34,6 +35,13 @@ export type LogEventInput = {
  * enforcing the audit trail requirement at the data layer rather than
  * relying on every caller to remember it.
  *
+ * Sets `context.internalWrite`, the flag agent-logs' access control
+ * requires for create (governance hardening, Phase 2A) — this IS the
+ * "server-generated only" boundary: nothing else may set it, so a direct
+ * REST POST or manual admin create is denied regardless of auth state.
+ * agent-logs also has no update/delete access at all; a correction is a new
+ * event with `correctsEventId` set, never an edit of the original.
+ *
  * Pass `req` when calling from inside another collection's hook so the
  * audit write joins that operation's existing transaction — both commit or
  * roll back together, and it avoids opening a second pooled connection that
@@ -42,7 +50,7 @@ export type LogEventInput = {
 export const logEvent = (payload: Payload, input: LogEventInput, req?: PayloadRequest) =>
   payload.create({
     collection: 'agent-logs',
-    context: { disableRevalidate: true },
+    context: { disableRevalidate: true, internalWrite: true },
     data: { ...input, timestamp: input.timestamp ?? new Date().toISOString() },
     req,
   })

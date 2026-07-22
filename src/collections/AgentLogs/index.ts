@@ -1,8 +1,21 @@
-import type { CollectionBeforeChangeHook, CollectionBeforeValidateHook, CollectionConfig } from 'payload'
+import type { Access, CollectionBeforeChangeHook, CollectionBeforeValidateHook, CollectionConfig } from 'payload'
 
 import { APIError } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
+
+/**
+ * Governance hardening (Phase 2A): agent-logs is server-generated only.
+ * `logEvent()` — the single canonical write path (src/lib/logEvent.ts) —
+ * sets `context.internalWrite`; nothing else does. A direct POST to
+ * /api/agent-logs, or a manual admin "create new", carries no such context
+ * and is denied here, regardless of the requester's auth state. This is
+ * enforced at the access-control layer, not just by convention.
+ */
+const internalWriteOnly: Access = ({ req }) => req.context?.internalWrite === true
+
+/** No update or delete, ever — corrections must be new events (governance hardening, Phase 2A). */
+const neverAllowed: Access = () => false
 
 /**
  * The logging store required by logging-spec.md (Task 3, Phase 1) and the
@@ -52,15 +65,15 @@ const computeRetentionClass: CollectionBeforeChangeHook = ({ data }) => {
 export const AgentLogs: CollectionConfig<'agent-logs'> = {
   slug: 'agent-logs',
   access: {
-    create: authenticated,
-    delete: authenticated,
+    create: internalWriteOnly,
+    delete: neverAllowed,
     read: authenticated,
-    update: authenticated,
+    update: neverAllowed,
   },
   admin: {
     defaultColumns: ['event', 'brand', 'siteCategory', 'operator', 'agentId', 'timestamp'],
     description:
-      'Append-only agent activity log (logging-spec.md). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks, case creation/status transitions/material updates) are retained indefinitely; operational events are not.',
+      'Append-only, immutable agent activity log (logging-spec.md). Server-generated only via logEvent() — no manual create, no update, no delete, ever; corrections must be new events (see correctsEventId). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks, case creation/status transitions/material updates) are retained indefinitely; operational events are not.',
     useAsTitle: 'event',
   },
   fields: [
@@ -117,6 +130,14 @@ export const AgentLogs: CollectionConfig<'agent-logs'> = {
       admin: {
         description:
           'Link to the research fetch or source that justifies a grade_assigned event. Required whenever event is grade_assigned — enforced by hook, not just this description.',
+      },
+    },
+    {
+      name: 'correctsEventId',
+      type: 'text',
+      admin: {
+        description:
+          'The id of the agent-logs event this one corrects, if any. Since entries are immutable, a correction is always a new event referencing the one it supersedes — never an edit.',
       },
     },
     {

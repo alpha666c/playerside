@@ -5,6 +5,8 @@ import * as migration_20260721_164432_add_agent_logs from './20260721_164432_add
 import * as migration_20260721_214311_sync_locked_rubric_weights from './20260721_214311_sync_locked_rubric_weights';
 import * as migration_20260722_020512_add_operator_and_research_queue from './20260722_020512_add_operator_and_research_queue';
 import * as migration_20260722_022400_add_case_governance_foundation from './20260722_022400_add_case_governance_foundation';
+import * as migration_20260722_025903_harden_governance_phase2a from './20260722_025903_harden_governance_phase2a';
+import * as migration_20260722_025946_remove_chat_history_placeholder from './20260722_025946_remove_chat_history_placeholder';
 
 export const migrations = [
   {
@@ -40,6 +42,16 @@ export const migrations = [
   {
     up: migration_20260722_022400_add_case_governance_foundation.up,
     down: migration_20260722_022400_add_case_governance_foundation.down,
-    name: '20260722_022400_add_case_governance_foundation'
+    name: '20260722_022400_add_case_governance_foundation',
+  },
+  {
+    up: migration_20260722_025903_harden_governance_phase2a.up,
+    down: migration_20260722_025903_harden_governance_phase2a.down,
+    name: '20260722_025903_harden_governance_phase2a',
+  },
+  {
+    up: migration_20260722_025946_remove_chat_history_placeholder.up,
+    down: migration_20260722_025946_remove_chat_history_placeholder.down,
+    name: '20260722_025946_remove_chat_history_placeholder'
   },
 ];

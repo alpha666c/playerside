@@ -29,7 +29,61 @@ const STAGES = [
   'monitoring',
 ] as const
 
-/** Blocks any status change that isn't a move to exactly the next stage — no skipping forward, no moving backward. */
+/** True if a value is meaningfully present — used by the stage entry gates below, not for general field validation. */
+const isPopulated = (value: unknown): boolean => {
+  if (value === null || value === undefined) return false
+  if (typeof value === 'string') return value.trim().length > 0
+  if (Array.isArray(value)) return value.length > 0
+  if (typeof value === 'object') return Object.keys(value as object).length > 0
+  return Boolean(value)
+}
+
+type Stage = (typeof STAGES)[number]
+
+/**
+ * Stage-specific entry gates — each keyed to the stage being ENTERED,
+ * checking the MASTER-BLUEPRINT.md §3 exit condition of the stage being
+ * LEFT. A case cannot move into a stage until the work that stage depends
+ * on actually exists, not just that the status field was flipped.
+ */
+const STAGE_ENTRY_GATES: Partial<Record<Stage, (merged: Record<string, unknown>) => string | null>> = {
+  'hands-on-testing': (merged) =>
+    isPopulated(merged.deskResearchOutput)
+      ? null
+      : 'Cannot enter hands-on-testing: deskResearchOutput is not populated (§3 DESK-RESEARCH exit condition: "all desk fields populated").',
+  editorial: (merged) => {
+    const hands = (merged.handsOnResults ?? {}) as Record<string, unknown>
+    const requiredActuals = ['withdrawalActualHours', 'supportActualMinutes', 'kycActualDays', 'bonusActualWager']
+    const missingActuals = requiredActuals.filter((key) => !isPopulated(hands[key]))
+    if (missingActuals.length > 0) {
+      return `Cannot enter editorial: handsOnResults is missing ${missingActuals.join(', ')} (§3 HANDS-ON-TESTING exit condition: "all test fields populated with real timestamps and evidence").`
+    }
+    if (!isPopulated(merged.evidenceRegister)) {
+      return 'Cannot enter editorial: evidenceRegister has no entries — hands-on results require logged evidence (§3).'
+    }
+    return null
+  },
+  'integrity-check': (merged) =>
+    isPopulated(merged.editorialDraft)
+      ? null
+      : 'Cannot enter integrity-check: editorialDraft is not populated (§3 EDITORIAL exit condition: "copy draft committed").',
+  published: (merged) =>
+    merged.integritySignOff === true
+      ? null
+      : 'Cannot enter published: integritySignOff is not true (§3 INTEGRITY-CHECK exit condition: "zero conflicts found; signed off").',
+  monitoring: (merged) =>
+    isPopulated(merged.publishedReviewId)
+      ? null
+      : 'Cannot enter monitoring: publishedReviewId is not set (§3 PUBLISHED exit condition: "review goes live").',
+}
+
+/**
+ * Blocks any status change that isn't a move to exactly the next stage — no
+ * skipping forward, no moving backward — then runs that stage's entry gate
+ * (STAGE_ENTRY_GATES) against the document as it will exist after this
+ * change, so a transition can't sneak in alongside the very data that
+ * satisfies its own gate in a way that doesn't actually land.
+ */
 const enforceStatusTransition: CollectionBeforeChangeHook = ({ data, operation, originalDoc }) => {
   const nextStatus = data?.status
   if (!nextStatus) return data
@@ -48,17 +102,38 @@ const enforceStatusTransition: CollectionBeforeChangeHook = ({ data, operation, 
   if (nextStatus === prevStatus) return data
 
   const prevIndex = STAGES.indexOf(prevStatus)
-  const nextIndex = STAGES.indexOf(nextStatus)
+  const nextIndex = STAGES.indexOf(nextStatus as Stage)
   if (nextIndex !== prevIndex + 1) {
     throw new APIError(
       `Cannot move a case from "${prevStatus}" to "${nextStatus}" — cases move through exactly one stage at a time, in order (MASTER-BLUEPRINT.md §3: "No skipping"). Expected next stage: "${STAGES[prevIndex + 1] ?? '(none — monitoring is terminal)'}".`,
       400,
     )
   }
+
+  const merged: Record<string, unknown> = { ...(originalDoc ?? {}) }
+  for (const key of Object.keys(data ?? {})) {
+    merged[key] = (data as Record<string, unknown>)[key]
+  }
+
+  const gate = STAGE_ENTRY_GATES[nextStatus as Stage]
+  const gateFailure = gate?.(merged)
+  if (gateFailure) {
+    throw new APIError(gateFailure, 400)
+  }
+
   return data
 }
 
-/** Top-level fields whose changes are audit-logged as `case_updated`. `status` gets its own dedicated `status_transition` event instead. */
+/**
+ * Material-field audit policy (governance requirement, Phase 2A hardening):
+ * every one of these top-level fields is audit-logged, with before/after
+ * values and actor data, on any change. This list IS the policy — a field
+ * not on it is not covered by `case_updated`, deliberately (bookkeeping
+ * fields like `id`/`updatedAt`/`createdAt` don't need an audit entry for
+ * their own sake). `status` is excluded here because it gets its own
+ * dedicated `status_transition` event instead, with the same before/after
+ * + actor guarantee.
+ */
 const MATERIAL_FIELDS = [
   'caseNumber',
   'operatorName',
@@ -78,7 +153,7 @@ const MATERIAL_FIELDS = [
   'monitorLog',
   'evidenceRegister',
   'accountProfile',
-  'chatHistory',
+  'aiRuns',
 ] as const
 
 /**
@@ -122,16 +197,19 @@ const auditCaseFileChanges: CollectionAfterChangeHook = async ({ doc, previousDo
     )
   }
 
-  const changedFields = MATERIAL_FIELDS.filter(
-    (field) => JSON.stringify(previousDoc[field] ?? null) !== JSON.stringify(doc[field] ?? null),
-  )
-  if (changedFields.length > 0) {
+  const changes = MATERIAL_FIELDS.map((field) => ({
+    field,
+    before: previousDoc[field] ?? null,
+    after: doc[field] ?? null,
+  })).filter((change) => JSON.stringify(change.before) !== JSON.stringify(change.after))
+
+  if (changes.length > 0) {
     await logEvent(
       payload,
       {
         ...commonFields,
         event: 'case_updated',
-        details: { caseNumber: doc.caseNumber, changedFields },
+        details: { caseNumber: doc.caseNumber, changes },
       },
       req,
     )
@@ -367,22 +445,61 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
       type: 'array',
       admin: {
         description:
-          'Structured evidence register — every fact this case relies on should trace to one entry here, sourced and labelled (DESK-RESEARCHER.md confidence convention).',
+          'Structured evidence register — every fact this case relies on should trace to one entry here, sourced and labelled (DESK-RESEARCHER.md confidence convention). Each row has a real Payload-generated id; supersedesEvidenceId references that id to build a correction lineage.',
       },
       fields: [
         { name: 'label', type: 'text', admin: { description: 'What this evidence supports or verifies.' }, required: true },
+        {
+          name: 'claimKey',
+          type: 'text',
+          admin: { description: 'Short identifier for the specific claim this evidence backs, e.g. "licenseNumber" or "withdrawalSpeed".' },
+        },
+        { name: 'claimSummary', type: 'textarea', admin: { description: 'The claim itself, in plain language.' } },
+        {
+          name: 'sourceType',
+          type: 'select',
+          admin: { description: 'What kind of source this is (DESK-RESEARCHER.md sourcing rules).' },
+          options: [
+            { label: 'Regulator register', value: 'regulator-register' },
+            { label: 'Operator primary source (T&C, site)', value: 'operator-primary' },
+            { label: 'Community source (forum, complaint site)', value: 'community-source' },
+            { label: 'Hands-on test', value: 'hands-on-test' },
+            { label: 'Other', value: 'other' },
+          ],
+        },
         { name: 'mediaRef', type: 'relationship', admin: { description: 'Screenshot or upload, if applicable.' }, relationTo: 'media' },
         { name: 'sourceUrl', type: 'text', admin: { description: 'Direct URL to the source, if applicable (e.g. regulator register page).' } },
-        { name: 'accessDate', type: 'date' },
+        { name: 'archiveRef', type: 'text', admin: { description: 'Archive permalink (e.g. Wayback Machine), where practical.' } },
+        { name: 'contentHash', type: 'text', admin: { description: 'Hash of the captured content, for integrity verification, where practical.' } },
+        { name: 'accessDate', type: 'date', admin: { description: 'When the researcher reviewed/verified the source.' } },
+        { name: 'capturedAt', type: 'date', admin: { description: 'When the evidence artifact itself (screenshot, log) was captured — may differ from accessDate.' } },
+        { name: 'capturedBy', type: 'text', admin: { description: 'Who or what captured this evidence — a name or agent id.' } },
         {
           name: 'verificationStatus',
           type: 'select',
           defaultValue: 'unverified',
           options: [
             { label: 'Verified', value: 'verified' },
+            { label: 'Corroborated', value: 'corroborated' },
             { label: 'Unverified', value: 'unverified' },
           ],
           required: true,
+        },
+        {
+          name: 'isCurrent',
+          type: 'checkbox',
+          admin: { description: 'Whether this is still the active evidence for its claimKey, or has been superseded.' },
+          defaultValue: true,
+        },
+        {
+          name: 'supersedesEvidenceId',
+          type: 'text',
+          admin: { description: 'The id of the evidence row this entry replaces, if any (correction lineage).' },
+        },
+        {
+          name: 'retractionReason',
+          type: 'textarea',
+          admin: { description: 'Why this evidence was retracted/superseded, if applicable.' },
         },
         { name: 'notes', type: 'textarea' },
       ],
@@ -420,25 +537,63 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
       ],
     },
     {
-      name: 'chatHistory',
+      name: 'aiRuns',
       type: 'array',
       admin: {
         description:
-          'AI chat panel history for this case (§10) — foundation field for Phase 2B; no chat UI or API route exists yet.',
+          'Versioned AI agent run records for this case (§10 data-model foundation only — no chat route, provider integration, or frontend UI exists yet; nothing writes here).',
         readOnly: true,
       },
       fields: [
+        { name: 'runId', type: 'text', admin: { description: 'Unique identifier for this run.' }, required: true },
         {
-          name: 'role',
+          name: 'agentRole',
           type: 'select',
           options: [
-            { label: 'User', value: 'user' },
-            { label: 'Assistant', value: 'assistant' },
+            { label: 'Desk Researcher', value: 'desk-researcher' },
+            { label: 'Score Analyst', value: 'score-analyst' },
+            { label: 'Editorial Writer', value: 'editorial-writer' },
+            { label: 'Integrity Checker', value: 'integrity-checker' },
+            { label: 'Monitor', value: 'monitor' },
+            { label: 'Chat', value: 'chat' },
           ],
           required: true,
         },
-        { name: 'message', type: 'textarea', required: true },
-        { name: 'timestamp', type: 'date', defaultValue: () => new Date().toISOString(), required: true },
+        { name: 'version', type: 'number', defaultValue: 1, required: true },
+        {
+          name: 'status',
+          type: 'select',
+          defaultValue: 'pending',
+          options: [
+            { label: 'Pending', value: 'pending' },
+            { label: 'Complete', value: 'complete' },
+            { label: 'Failed', value: 'failed' },
+          ],
+          required: true,
+        },
+        { name: 'startedAt', type: 'date' },
+        { name: 'completedAt', type: 'date' },
+        { name: 'input', type: 'json', admin: { description: 'What was sent to the agent for this run.' } },
+        { name: 'output', type: 'json', admin: { description: 'What the agent returned for this run.' } },
+        {
+          name: 'messages',
+          type: 'array',
+          admin: { description: 'Turn-by-turn record for this run.' },
+          fields: [
+            {
+              name: 'role',
+              type: 'select',
+              options: [
+                { label: 'User', value: 'user' },
+                { label: 'Assistant', value: 'assistant' },
+                { label: 'System', value: 'system' },
+              ],
+              required: true,
+            },
+            { name: 'content', type: 'textarea', required: true },
+            { name: 'timestamp', type: 'date', defaultValue: () => new Date().toISOString(), required: true },
+          ],
+        },
       ],
     },
   ],

@@ -1260,7 +1260,7 @@ export interface NoWageringBonus {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Append-only agent activity log (logging-spec.md). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks, case creation/status transitions/material updates) are retained indefinitely; operational events are not.
+ * Append-only, immutable agent activity log (logging-spec.md). Server-generated only via logEvent() — no manual create, no update, no delete, ever; corrections must be new events (see correctsEventId). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks, case creation/status transitions/material updates) are retained indefinitely; operational events are not.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "agent-logs".
@@ -1297,6 +1297,10 @@ export interface AgentLog {
    * Link to the research fetch or source that justifies a grade_assigned event. Required whenever event is grade_assigned — enforced by hook, not just this description.
    */
   evidenceRef?: string | null;
+  /**
+   * The id of the agent-logs event this one corrects, if any. Since entries are immutable, a correction is always a new event referencing the one it supersedes — never an edit.
+   */
+  correctsEventId?: string | null;
   /**
    * Event-specific fields per logging-spec.md: source_url/extracted (research fetch), draft_version/inputs_used (draft events), qa_checks (per-field pass/fail + reason), qa_check_ref (publish/unpublish), previous_status/current_status/source_checked (license recheck).
    */
@@ -1507,7 +1511,7 @@ export interface ResearchQueue {
       }[]
     | null;
   /**
-   * Structured evidence register — every fact this case relies on should trace to one entry here, sourced and labelled (DESK-RESEARCHER.md confidence convention).
+   * Structured evidence register — every fact this case relies on should trace to one entry here, sourced and labelled (DESK-RESEARCHER.md confidence convention). Each row has a real Payload-generated id; supersedesEvidenceId references that id to build a correction lineage.
    */
   evidenceRegister?:
     | {
@@ -1516,6 +1520,19 @@ export interface ResearchQueue {
          */
         label: string;
         /**
+         * Short identifier for the specific claim this evidence backs, e.g. "licenseNumber" or "withdrawalSpeed".
+         */
+        claimKey?: string | null;
+        /**
+         * The claim itself, in plain language.
+         */
+        claimSummary?: string | null;
+        /**
+         * What kind of source this is (DESK-RESEARCHER.md sourcing rules).
+         */
+        sourceType?:
+          ('regulator-register' | 'operator-primary' | 'community-source' | 'hands-on-test' | 'other') | null;
+        /**
          * Screenshot or upload, if applicable.
          */
         mediaRef?: (number | null) | Media;
@@ -1523,8 +1540,39 @@ export interface ResearchQueue {
          * Direct URL to the source, if applicable (e.g. regulator register page).
          */
         sourceUrl?: string | null;
+        /**
+         * Archive permalink (e.g. Wayback Machine), where practical.
+         */
+        archiveRef?: string | null;
+        /**
+         * Hash of the captured content, for integrity verification, where practical.
+         */
+        contentHash?: string | null;
+        /**
+         * When the researcher reviewed/verified the source.
+         */
         accessDate?: string | null;
-        verificationStatus: 'verified' | 'unverified';
+        /**
+         * When the evidence artifact itself (screenshot, log) was captured — may differ from accessDate.
+         */
+        capturedAt?: string | null;
+        /**
+         * Who or what captured this evidence — a name or agent id.
+         */
+        capturedBy?: string | null;
+        verificationStatus: 'verified' | 'corroborated' | 'unverified';
+        /**
+         * Whether this is still the active evidence for its claimKey, or has been superseded.
+         */
+        isCurrent?: boolean | null;
+        /**
+         * The id of the evidence row this entry replaces, if any (correction lineage).
+         */
+        supersedesEvidenceId?: string | null;
+        /**
+         * Why this evidence was retracted/superseded, if applicable.
+         */
+        retractionReason?: string | null;
         notes?: string | null;
         id?: string | null;
       }[]
@@ -1545,13 +1593,54 @@ export interface ResearchQueue {
     notes?: string | null;
   };
   /**
-   * AI chat panel history for this case (§10) — foundation field for Phase 2B; no chat UI or API route exists yet.
+   * Versioned AI agent run records for this case (§10 data-model foundation only — no chat route, provider integration, or frontend UI exists yet; nothing writes here).
    */
-  chatHistory?:
+  aiRuns?:
     | {
-        role: 'user' | 'assistant';
-        message: string;
-        timestamp: string;
+        /**
+         * Unique identifier for this run.
+         */
+        runId: string;
+        agentRole: 'desk-researcher' | 'score-analyst' | 'editorial-writer' | 'integrity-checker' | 'monitor' | 'chat';
+        version: number;
+        status: 'pending' | 'complete' | 'failed';
+        startedAt?: string | null;
+        completedAt?: string | null;
+        /**
+         * What was sent to the agent for this run.
+         */
+        input?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        /**
+         * What the agent returned for this run.
+         */
+        output?:
+          | {
+              [k: string]: unknown;
+            }
+          | unknown[]
+          | string
+          | number
+          | boolean
+          | null;
+        /**
+         * Turn-by-turn record for this run.
+         */
+        messages?:
+          | {
+              role: 'user' | 'assistant' | 'system';
+              content: string;
+              timestamp: string;
+              id?: string | null;
+            }[]
+          | null;
         id?: string | null;
       }[]
     | null;
@@ -2432,6 +2521,7 @@ export interface AgentLogsSelect<T extends boolean = true> {
   rubricCategory?: T;
   score?: T;
   evidenceRef?: T;
+  correctsEventId?: T;
   details?: T;
   retentionClass?: T;
   updatedAt?: T;
@@ -2508,10 +2598,20 @@ export interface ResearchQueueSelect<T extends boolean = true> {
     | T
     | {
         label?: T;
+        claimKey?: T;
+        claimSummary?: T;
+        sourceType?: T;
         mediaRef?: T;
         sourceUrl?: T;
+        archiveRef?: T;
+        contentHash?: T;
         accessDate?: T;
+        capturedAt?: T;
+        capturedBy?: T;
         verificationStatus?: T;
+        isCurrent?: T;
+        supersedesEvidenceId?: T;
+        retractionReason?: T;
         notes?: T;
         id?: T;
       };
@@ -2523,12 +2623,25 @@ export interface ResearchQueueSelect<T extends boolean = true> {
         accountStatus?: T;
         notes?: T;
       };
-  chatHistory?:
+  aiRuns?:
     | T
     | {
-        role?: T;
-        message?: T;
-        timestamp?: T;
+        runId?: T;
+        agentRole?: T;
+        version?: T;
+        status?: T;
+        startedAt?: T;
+        completedAt?: T;
+        input?: T;
+        output?: T;
+        messages?:
+          | T
+          | {
+              role?: T;
+              content?: T;
+              timestamp?: T;
+              id?: T;
+            };
         id?: T;
       };
   updatedAt?: T;
