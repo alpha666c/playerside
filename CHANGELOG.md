@@ -4,6 +4,7 @@
 
 ## 2026-07-22
 
+- Replaced the non-functional, publicly-exposed evidence-upload design with a private Vercel Blob-backed storage adapter for the `Media` collection. Uploads no longer write to Vercel's read-only serverless filesystem (the cause of the previous HTTP 500), and internal-visibility files are no longer reachable via an unauthenticated raw static URL — every read now goes through Payload's own access-controlled `/api/media/file/:filename` route. See `docs/review-system/DECISION-LOG.md` (2026-07-22, "Private evidence storage: implemented") and `docs/review-handoffs/2026-07-22-private-evidence-storage.md`.
 - **`a291c42`** — Repo & deployment security review handoff: read-only review of Phase 2A.2 (git reconciliation, live production testing, Vercel log inspection, adversarial pass). Surfaced the undelivered `~/Downloads/playerside-phase3-handoff/` package as the session's headline finding. No code changed.
 - **`dbb2ef2`** — Phase 2A.2: deployment verification, media protection, abuse tests.
 - **`7e04319`** — Phase 2A hardening: evidence register upgrade (3-tier verification labels), immutable audit log, stage entry gates.

@@ -1,3 +1,4 @@
+import { cloudStoragePlugin } from '@payloadcms/plugin-cloud-storage'
 import { formBuilderPlugin } from '@payloadcms/plugin-form-builder'
 import { nestedDocsPlugin } from '@payloadcms/plugin-nested-docs'
 import { redirectsPlugin } from '@payloadcms/plugin-redirects'
@@ -9,6 +10,7 @@ import { GenerateTitle, GenerateURL } from '@payloadcms/plugin-seo/types'
 import { FixedToolbarFeature, HeadingFeature, lexicalEditor } from '@payloadcms/richtext-lexical'
 import { searchFields } from '@/search/fieldOverrides'
 import { beforeSyncWithSearch } from '@/search/beforeSync'
+import { vercelBlobPrivateAdapter } from '@/lib/media/vercelBlobPrivateAdapter'
 
 import { Page, Post } from '@/payload-types'
 import { getServerSideURL } from '@/utilities/getURL'
@@ -24,6 +26,20 @@ const generateURL: GenerateURL<Post | Page> = ({ doc }) => {
 }
 
 export const plugins: Plugin[] = [
+  // Private evidence storage (see docs/review-system/DECISION-LOG.md,
+  // 2026-07-22 entry). Falls back to Payload's local-disk default when no
+  // token is configured (local dev without `vercel env pull`) rather than
+  // failing config load.
+  cloudStoragePlugin({
+    collections: {
+      media: {
+        adapter: process.env.BLOB_READ_WRITE_TOKEN
+          ? vercelBlobPrivateAdapter(process.env.BLOB_READ_WRITE_TOKEN)
+          : null,
+      },
+    },
+    enabled: Boolean(process.env.BLOB_READ_WRITE_TOKEN),
+  }),
   redirectsPlugin({
     collections: ['pages', 'posts'],
     overrides: {

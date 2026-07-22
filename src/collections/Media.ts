@@ -18,16 +18,20 @@ const dirname = path.dirname(filename)
 /**
  * Public by default (marketing/blog images need to stay fast and
  * unauthenticated), but a doc explicitly marked `visibility: 'internal'`
- * (evidence uploads, once that flow exists) is excluded from anonymous
- * reads at the Payload API layer — both direct /api/media/:id lookups and
- * relationship-expanded reads from another collection.
+ * (evidence uploads) is excluded from anonymous reads at the Payload API
+ * layer — both direct /api/media/:id lookups and relationship-expanded
+ * reads from another collection.
  *
- * Known gap: `upload.staticDir` below serves files from Next.js's public/
- * directory, which Next serves unauthenticated regardless of this access
- * control — this only protects the Payload API (metadata + direct/related
- * fetches through it), not the raw static file URL. A real fix requires
- * moving internal uploads off the public static path entirely; out of
- * scope for this pass (governance/abuse verification only).
+ * File bytes (public and internal alike) live in the private
+ * `playerside-evidence` Vercel Blob store (see
+ * src/lib/media/vercelBlobPrivateAdapter.ts + DECISION-LOG.md,
+ * 2026-07-22), wired in via `cloudStoragePlugin` in src/plugins/index.ts.
+ * The one and only way to fetch bytes is Payload's own
+ * `/api/media/file/:filename` route, which runs this `read` access
+ * function *before* the storage adapter is ever invoked — there is no raw,
+ * unauthenticated static path to the files anymore (the previous
+ * `staticDir`-into-Next's-`public/`-folder design was the actual bypass;
+ * removed, not just relocated).
  */
 const readUnlessInternal: Access = ({ req }) => {
   if (req.user) return true
@@ -74,7 +78,11 @@ export const Media: CollectionConfig = {
     },
   ],
   upload: {
-    // Upload to the public/media directory in Next.js making them publicly accessible even outside of Payload
+    // Local-disk fallback only, used when BLOB_READ_WRITE_TOKEN is absent
+    // (local dev without `vercel env pull`) — the cloudStoragePlugin in
+    // src/plugins/index.ts takes over and sets disableLocalStorage: true
+    // whenever the token is present, so this path is never written to in
+    // any deployed environment.
     staticDir: path.resolve(dirname, '../../public/media'),
     adminThumbnail: 'thumbnail',
     focalPoint: true,
