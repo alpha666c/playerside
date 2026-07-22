@@ -33,7 +33,16 @@ const enforceGradeEvidence: CollectionBeforeValidateHook = ({ data }) => {
   return data
 }
 
-const complianceEvents = new Set(['grade_assigned', 'qa_check', 'publish', 'unpublish', 'license_recheck'])
+const complianceEvents = new Set([
+  'grade_assigned',
+  'qa_check',
+  'publish',
+  'unpublish',
+  'license_recheck',
+  'case_created',
+  'status_transition',
+  'case_updated',
+])
 
 const computeRetentionClass: CollectionBeforeChangeHook = ({ data }) => {
   data.retentionClass = complianceEvents.has(data.event) ? 'compliance' : 'operational'
@@ -51,7 +60,7 @@ export const AgentLogs: CollectionConfig<'agent-logs'> = {
   admin: {
     defaultColumns: ['event', 'brand', 'siteCategory', 'operator', 'agentId', 'timestamp'],
     description:
-      'Append-only agent activity log (logging-spec.md). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks) are retained indefinitely; operational events are not.',
+      'Append-only agent activity log (logging-spec.md). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks, case creation/status transitions/material updates) are retained indefinitely; operational events are not.',
     useAsTitle: 'event',
   },
   fields: [
@@ -67,6 +76,9 @@ export const AgentLogs: CollectionConfig<'agent-logs'> = {
         { label: 'Publish', value: 'publish' },
         { label: 'Unpublish', value: 'unpublish' },
         { label: 'License recheck', value: 'license_recheck' },
+        { label: 'Case created', value: 'case_created' },
+        { label: 'Status transition', value: 'status_transition' },
+        { label: 'Case updated', value: 'case_updated' },
       ],
       required: true,
     },

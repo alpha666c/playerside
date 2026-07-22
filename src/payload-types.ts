@@ -1260,7 +1260,7 @@ export interface NoWageringBonus {
   _status?: ('draft' | 'published') | null;
 }
 /**
- * Append-only agent activity log (logging-spec.md). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks) are retained indefinitely; operational events are not.
+ * Append-only agent activity log (logging-spec.md). Compliance-relevant events (grades, QA checks, publish/unpublish, license rechecks, case creation/status transitions/material updates) are retained indefinitely; operational events are not.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "agent-logs".
@@ -1275,7 +1275,10 @@ export interface AgentLog {
     | 'qa_check'
     | 'publish'
     | 'unpublish'
-    | 'license_recheck';
+    | 'license_recheck'
+    | 'case_created'
+    | 'status_transition'
+    | 'case_updated';
   timestamp: string;
   agentId: string;
   /**
@@ -1500,6 +1503,55 @@ export interface ResearchQueue {
         flagType: string;
         summary: string;
         agentRef?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Structured evidence register — every fact this case relies on should trace to one entry here, sourced and labelled (DESK-RESEARCHER.md confidence convention).
+   */
+  evidenceRegister?:
+    | {
+        /**
+         * What this evidence supports or verifies.
+         */
+        label: string;
+        /**
+         * Screenshot or upload, if applicable.
+         */
+        mediaRef?: (number | null) | Media;
+        /**
+         * Direct URL to the source, if applicable (e.g. regulator register page).
+         */
+        sourceUrl?: string | null;
+        accessDate?: string | null;
+        verificationStatus: 'verified' | 'unverified';
+        notes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Internal-only test-account metadata (CREDENTIAL-LOG.md). Never store passwords, 2FA seeds, or other secrets here — password manager only. This group holds labels/identifiers, not credentials.
+   */
+  accountProfile?: {
+    /**
+     * A description of the account used, e.g. "Viktor's personal Stake account (Platinum 2)" — never a username or password.
+     */
+    liveChatAccountLabel?: string | null;
+    /**
+     * The clean test address for the email channel, per CREDENTIAL-LOG.md convention.
+     */
+    emailTestAddress?: string | null;
+    accountStatus?: ('active' | 'suspended' | 'closed' | 'not-created') | null;
+    notes?: string | null;
+  };
+  /**
+   * AI chat panel history for this case (§10) — foundation field for Phase 2B; no chat UI or API route exists yet.
+   */
+  chatHistory?:
+    | {
+        role: 'user' | 'assistant';
+        message: string;
+        timestamp: string;
         id?: string | null;
       }[]
     | null;
@@ -2450,6 +2502,33 @@ export interface ResearchQueueSelect<T extends boolean = true> {
         flagType?: T;
         summary?: T;
         agentRef?: T;
+        id?: T;
+      };
+  evidenceRegister?:
+    | T
+    | {
+        label?: T;
+        mediaRef?: T;
+        sourceUrl?: T;
+        accessDate?: T;
+        verificationStatus?: T;
+        notes?: T;
+        id?: T;
+      };
+  accountProfile?:
+    | T
+    | {
+        liveChatAccountLabel?: T;
+        emailTestAddress?: T;
+        accountStatus?: T;
+        notes?: T;
+      };
+  chatHistory?:
+    | T
+    | {
+        role?: T;
+        message?: T;
+        timestamp?: T;
         id?: T;
       };
   updatedAt?: T;

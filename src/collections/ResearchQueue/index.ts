@@ -1,6 +1,9 @@
-import type { CollectionAfterChangeHook, CollectionConfig } from 'payload'
+import type { CollectionAfterChangeHook, CollectionBeforeChangeHook, CollectionConfig } from 'payload'
+
+import { APIError } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
+import { logEvent } from '@/lib/logEvent'
 
 /**
  * The per-operator case file that drives the Review Intelligence System
@@ -14,6 +17,128 @@ import { authenticated } from '../../access/authenticated'
  * `handsOnResults.support*` / email-channel fields on this collection.
  */
 const CASE_NUMBER_PATTERN = /^#PS-\d{4}-(\d{3}|S\d{2})$/
+
+/** The seven pipeline stages, in the strict order MASTER-BLUEPRINT.md §3 requires — "Every case moves through exactly these stages in order. No skipping." */
+const STAGES = [
+  'queued',
+  'desk-research',
+  'hands-on-testing',
+  'editorial',
+  'integrity-check',
+  'published',
+  'monitoring',
+] as const
+
+/** Blocks any status change that isn't a move to exactly the next stage — no skipping forward, no moving backward. */
+const enforceStatusTransition: CollectionBeforeChangeHook = ({ data, operation, originalDoc }) => {
+  const nextStatus = data?.status
+  if (!nextStatus) return data
+
+  if (operation === 'create') {
+    if (nextStatus !== STAGES[0]) {
+      throw new APIError(
+        `New cases must start at status "${STAGES[0]}" (MASTER-BLUEPRINT.md §3) — got "${nextStatus}".`,
+        400,
+      )
+    }
+    return data
+  }
+
+  const prevStatus = originalDoc?.status
+  if (nextStatus === prevStatus) return data
+
+  const prevIndex = STAGES.indexOf(prevStatus)
+  const nextIndex = STAGES.indexOf(nextStatus)
+  if (nextIndex !== prevIndex + 1) {
+    throw new APIError(
+      `Cannot move a case from "${prevStatus}" to "${nextStatus}" — cases move through exactly one stage at a time, in order (MASTER-BLUEPRINT.md §3: "No skipping"). Expected next stage: "${STAGES[prevIndex + 1] ?? '(none — monitoring is terminal)'}".`,
+      400,
+    )
+  }
+  return data
+}
+
+/** Top-level fields whose changes are audit-logged as `case_updated`. `status` gets its own dedicated `status_transition` event instead. */
+const MATERIAL_FIELDS = [
+  'caseNumber',
+  'operatorName',
+  'operatorUrl',
+  'casinoType',
+  'parentCompany',
+  'licenseJurisdiction',
+  'licenseNumber',
+  'assignedReviewer',
+  'deskResearchOutput',
+  'handsOnResults',
+  'computedScores',
+  'editorialDraft',
+  'integritySignOff',
+  'publishedReviewId',
+  'internalNotes',
+  'monitorLog',
+  'evidenceRegister',
+  'accountProfile',
+  'chatHistory',
+] as const
+
+/**
+ * Append-only audit trail (governance requirement, Phase 2A) for every
+ * material change to a case file — routed through the existing AgentLogs
+ * store (logEvent.ts) rather than a second, parallel logging mechanism.
+ * Passes `req` through to logEvent() so each audit write joins the same
+ * transaction as the case-file change: they commit or roll back together
+ * (and it avoids opening a second pooled connection that would otherwise
+ * lock-wait against this still-open outer transaction).
+ */
+const auditCaseFileChanges: CollectionAfterChangeHook = async ({ doc, previousDoc, operation, req }) => {
+  const { payload, user } = req
+  const agentId = user?.email ?? 'system'
+  const commonFields = { agentId, brand: '01-playerside', operator: doc.operatorName, pageId: String(doc.id) }
+
+  if (operation === 'create') {
+    await logEvent(
+      payload,
+      {
+        ...commonFields,
+        event: 'case_created',
+        details: { caseNumber: doc.caseNumber, casinoType: doc.casinoType, status: doc.status },
+      },
+      req,
+    )
+    return doc
+  }
+
+  if (!previousDoc) return doc
+
+  if (previousDoc.status !== doc.status) {
+    await logEvent(
+      payload,
+      {
+        ...commonFields,
+        event: 'status_transition',
+        details: { caseNumber: doc.caseNumber, previousStatus: previousDoc.status, newStatus: doc.status },
+      },
+      req,
+    )
+  }
+
+  const changedFields = MATERIAL_FIELDS.filter(
+    (field) => JSON.stringify(previousDoc[field] ?? null) !== JSON.stringify(doc[field] ?? null),
+  )
+  if (changedFields.length > 0) {
+    await logEvent(
+      payload,
+      {
+        ...commonFields,
+        event: 'case_updated',
+        details: { caseNumber: doc.caseNumber, changedFields },
+      },
+      req,
+    )
+  }
+
+  return doc
+}
 
 /** `knownBrands` comes back as numeric IDs or populated docs depending on query depth. */
 const extractIds = (relations: unknown): number[] =>
@@ -33,7 +158,7 @@ const syncOperatorKnownBrands: CollectionAfterChangeHook = async ({ doc, previou
   if (prevOperatorId === nextOperatorId) return doc
 
   if (prevOperatorId) {
-    const prevOperator = await payload.findByID({ id: prevOperatorId, collection: 'operators' }).catch(() => null)
+    const prevOperator = await payload.findByID({ id: prevOperatorId, collection: 'operators', req }).catch(() => null)
     if (prevOperator) {
       const knownBrands = extractIds(prevOperator.knownBrands)
       await payload.update({
@@ -41,12 +166,13 @@ const syncOperatorKnownBrands: CollectionAfterChangeHook = async ({ doc, previou
         collection: 'operators',
         context: { disableRevalidate: true },
         data: { knownBrands: knownBrands.filter((id) => id !== doc.id) },
+        req,
       })
     }
   }
 
   if (nextOperatorId) {
-    const nextOperator = await payload.findByID({ id: nextOperatorId, collection: 'operators' }).catch(() => null)
+    const nextOperator = await payload.findByID({ id: nextOperatorId, collection: 'operators', req }).catch(() => null)
     if (nextOperator) {
       const knownBrands = extractIds(nextOperator.knownBrands)
       if (!knownBrands.includes(doc.id)) {
@@ -55,6 +181,7 @@ const syncOperatorKnownBrands: CollectionAfterChangeHook = async ({ doc, previou
           collection: 'operators',
           context: { disableRevalidate: true },
           data: { knownBrands: [...knownBrands, doc.id] },
+          req,
         })
       }
     }
@@ -235,9 +362,89 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
         { name: 'agentRef', type: 'text' },
       ],
     },
+    {
+      name: 'evidenceRegister',
+      type: 'array',
+      admin: {
+        description:
+          'Structured evidence register — every fact this case relies on should trace to one entry here, sourced and labelled (DESK-RESEARCHER.md confidence convention).',
+      },
+      fields: [
+        { name: 'label', type: 'text', admin: { description: 'What this evidence supports or verifies.' }, required: true },
+        { name: 'mediaRef', type: 'relationship', admin: { description: 'Screenshot or upload, if applicable.' }, relationTo: 'media' },
+        { name: 'sourceUrl', type: 'text', admin: { description: 'Direct URL to the source, if applicable (e.g. regulator register page).' } },
+        { name: 'accessDate', type: 'date' },
+        {
+          name: 'verificationStatus',
+          type: 'select',
+          defaultValue: 'unverified',
+          options: [
+            { label: 'Verified', value: 'verified' },
+            { label: 'Unverified', value: 'unverified' },
+          ],
+          required: true,
+        },
+        { name: 'notes', type: 'textarea' },
+      ],
+    },
+    {
+      name: 'accountProfile',
+      type: 'group',
+      admin: {
+        description:
+          'Internal-only test-account metadata (CREDENTIAL-LOG.md). Never store passwords, 2FA seeds, or other secrets here — password manager only. This group holds labels/identifiers, not credentials.',
+      },
+      fields: [
+        {
+          name: 'liveChatAccountLabel',
+          type: 'text',
+          admin: { description: 'A description of the account used, e.g. "Viktor\'s personal Stake account (Platinum 2)" — never a username or password.' },
+        },
+        {
+          name: 'emailTestAddress',
+          type: 'text',
+          admin: { description: 'The clean test address for the email channel, per CREDENTIAL-LOG.md convention.' },
+        },
+        {
+          name: 'accountStatus',
+          type: 'select',
+          defaultValue: 'not-created',
+          options: [
+            { label: 'Active', value: 'active' },
+            { label: 'Suspended', value: 'suspended' },
+            { label: 'Closed', value: 'closed' },
+            { label: 'Not created', value: 'not-created' },
+          ],
+        },
+        { name: 'notes', type: 'textarea' },
+      ],
+    },
+    {
+      name: 'chatHistory',
+      type: 'array',
+      admin: {
+        description:
+          'AI chat panel history for this case (§10) — foundation field for Phase 2B; no chat UI or API route exists yet.',
+        readOnly: true,
+      },
+      fields: [
+        {
+          name: 'role',
+          type: 'select',
+          options: [
+            { label: 'User', value: 'user' },
+            { label: 'Assistant', value: 'assistant' },
+          ],
+          required: true,
+        },
+        { name: 'message', type: 'textarea', required: true },
+        { name: 'timestamp', type: 'date', defaultValue: () => new Date().toISOString(), required: true },
+      ],
+    },
   ],
   hooks: {
-    afterChange: [syncOperatorKnownBrands],
+    beforeChange: [enforceStatusTransition],
+    afterChange: [syncOperatorKnownBrands, auditCaseFileChanges],
   },
   timestamps: true,
 }

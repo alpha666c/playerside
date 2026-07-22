@@ -1,4 +1,4 @@
-import type { Payload } from 'payload'
+import type { Payload, PayloadRequest } from 'payload'
 
 export type AgentLogEvent =
   | 'research_fetch'
@@ -9,6 +9,9 @@ export type AgentLogEvent =
   | 'publish'
   | 'unpublish'
   | 'license_recheck'
+  | 'case_created'
+  | 'status_transition'
+  | 'case_updated'
 
 export type LogEventInput = {
   agentId: string
@@ -30,10 +33,16 @@ export type LogEventInput = {
  * beforeValidate hook rejects a grade_assigned event missing evidenceRef,
  * enforcing the audit trail requirement at the data layer rather than
  * relying on every caller to remember it.
+ *
+ * Pass `req` when calling from inside another collection's hook so the
+ * audit write joins that operation's existing transaction — both commit or
+ * roll back together, and it avoids opening a second pooled connection that
+ * can lock-wait against the still-open outer transaction.
  */
-export const logEvent = (payload: Payload, input: LogEventInput) =>
+export const logEvent = (payload: Payload, input: LogEventInput, req?: PayloadRequest) =>
   payload.create({
     collection: 'agent-logs',
     context: { disableRevalidate: true },
     data: { ...input, timestamp: input.timestamp ?? new Date().toISOString() },
+    req,
   })
