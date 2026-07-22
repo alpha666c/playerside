@@ -60,13 +60,21 @@ export const vercelBlobPrivateAdapter = (token: string): Adapter => () => ({
   staticHandler: async (req, { params }) => {
     const { fileKey } = getFileKey({ filename: params.filename })
     try {
-      const result = await get(fileKey, { access: BLOB_ACCESS, token })
+      // useCache: false — every request re-runs access.read (checkFileAccess,
+      // upstream of this handler), so the response must never be served from
+      // Vercel's CDN edge cache: a cached response wouldn't reflect a
+      // subsequent delete, an access change, or the current caller's
+      // authorization, and could theoretically be replayed to a different
+      // caller than the one who was actually authorized. Confirmed in
+      // production: without this, a GET on a just-deleted file still
+      // returned 200 from cache.
+      const result = await get(fileKey, { access: BLOB_ACCESS, token, useCache: false })
       if (!result) {
         return new Response(null, { status: 404 })
       }
       const headers = new Headers()
       headers.set('Content-Type', result.blob.contentType ?? 'application/octet-stream')
-      headers.set('Cache-Control', result.blob.cacheControl || 'private, max-age=0, must-revalidate')
+      headers.set('Cache-Control', 'private, no-store')
       return new Response(result.stream, { headers, status: result.statusCode })
     } catch (err) {
       req.payload.logger.error({ err, msg: 'vercel-blob-private staticHandler error' })

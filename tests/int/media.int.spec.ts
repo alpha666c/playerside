@@ -76,7 +76,7 @@ describe('Media — private evidence storage', () => {
 
   it('generates a URL through the protected Payload route, never a raw blob domain', () => {
     const adapter = vercelBlobPrivateAdapter('fake-token')({ collection: { slug: 'media' } as never })
-    const url = adapter.generateURL({ collection: { slug: 'media' } as never, filename: 'evidence.png' })
+    const url = adapter.generateURL?.({ collection: { slug: 'media' } as never, data: {}, filename: 'evidence.png' })
     expect(url).toContain('/api/media/file/evidence.png')
     expect(url).not.toContain('blob.vercel-storage.com')
   })
