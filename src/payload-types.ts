@@ -293,6 +293,10 @@ export interface Post {
 export interface Media {
   id: number;
   alt?: string | null;
+  /**
+   * Public media (site images) stays public. Mark evidence uploads "Internal" — anonymous requests cannot read internal media via the Payload API. Does not protect the raw static file URL (see collection doc comment).
+   */
+  visibility: 'public' | 'internal';
   caption?: {
     root: {
       type: string;
@@ -2119,6 +2123,7 @@ export interface PostsSelect<T extends boolean = true> {
  */
 export interface MediaSelect<T extends boolean = true> {
   alt?: T;
+  visibility?: T;
   caption?: T;
   folder?: T;
   updatedAt?: T;

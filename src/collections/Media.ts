@@ -8,11 +8,31 @@ import {
 import path from 'path'
 import { fileURLToPath } from 'url'
 
-import { anyone } from '../access/anyone'
+import type { Access } from 'payload'
+
 import { authenticated } from '../access/authenticated'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+/**
+ * Public by default (marketing/blog images need to stay fast and
+ * unauthenticated), but a doc explicitly marked `visibility: 'internal'`
+ * (evidence uploads, once that flow exists) is excluded from anonymous
+ * reads at the Payload API layer — both direct /api/media/:id lookups and
+ * relationship-expanded reads from another collection.
+ *
+ * Known gap: `upload.staticDir` below serves files from Next.js's public/
+ * directory, which Next serves unauthenticated regardless of this access
+ * control — this only protects the Payload API (metadata + direct/related
+ * fetches through it), not the raw static file URL. A real fix requires
+ * moving internal uploads off the public static path entirely; out of
+ * scope for this pass (governance/abuse verification only).
+ */
+const readUnlessInternal: Access = ({ req }) => {
+  if (req.user) return true
+  return { visibility: { not_equals: 'internal' } }
+}
 
 export const Media: CollectionConfig = {
   slug: 'media',
@@ -20,7 +40,7 @@ export const Media: CollectionConfig = {
   access: {
     create: authenticated,
     delete: authenticated,
-    read: anyone,
+    read: readUnlessInternal,
     update: authenticated,
   },
   fields: [
@@ -28,6 +48,20 @@ export const Media: CollectionConfig = {
       name: 'alt',
       type: 'text',
       //required: true,
+    },
+    {
+      name: 'visibility',
+      type: 'select',
+      admin: {
+        description:
+          'Public media (site images) stays public. Mark evidence uploads "Internal" — anonymous requests cannot read internal media via the Payload API. Does not protect the raw static file URL (see collection doc comment).',
+      },
+      defaultValue: 'public',
+      options: [
+        { label: 'Public', value: 'public' },
+        { label: 'Internal', value: 'internal' },
+      ],
+      required: true,
     },
     {
       name: 'caption',

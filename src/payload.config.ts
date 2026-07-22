@@ -69,6 +69,12 @@ export default buildConfig({
     pool: {
       connectionString: process.env.DATABASE_URL,
     },
+    // The schema is migration-driven now (9 formal migrations) — dev-mode
+    // auto-push computed a broken diff against an unrelated table during
+    // e2e runs (tried to drop a constraint that doesn't exist). Disabling
+    // it removes an entire class of undocumented, un-reviewed schema
+    // drift; `payload migrate` is the only path that changes the schema.
+    push: false,
   }),
   collections: [
     Pages,

@@ -11,6 +11,8 @@
 
 When any two sources of documentation or authority conflict (e.g., code and MASTER-BLUEPRINT.md disagree about a field structure, or a role file contradicts the blueprint), this document specifies which source wins. No ambiguity; no interpretation.
 
+**In one line:** Git/schema/migrations are **implementation truth** (what actually exists and runs). MASTER-BLUEPRINT.md is the **system spec** (what the system is designed to do). Role files are **agent authority** (what a given agent is bound to). Handoffs are **historical operating records** — they document what happened in a session; they never override a committed spec, migration, or role file, no matter how recent.
+
 ---
 
 ## Exception: Rubric Weights Outrank Everything
