@@ -1,0 +1,32 @@
+# Security & Risk Review — Phase 2A.2 (Corrected Classification)
+
+Date: 2026-07-22
+Stage completed: Re-review of `docs/review-handoffs/PS-review-2026-07-22-repo-security-review.md` (commit `a291c42`) for severity accuracy, plus independent corroboration via read-only Supabase table inspection
+Next stage: Owner decisions recorded in `docs/review-system/DECISION-LOG.md`; no code, schema, config, RLS, or data changes made in this review
+Next agent role: n/a — this is a review handoff, not a case-pipeline handoff
+
+This file **supersedes the severity classifications** in `PS-review-2026-07-22-repo-security-review.md`; it does not replace or delete that handoff, which remains the historical record of the original review session (git reconciliation, live production testing, Vercel log inspection, Haiku adversarial pass). Two corrections are made here: the RLS/PostgREST finding is reclassified from an unstated/implied moderate severity to **Critical**, and the raw-media-URL finding is restated as a confirmed architectural flaw that has **not** been runtime-proven (because no upload has ever succeeded in production), rather than an implied live exposure.
+
+---
+
+## Findings, Corrected Severity
+
+| # | Finding | Corrected severity | Status | Evidence |
+|---|---|---|---|---|
+| 1 | Supabase RLS disabled with full default `anon`/`authenticated` CRUD grants on `research_queue`, `agent_logs`, `operators`, `media`, and 94 other tables | **Critical — pending a deliberate RLS/policy decision** | Not fixed; no schema change made | Independently re-confirmed this session via Supabase's own `list_tables` advisory, which self-labels this `"level": "critical"` and lists all 98 affected tables. Corroborates the original review's anonymous PostgREST 200-OK test. `research_queue` and `operators` currently have 0 rows, so no real operator/case data is exposed *yet* — but the exposure is unconditional and will cover real data the instant any is written, with no code change required to trigger it. |
+| 2 | Raw static-file URL for `media` uploads bypasses the `visibility:'internal'` access-control field | **Confirmed architectural flaw / dormant exposure — not runtime-proven** | Not fixed; no upload has ever succeeded in production, so this has never actually been exercised against real evidence | `src/collections/Media.ts` gates only the Payload API layer (`readUnlessInternal` access function); its own code comment states the gap explicitly: `upload.staticDir` serves from Next.js's `public/`, which Next serves unauthenticated regardless of the `visibility` field. The `media` table's single existing row predates this feature and is unrelated to case evidence (no storage adapter is configured, so no CaseFile evidence upload has ever landed anywhere). Do not describe this as "proven" — it is a structural design gap, correctly identified from source, that becomes a live risk only once uploads start succeeding. |
+| 3 | Evidence/media upload returns HTTP 500 in production | **High — functional blocker** | Not fixed | `ENOENT: mkdir '/var/task/public'` — Vercel's serverless filesystem has no writable `public/`. Confirmed this session: no storage adapter package (`@vercel/blob` or equivalent) appears anywhere in `package.json`. This is also, incidentally, what currently prevents finding #2 from being exercised in practice. |
+| 4 | Concurrent writes to different fields on the same `research-queue` document silently lose data (last-writer-wins) | **Medium-High — data-integrity risk, not yet triggered** | Not fixed | Confirmed this session: no compare-and-swap, optimistic-locking, or `where`-based update logic exists anywhere in `src/collections/ResearchQueue/index.ts`. Root cause (Payload's `updateByID` reads a non-locking snapshot before hooks run) was traced and a zero-migration fix identified (a `where`-based CAS on `updatedAt`) but not implemented. Risk is currently latent — no concurrent-writer workflow (e.g. the deferred AI chat route) exists yet to trigger it in real use. |
+| 5 | `accountProfile` implements 4 of the 11 fields specified for test-account metadata governance | **Low-Medium — governance gap, not a credential-exposure risk** | Owner decision: expand fields or accept narrower scope | Confirmed field-by-field this session against the Downloads package's spec (see `2026-07-22-platform-before-stake-reconciliation.md` Part 2). No credentials are stored under either the narrower or fuller spec — this is a data-completeness gap, not a secrets-handling gap. |
+| 6 | `.claude/` directory is untracked but not `.gitignore`d | **Low — latent accidental-commit risk** | Not fixed | Confirmed this session: `.gitignore` contains no `.claude` entry; `git status` shows `.claude/` untracked, and it currently contains a stray agent worktree (`.claude/worktrees/agent-ad336c27c26648efb/`) with its own `node_modules`/`.next` build output. Not a secrets leak on its own, but worth a deliberate `.gitignore` decision before it grows. |
+| 7 | `CHANGELOG.md` and `ORG.md` referenced by name (22+ comment/doc references) but absent from the repo | **Low — documentation-integrity gap** | `CHANGELOG.md` created this session (see below); `ORG.md` still lives only in the separate `~/Downloads/vertix-affiliating/` repo, never linked into `playerside` | No Supabase key or other secret was found exposed in application code, `.env.example`, or any built client bundle, in this review or the original one. |
+
+---
+
+## What This Review Did Not Do
+
+No RLS policy was enabled, no storage adapter was installed, no CAS logic was written, no `.gitignore` entry was added, and no data was written to any table. `research_queue`, `operators`, and `agent_logs` row counts were read via a metadata-listing call, not a mutating query. This document exists to correct severity language and add corroborating evidence; remediation is explicitly out of scope and gated on the owner decisions in `docs/review-system/DECISION-LOG.md`.
+
+## Next Action
+
+Owner decisions required — see `docs/review-system/DECISION-LOG.md`. In priority order given the corrected severities above: (1) the RLS/grants decision (Critical, blocks any real operator data from safely entering `research_queue`/`operators`), (2) the media-storage decision (High, blocks hands-on evidence entirely and is a prerequisite for finding #2 ever mattering in practice), (3) the concurrency fix (Medium-High, blocks any future multi-writer workflow including the deferred AI route).
