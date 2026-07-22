@@ -77,6 +77,8 @@ export interface Config {
     'wagering-bonuses': WageringBonus;
     'no-wagering-bonuses': NoWageringBonus;
     'agent-logs': AgentLog;
+    operators: Operator;
+    'research-queue': ResearchQueue;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -104,6 +106,8 @@ export interface Config {
     'wagering-bonuses': WageringBonusesSelect<false> | WageringBonusesSelect<true>;
     'no-wagering-bonuses': NoWageringBonusesSelect<false> | NoWageringBonusesSelect<true>;
     'agent-logs': AgentLogsSelect<false> | AgentLogsSelect<true>;
+    operators: OperatorsSelect<false> | OperatorsSelect<true>;
+    'research-queue': ResearchQueueSelect<false> | ResearchQueueSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1311,6 +1315,199 @@ export interface AgentLog {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "operators".
+ */
+export interface Operator {
+  id: number;
+  name: string;
+  slug: string;
+  jurisdiction?: string | null;
+  incorporationCountry?: string | null;
+  /**
+   * Every case (brand) known to belong to this operator — kept in sync automatically when a case sets this operator as its parentCompany (§8.1).
+   */
+  knownBrands?: (number | ResearchQueue)[] | null;
+  /**
+   * Scandals, legal actions, press coverage — internal only, never auto-published (§8.2).
+   */
+  internalNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Flags this operator for active regulatory monitoring (Monitor agent, MONITOR.md).
+   */
+  regulatoryWatchFlag?: boolean | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * Review Intelligence System case files (MASTER-BLUEPRINT.md §3). Referred to as "Case File" in agent role docs.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "research-queue".
+ */
+export interface ResearchQueue {
+  id: number;
+  /**
+   * Format #PS-YYYY-NNN (real cases) or #PS-YYYY-SNN (seed/illustrative cases) — §2.
+   */
+  caseNumber: string;
+  operatorName: string;
+  operatorUrl?: string | null;
+  casinoType: 'traditional' | 'crypto';
+  /**
+   * The Operator (parent/holding company) this brand belongs to (§8.1).
+   */
+  parentCompany?: (number | null) | Operator;
+  licenseJurisdiction?: string | null;
+  licenseNumber?: string | null;
+  status:
+    'queued' | 'desk-research' | 'hands-on-testing' | 'editorial' | 'integrity-check' | 'published' | 'monitoring';
+  assignedReviewer?: string | null;
+  /**
+   * Populated by the Desk Researcher agent (DESK-RESEARCHER.md output format).
+   */
+  deskResearchOutput?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  handsOnResults?: {
+    withdrawalClaimedHours?: number | null;
+    withdrawalActualHours?: number | null;
+    withdrawalEvidenceRef?: (number | null) | Media;
+    /**
+     * Operator-claimed live chat response time.
+     */
+    supportClaimedMinutes?: number | null;
+    /**
+     * Live chat (RG test, TEST-CASES.md §Channel 1) — time to first human response.
+     */
+    supportActualMinutes?: number | null;
+    supportEvidenceRef?: (number | null) | Media;
+    /**
+     * Sub-questions answered by the RG live chat test (TEST-CASES.md §Channel 1).
+     */
+    supportQualityScore?: ('0' | '1' | '2' | '3') | null;
+    supportEmpathyFlag?: boolean | null;
+    supportRGResourcesFlag?: boolean | null;
+    /**
+     * Email (KYC/privacy test, TEST-CASES.md §Channel 2) — time to first response, in hours.
+     */
+    emailSupportActualHours?: number | null;
+    /**
+     * Sub-questions answered by the KYC/privacy email test (TEST-CASES.md §Channel 2).
+     */
+    emailQualityScore?: ('0' | '1' | '2' | '3') | null;
+    emailGDPRFlag?: boolean | null;
+    /**
+     * Desk Researcher cross-check: does the stated retention period match the live Privacy Policy? (TEST-CASES.md §Cross-check)
+     */
+    emailPolicyAccuracyFlag?: ('match' | 'conflict' | 'not-checked') | null;
+    kycClaimedDays?: number | null;
+    kycActualDays?: number | null;
+    kycEvidenceRef?: (number | null) | Media;
+    bonusClaimedWager?: number | null;
+    bonusActualWager?: number | null;
+    bonusEvidenceRef?: (number | null) | Media;
+  };
+  /**
+   * Populated by the Score Analyst agent (SCORE-ANALYST.md output format).
+   */
+  computedScores?:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  /**
+   * Populated by the Editorial Writer agent — draft until Viktor + Integrity Checker sign off.
+   */
+  editorialDraft?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Set once the Integrity Checker agent output is INTEGRITY: PASS and Viktor confirms.
+   */
+  integritySignOff?: boolean | null;
+  /**
+   * The live review this case became, once published.
+   */
+  publishedReviewId?:
+    | ({
+        relationTo: 'traditional-casino-reviews';
+        value: number | TraditionalCasinoReview;
+      } | null)
+    | ({
+        relationTo: 'crypto-casino-reviews';
+        value: number | CryptoCasinoReview;
+      } | null);
+  /**
+   * Never published — internal case notes only.
+   */
+  internalNotes?: {
+    root: {
+      type: string;
+      children: {
+        type: any;
+        version: number;
+        [k: string]: unknown;
+      }[];
+      direction: ('ltr' | 'rtl') | null;
+      format: 'left' | 'start' | 'center' | 'right' | 'end' | 'justify' | '';
+      indent: number;
+      version: number;
+    };
+    [k: string]: unknown;
+  } | null;
+  /**
+   * Monitor agent entries post-publish (MONITOR.md).
+   */
+  monitorLog?:
+    | {
+        date: string;
+        flagType: string;
+        summary: string;
+        agentRef?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1538,6 +1735,14 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'agent-logs';
         value: number | AgentLog;
+      } | null)
+    | ({
+        relationTo: 'operators';
+        value: number | Operator;
+      } | null)
+    | ({
+        relationTo: 'research-queue';
+        value: number | ResearchQueue;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2177,6 +2382,76 @@ export interface AgentLogsSelect<T extends boolean = true> {
   evidenceRef?: T;
   details?: T;
   retentionClass?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "operators_select".
+ */
+export interface OperatorsSelect<T extends boolean = true> {
+  name?: T;
+  slug?: T;
+  jurisdiction?: T;
+  incorporationCountry?: T;
+  knownBrands?: T;
+  internalNotes?: T;
+  regulatoryWatchFlag?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "research-queue_select".
+ */
+export interface ResearchQueueSelect<T extends boolean = true> {
+  caseNumber?: T;
+  operatorName?: T;
+  operatorUrl?: T;
+  casinoType?: T;
+  parentCompany?: T;
+  licenseJurisdiction?: T;
+  licenseNumber?: T;
+  status?: T;
+  assignedReviewer?: T;
+  deskResearchOutput?: T;
+  handsOnResults?:
+    | T
+    | {
+        withdrawalClaimedHours?: T;
+        withdrawalActualHours?: T;
+        withdrawalEvidenceRef?: T;
+        supportClaimedMinutes?: T;
+        supportActualMinutes?: T;
+        supportEvidenceRef?: T;
+        supportQualityScore?: T;
+        supportEmpathyFlag?: T;
+        supportRGResourcesFlag?: T;
+        emailSupportActualHours?: T;
+        emailQualityScore?: T;
+        emailGDPRFlag?: T;
+        emailPolicyAccuracyFlag?: T;
+        kycClaimedDays?: T;
+        kycActualDays?: T;
+        kycEvidenceRef?: T;
+        bonusClaimedWager?: T;
+        bonusActualWager?: T;
+        bonusEvidenceRef?: T;
+      };
+  computedScores?: T;
+  editorialDraft?: T;
+  integritySignOff?: T;
+  publishedReviewId?: T;
+  internalNotes?: T;
+  monitorLog?:
+    | T
+    | {
+        date?: T;
+        flagType?: T;
+        summary?: T;
+        agentRef?: T;
+        id?: T;
+      };
   updatedAt?: T;
   createdAt?: T;
 }

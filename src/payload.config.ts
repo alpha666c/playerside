@@ -9,8 +9,10 @@ import { Categories } from './collections/Categories'
 import { CryptoCasinoReviews } from './collections/CryptoCasinoReviews'
 import { Media } from './collections/Media'
 import { NoWageringBonuses } from './collections/NoWageringBonuses'
+import { Operator } from './collections/Operator'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
+import { ResearchQueue } from './collections/ResearchQueue'
 import { TraditionalCasinoReviews } from './collections/TraditionalCasinoReviews'
 import { Users } from './collections/Users'
 import { WageringBonuses } from './collections/WageringBonuses'
@@ -79,6 +81,8 @@ export default buildConfig({
     WageringBonuses,
     NoWageringBonuses,
     AgentLogs,
+    Operator,
+    ResearchQueue,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, Homepage],

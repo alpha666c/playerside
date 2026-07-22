@@ -3,6 +3,7 @@ import * as migration_20260721_033208 from './20260721_033208';
 import * as migration_20260721_162047_add_reviews_and_bonuses from './20260721_162047_add_reviews_and_bonuses';
 import * as migration_20260721_164432_add_agent_logs from './20260721_164432_add_agent_logs';
 import * as migration_20260721_214311_sync_locked_rubric_weights from './20260721_214311_sync_locked_rubric_weights';
+import * as migration_20260722_020512_add_operator_and_research_queue from './20260722_020512_add_operator_and_research_queue';
 
 export const migrations = [
   {
@@ -28,6 +29,11 @@ export const migrations = [
   {
     up: migration_20260721_214311_sync_locked_rubric_weights.up,
     down: migration_20260721_214311_sync_locked_rubric_weights.down,
-    name: '20260721_214311_sync_locked_rubric_weights'
+    name: '20260721_214311_sync_locked_rubric_weights',
+  },
+  {
+    up: migration_20260722_020512_add_operator_and_research_queue.up,
+    down: migration_20260722_020512_add_operator_and_research_queue.down,
+    name: '20260722_020512_add_operator_and_research_queue'
   },
 ];
