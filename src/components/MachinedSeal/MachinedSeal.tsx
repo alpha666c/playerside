@@ -19,9 +19,8 @@ const supportsWebGL = (): boolean => {
   }
 }
 
-/** Coarse capability check — low core count or a very small viewport falls back to the flat seal rather than risk a stutter on the signature moment. */
-const isLowPowerDevice = (): boolean =>
-  (navigator.hardwareConcurrency ?? 8) <= 2 || window.innerWidth < 380
+/** Coarse capability check — low core count falls back to the flat seal rather than risk a stutter on the signature moment. Viewport width is not a power signal (an iPhone SE has the same GPU class as larger iPhones), so it no longer forces the fallback. */
+const isLowPowerDevice = (): boolean => (navigator.hardwareConcurrency ?? 8) <= 2
 
 type MachinedSealProps = {
   size?: number
