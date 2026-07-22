@@ -130,3 +130,4 @@ The build attempts to query the database during page collection (to populate sta
 - No code has been edited since the last commit; all work is addition-only (new collections, routes, components, migration).
 - Playwright e2e tests in the existing suite passed locally; new test coverage for the collections may be needed.
 - The existing `npm run lint` failure (eslint circular JSON issue) is pre-existing and unrelated to this work.
+<!-- Playerside planning documentation sync initiated 2026-07-22 -->
