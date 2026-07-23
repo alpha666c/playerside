@@ -1388,6 +1388,10 @@ export interface ResearchQueue {
     'queued' | 'desk-research' | 'hands-on-testing' | 'editorial' | 'integrity-check' | 'published' | 'monitoring';
   assignedReviewer?: string | null;
   /**
+   * Optimistic-concurrency token (docs/review-handoffs/2026-07-23-research-queue-concurrency-spec.md §3.1) — bumped atomically by enforceOptimisticVersion.ts on every update. Not editorial data; never set this by hand.
+   */
+  version?: number | null;
+  /**
    * Populated by the Desk Researcher agent (DESK-RESEARCHER.md output format).
    */
   deskResearchOutput?:
@@ -2561,6 +2565,7 @@ export interface ResearchQueueSelect<T extends boolean = true> {
   licenseNumber?: T;
   status?: T;
   assignedReviewer?: T;
+  version?: T;
   deskResearchOutput?: T;
   handsOnResults?:
     | T

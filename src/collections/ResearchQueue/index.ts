@@ -4,6 +4,7 @@ import { APIError } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
 import { logEvent } from '@/lib/logEvent'
+import { enforceOptimisticVersion } from './enforceOptimisticVersion'
 
 /**
  * The per-operator case file that drives the Review Intelligence System
@@ -329,6 +330,21 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
     },
     { name: 'assignedReviewer', type: 'text', defaultValue: 'Viktor' },
     {
+      name: 'version',
+      type: 'number',
+      admin: {
+        description:
+          'Optimistic-concurrency token (docs/review-handoffs/2026-07-23-research-queue-concurrency-spec.md §3.1) — bumped atomically by enforceOptimisticVersion.ts on every update. Not editorial data; never set this by hand.',
+        readOnly: true,
+      },
+      // Not `required: true` deliberately — every existing call site that
+      // creates a research-queue doc (this app's own scripts, and any
+      // future caller) relies on Payload applying this default rather than
+      // passing version explicitly. Real NOT NULL enforcement lives in the
+      // migration's DB-level default + constraint, not this TS-facing flag.
+      defaultValue: 1,
+    },
+    {
       name: 'deskResearchOutput',
       type: 'json',
       admin: { description: 'Populated by the Desk Researcher agent (DESK-RESEARCHER.md output format).' },
@@ -598,7 +614,7 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
     },
   ],
   hooks: {
-    beforeChange: [enforceStatusTransition],
+    beforeChange: [enforceOptimisticVersion, enforceStatusTransition],
     afterChange: [syncOperatorKnownBrands, auditCaseFileChanges],
   },
   timestamps: true,

@@ -258,30 +258,157 @@ const run = async () => {
   ])
 
   // ---------------------------------------------------------------------
-  // 6. Concurrent CaseFile writes — transaction safety
+  // 6. Concurrent CaseFile writes — version-aware safe-write behavior
+  //    (docs/review-handoffs/2026-07-23-research-queue-concurrency-spec.md
+  //    §3.1, §4). Root cause and design rationale are documented there;
+  //    this section proves the implemented behavior matches the spec.
   // ---------------------------------------------------------------------
-  const concurrentFields: [string, unknown][] = [
-    ['licenseNumber', 'CONCURRENT-LIC-01'],
-    ['licenseJurisdiction', 'Concurrent Jurisdiction'],
-    ['assignedReviewer', 'Concurrent Reviewer'],
-    ['operatorUrl', 'https://concurrent.example.invalid'],
-    ['operatorName', 'Abuse Test Co (concurrent)'],
-  ]
-  await Promise.all(
-    concurrentFields.map(([field, value]) => payload.update({ id: caseFile.id, collection: 'research-queue', data: { [field]: value } })),
-  )
-  const afterConcurrent = await payload.findByID({ id: caseFile.id, collection: 'research-queue' })
-  const landedResults = concurrentFields.map(([field, value]) => [field, (afterConcurrent as unknown as Record<string, unknown>)[field] === value] as const)
-  const allLanded = landedResults.every(([, ok]) => ok)
-  payload.logger.info(`DIAGNOSTIC — concurrent field landing: ${JSON.stringify(landedResults)}`)
-  checks.push(['concurrency: all 5 concurrent field writes landed (no lost updates)', allLanded])
+  const auditCountForCase = async () => {
+    const result = await payload.find({
+      collection: 'agent-logs',
+      limit: 200,
+      where: { and: [{ pageId: { equals: String(caseFile.id) } }, { event: { equals: 'case_updated' } }] },
+    })
+    return result.docs.length
+  }
+  const auditCountBefore6a = await auditCountForCase()
 
-  const concurrentAuditEvents = await payload.find({
-    collection: 'agent-logs',
-    limit: 50,
-    where: { and: [{ pageId: { equals: String(caseFile.id) } }, { event: { equals: 'case_updated' } }] },
-  })
-  checks.push(['concurrency: exactly 5 case_updated audit events (exactly-once, no duplicates/drops)', concurrentAuditEvents.docs.length === 5])
+  // 6a. Legacy control — callers that don't pass `context.expectedVersion`
+  // get today's unchanged, unguarded behavior (a data race can still lose
+  // an update). This is NOT asserting data loss is desirable — it proves
+  // the new hook is genuinely opt-in and doesn't retroactively change
+  // behavior for callers that haven't been updated to use it (there are
+  // none yet — no admin UI or route currently passes expectedVersion).
+  const legacyFields: [string, unknown][] = [
+    ['licenseNumber', 'LEGACY-CONCURRENT-LIC-01'],
+    ['licenseJurisdiction', 'Legacy Concurrent Jurisdiction'],
+  ]
+  const legacyResults = await Promise.allSettled(
+    legacyFields.map(([field, value]) => payload.update({ id: caseFile.id, collection: 'research-queue', data: { [field]: value } })),
+  )
+  checks.push([
+    'concurrency control: legacy callers without expectedVersion are unaffected by the new hook (neither call is rejected)',
+    legacyResults.every((r) => r.status === 'fulfilled'),
+  ])
+  const auditCountAfter6a = await auditCountForCase()
+  checks.push([
+    'concurrency control: legacy concurrent writes both still produce a case_updated event regardless of which wins (audit logging is independent of the data race)',
+    auditCountAfter6a - auditCountBefore6a === legacyFields.length,
+  ])
+
+  // 6b. Simultaneous version-aware writers — the scenario that used to
+  // lose 4 of 5 updates silently. All 5 read the SAME version (as if 5
+  // people had the case open at the exact same instant) then write
+  // concurrently; exactly 1 may win, the other 4 must be rejected with the
+  // explicit conflict error, not silently dropped.
+  const versionedDoc = await payload.findByID({ id: caseFile.id, collection: 'research-queue' })
+  const versionBeforeSimultaneous = (versionedDoc as unknown as { version: number }).version
+  const simultaneousFields: [string, unknown][] = [
+    ['licenseNumber', 'SIMUL-LIC-01'],
+    ['licenseJurisdiction', 'Simultaneous Jurisdiction'],
+    ['assignedReviewer', 'Simultaneous Reviewer'],
+    ['operatorUrl', 'https://simultaneous.example.invalid'],
+    ['operatorName', 'Abuse Test Co (simultaneous)'],
+  ]
+  const simultaneousResults = await Promise.allSettled(
+    simultaneousFields.map(([field, value]) =>
+      payload.update({
+        id: caseFile.id,
+        collection: 'research-queue',
+        context: { changedFields: [field], expectedVersion: versionBeforeSimultaneous },
+        data: { [field]: value },
+      }),
+    ),
+  )
+  const simultaneousSucceeded = simultaneousResults.filter((r) => r.status === 'fulfilled').length
+  const simultaneousConflictRejections = simultaneousResults.filter(
+    (r) => r.status === 'rejected' && String((r as PromiseRejectedResult).reason?.message ?? '').includes('changed by someone else'),
+  ).length
+  payload.logger.info(
+    `DIAGNOSTIC — simultaneous version-aware writers: ${simultaneousSucceeded} succeeded, ${simultaneousConflictRejections} rejected with the expected conflict error (of ${simultaneousFields.length} total)`,
+  )
+  checks.push(['concurrency: exactly 1 of 5 simultaneous version-aware writers succeeds', simultaneousSucceeded === 1])
+  checks.push([
+    'concurrency: the other 4 simultaneous writers are rejected with the explicit conflict error, not silently dropped',
+    simultaneousConflictRejections === simultaneousFields.length - 1,
+  ])
+  const afterSimultaneous = await payload.findByID({ id: caseFile.id, collection: 'research-queue' })
+  const simultaneousSurvivingCount = simultaneousFields.filter(([field, value]) => (afterSimultaneous as unknown as Record<string, unknown>)[field] === value).length
+  checks.push(['concurrency: the 1 successful simultaneous write is fully intact, not partially merged', simultaneousSurvivingCount === 1])
+  const auditCountAfter6b = await auditCountForCase()
+  checks.push([
+    'concurrency: exactly 1 new case_updated event for the simultaneous scenario (rejected writers never reach the afterChange audit hook)',
+    auditCountAfter6b - auditCountAfter6a === 1,
+  ])
+
+  // 6c. Staggered read-then-write with retry-on-conflict — the realistic
+  // multi-user workflow: each writer independently reads the current
+  // version then writes, retrying (refetch + reapply) if it collides.
+  // Deliberately staggers each writer's *first* attempt by a small,
+  // index-proportional delay -- without this, all 5 fire their first read
+  // in the same instant (indistinguishable from 6b's fully-simultaneous
+  // case) and a single retry is not guaranteed to converge, since the
+  // losers' retries can themselves collide with each other. A retry count
+  // generous enough for the worst case (up to 4 retries, one per
+  // contender) is combined with the stagger so this test proves the
+  // intended "5 people opened it at slightly different times" scenario,
+  // not a second copy of 6b.
+  const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))
+  const staggeredFields: [string, unknown][] = [
+    ['licenseNumber', 'STAGGERED-LIC-01'],
+    ['licenseJurisdiction', 'Staggered Jurisdiction'],
+    ['assignedReviewer', 'Staggered Reviewer'],
+    ['operatorUrl', 'https://staggered.example.invalid'],
+    ['operatorName', 'Abuse Test Co (staggered)'],
+  ]
+  const writeWithRetries = async (field: string, value: unknown, initialDelayMs: number): Promise<boolean> => {
+    await sleep(initialDelayMs)
+    const maxAttempts = staggeredFields.length
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const current = await payload.findByID({ id: caseFile.id, collection: 'research-queue' })
+      const currentVersion = (current as unknown as { version: number }).version
+      try {
+        await payload.update({
+          id: caseFile.id,
+          collection: 'research-queue',
+          context: { changedFields: [field], expectedVersion: currentVersion },
+          data: { [field]: value },
+        })
+        return true
+      } catch {
+        if (attempt === maxAttempts - 1) return false
+        await sleep(10 + Math.floor(Math.random() * 15))
+      }
+    }
+    return false
+  }
+  const staggeredResults = await Promise.all(
+    staggeredFields.map(([field, value], index) => writeWithRetries(field, value, index * 40)),
+  )
+  checks.push(['concurrency: all 5 staggered (read-then-write, retry-once-on-conflict) writers eventually succeed', staggeredResults.every(Boolean)])
+  const afterStaggered = await payload.findByID({ id: caseFile.id, collection: 'research-queue' })
+  const staggeredLandedDetail = staggeredFields.map(([field, value]) => [field, (afterStaggered as unknown as Record<string, unknown>)[field], value] as const)
+  payload.logger.info(`DIAGNOSTIC — staggered field landing detail (field, actual, expected): ${JSON.stringify(staggeredLandedDetail)}`)
+  payload.logger.info(`DIAGNOSTIC — staggered final version: ${(afterStaggered as unknown as { version: number }).version}`)
+  const staggeredLandedCount = staggeredFields.filter(([field, value]) => (afterStaggered as unknown as Record<string, unknown>)[field] === value).length
+  checks.push(['concurrency: all 5 staggered fields present in final state after retries', staggeredLandedCount === staggeredFields.length])
+
+  // 6d. Sequential single-writer control — confirms the fix does not
+  // disturb the always-safe, currently-working single-writer case
+  // (DECISION-LOG.md: "single-writer, single-session use... is not at risk").
+  const sequentialFields: [string, unknown][] = [
+    ['licenseNumber', 'SEQUENTIAL-LIC-01'],
+    ['licenseJurisdiction', 'Sequential Jurisdiction'],
+    ['assignedReviewer', 'Sequential Reviewer'],
+    ['operatorUrl', 'https://sequential.example.invalid'],
+    ['operatorName', 'Abuse Test Co (sequential)'],
+  ]
+  for (const [field, value] of sequentialFields) {
+    await payload.update({ id: caseFile.id, collection: 'research-queue', data: { [field]: value } })
+  }
+  const afterSequential = await payload.findByID({ id: caseFile.id, collection: 'research-queue' })
+  const sequentialLandedCount = sequentialFields.filter(([field, value]) => (afterSequential as unknown as Record<string, unknown>)[field] === value).length
+  checks.push(['concurrency control: 5 sequential single-writer updates all land (fix does not disturb the always-safe case)', sequentialLandedCount === sequentialFields.length])
 
   // ---------------------------------------------------------------------
   const failed = checks.filter(([, ok]) => !ok)

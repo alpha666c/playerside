@@ -8,6 +8,7 @@ import * as migration_20260722_022400_add_case_governance_foundation from './202
 import * as migration_20260722_025903_harden_governance_phase2a from './20260722_025903_harden_governance_phase2a';
 import * as migration_20260722_025946_remove_chat_history_placeholder from './20260722_025946_remove_chat_history_placeholder';
 import * as migration_20260722_033154_protect_evidence_media from './20260722_033154_protect_evidence_media';
+import * as migration_20260723_002255_add_research_queue_version from './20260723_002255_add_research_queue_version';
 
 export const migrations = [
   {
@@ -58,6 +59,11 @@ export const migrations = [
   {
     up: migration_20260722_033154_protect_evidence_media.up,
     down: migration_20260722_033154_protect_evidence_media.down,
-    name: '20260722_033154_protect_evidence_media'
+    name: '20260722_033154_protect_evidence_media',
+  },
+  {
+    up: migration_20260723_002255_add_research_queue_version.up,
+    down: migration_20260723_002255_add_research_queue_version.down,
+    name: '20260723_002255_add_research_queue_version'
   },
 ];
