@@ -1590,7 +1590,7 @@ export interface ResearchQueue {
    */
   accountProfile?: {
     /**
-     * A description of the account used, e.g. "Viktor's personal Stake account (Platinum 2)" — never a username or password.
+     * A description of the account used — never a username or password.
      */
     liveChatAccountLabel?: string | null;
     /**

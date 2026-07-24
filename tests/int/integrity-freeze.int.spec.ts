@@ -5,6 +5,8 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { loadCaseContextAllowlist } from '@/lib/reviewChat/loadCaseContext'
 import { enforceStatusTransition } from '@/collections/ResearchQueue'
+// must mirror app/.../page.tsx imports
+import HomePage from '@/app/(frontend)/page'
 import { PublicHomepageView } from '@/components/public/PublicHomepageView'
 import { VerifiedOperatorGrid } from '@/components/public/VerifiedOperatorGrid'
 import { LivePayoutLeaderboard } from '@/components/public/LivePayoutLeaderboard'
@@ -92,7 +94,7 @@ describe('Integrity Freeze Required Tests', () => {
     })
   })
 
-  // Test 6: Rendered Component DOM Guard — Rendered components must NOT contain banned strings and MUST contain sample labels
+  // Test 6: Rendered Component DOM Guard — must mirror app/(frontend)/page.tsx imports
   it('rendered React public components contain ZERO banned strings and DO contain sample labels', () => {
     const bannedPatterns = [
       'Stake.com',
@@ -108,6 +110,8 @@ describe('Integrity Freeze Required Tests', () => {
       React.createElement(
         React.Fragment,
         null,
+        // must mirror app/.../page.tsx imports
+        React.createElement(HomePage),
         React.createElement(PublicHomepageView),
         React.createElement(VerifiedOperatorGrid),
         React.createElement(LivePayoutLeaderboard),

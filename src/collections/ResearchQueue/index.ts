@@ -532,7 +532,8 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
         {
           name: 'liveChatAccountLabel',
           type: 'text',
-          admin: { description: 'A description of the account used, e.g. "Viktor\'s personal Stake account (Platinum 2)" — never a username or password.' },
+          admin: { description: 'A description of the account used — never a username or password.' },
+
         },
         {
           name: 'emailTestAddress',
