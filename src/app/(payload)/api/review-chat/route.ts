@@ -1,9 +1,11 @@
 import { createLocalReq, getPayload } from 'payload'
 import config from '@payload-config'
 import { headers } from 'next/headers'
-import { loadRoleFile, startAiRun, completeAiRun } from '@/agents/runner'
 import { runDeskResearch } from '@/agents/deskResearcher'
-import { logEvent } from '@/lib/logEvent'
+import { runScoreAnalyst } from '@/agents/scoreAnalyst'
+import { runEditorialWriter } from '@/agents/editorialWriter'
+import { runIntegrityChecker } from '@/agents/integrityChecker'
+import { runMonitor } from '@/agents/monitor'
 
 export const maxDuration = 240
 
@@ -19,7 +21,7 @@ export async function POST(request: Request): Promise<Response> {
   try {
     const { caseId, message, apply } = await request.json()
 
-    const doc = await payload.findByID({
+    const doc: any = await payload.findByID({
       collection: 'research-queue',
       id: caseId,
       req: payloadReq,
@@ -27,56 +29,82 @@ export async function POST(request: Request): Promise<Response> {
     if (!doc) return new Response('Case not found', { status: 404 })
 
     const status = doc.status
+    const expectedVersion = doc.version ?? 1
 
     if (status === 'desk-research') {
-      const { runId, deskResearchOutput, evidenceRegister } = await runDeskResearch(
+      const res = await runDeskResearch(
         payload,
         payloadReq,
         caseId,
         apply
           ? {
               apply: true,
-              expectedVersion: doc.version ?? 1,
+              expectedVersion,
               changedFields: ['deskResearchOutput', 'evidenceRegister'],
             }
           : undefined,
       )
-
-      return Response.json({ runId, deskResearchOutput, evidenceRegister })
+      return Response.json(res)
     }
 
-    const roleMap: Record<string, 'score-analyst' | 'editorial-writer' | 'integrity-checker' | 'monitor'> = {
-      editorial: 'editorial-writer',
-      'integrity-check': 'integrity-checker',
-      published: 'monitor',
-      monitoring: 'monitor',
+    if (status === 'editorial' && (!doc.computedScores || Object.keys(doc.computedScores).length === 0)) {
+      const res = await runScoreAnalyst(
+        payload,
+        payloadReq,
+        caseId,
+        apply
+          ? {
+              apply: true,
+              expectedVersion,
+              changedFields: ['computedScores'],
+            }
+          : undefined,
+      )
+      return Response.json(res)
     }
 
-    const agentRole = roleMap[status] ?? 'desk-researcher'
-    const roleFile = await loadRoleFile(agentRole)
-    const runId = await startAiRun(payload, payloadReq, caseId, agentRole)
+    if (status === 'editorial') {
+      const res = await runEditorialWriter(
+        payload,
+        payloadReq,
+        caseId,
+        apply
+          ? {
+              apply: true,
+              expectedVersion,
+              changedFields: ['editorialDraft'],
+            }
+          : undefined,
+      )
+      return Response.json(res)
+    }
 
-    const assistantResponse = `Loaded role ${agentRole}. Role file length ${roleFile.length}. Received message: ${String(message ?? '').slice(0, 200)}`
+    if (status === 'integrity-check') {
+      const res = await runIntegrityChecker(payload, payloadReq, caseId)
+      return Response.json(res)
+    }
 
-    await completeAiRun(payload, payloadReq, caseId, runId, { assistantResponse })
+    if (status === 'published' || status === 'monitoring') {
+      const res = await runMonitor(
+        payload,
+        payloadReq,
+        caseId,
+        apply
+          ? {
+              apply: true,
+              expectedVersion,
+              changedFields: ['monitorLog'],
+            }
+          : undefined,
+      )
+      return Response.json(res)
+    }
 
-    await logEvent(
-      payload,
-      {
-        agentId: user.email,
-        brand: '01-playerside',
-        event: 'research_fetch',
-        operator: doc.operatorName,
-        pageId: String(doc.id),
-        details: { role: agentRole },
-      },
-      payloadReq,
-    )
-
-    return Response.json({ runId, assistantResponse })
+    return Response.json({ status, message: `No active agent for status '${status}'.` })
   } catch (e: any) {
     payload.logger.error({ err: e, message: 'review-chat error' })
     return new Response('Internal error', { status: 500 })
   }
 }
+
 
