@@ -48,14 +48,14 @@ export function Review3DStampReactor({
           <svg className="w-5 h-5 text-zinc-950 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z" />
           </svg>
-          <span>{isFlipped ? 'Flip Back to Overview' : 'SEE RESULT OF OUR REVIEW & STAMP FINDINGS'}</span>
+          <span>{isFlipped ? 'FLIP BACK TO OVERVIEW' : 'SEE RESULT OF OUR REVIEW & STAMP FINDINGS'}</span>
         </button>
       </div>
 
       {/* 3D Perspective Card Container */}
-      <div className="perspective-1000 min-h-[420px] relative">
+      <div className="perspective-1000 min-h-[460px] relative">
         <div
-          className={`w-full transition-transform duration-700 transform-style-3d relative ${
+          className={`w-full h-full transition-transform duration-700 transform-style-3d relative ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
         >
@@ -110,29 +110,29 @@ export function Review3DStampReactor({
           </div>
 
           {/* BACK OF CARD: Flipped Evidence Verdict with 3D Stamp Slam Animation */}
-          <div className="rotate-y-180 backface-hidden absolute top-0 left-0 w-full h-full bg-zinc-950 border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col justify-between overflow-hidden">
+          <div className="rotate-y-180 backface-hidden absolute inset-0 w-full h-full bg-zinc-950 border border-zinc-800 rounded-2xl p-6 sm:p-8 shadow-2xl flex flex-col justify-between overflow-hidden">
             {/* Background Glow */}
             <div
-              className={`absolute inset-0 transition-opacity duration-500 ${
-                isCertified ? 'bg-emerald-950/20' : 'bg-rose-950/20'
+              className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${
+                isCertified ? 'bg-emerald-950/30' : 'bg-rose-950/30'
               }`}
             ></div>
 
             {/* 3D STAMP SLAM OVERLAY */}
             {stampAnimationDone && (
-              <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none">
+              <div className="absolute inset-0 z-30 flex items-center justify-center pointer-events-none p-4">
                 <div
-                  className={`px-8 py-4 border-4 font-mono font-black text-2xl sm:text-4xl tracking-widest uppercase rounded-2xl shadow-2xl transition-all duration-300 ${
+                  className={`px-6 sm:px-8 py-4 border-4 font-mono font-black text-xl sm:text-3xl tracking-widest uppercase rounded-2xl shadow-2xl transition-all duration-300 ${
                     isCertified
-                      ? 'border-emerald-400 text-emerald-400 bg-zinc-950/90 shadow-emerald-500/40 rotate-[-6deg] animate-in zoom-in-150 duration-200'
-                      : 'border-rose-500 text-rose-500 bg-zinc-950/90 shadow-rose-500/40 rotate-[6deg] animate-in zoom-in-150 duration-200'
+                      ? 'border-emerald-400 text-emerald-400 bg-zinc-950/95 shadow-emerald-500/50 rotate-[-4deg] animate-in zoom-in-150 duration-200'
+                      : 'border-rose-500 text-rose-500 bg-zinc-950/95 shadow-rose-500/50 rotate-[4deg] animate-in zoom-in-150 duration-200'
                   }`}
                 >
-                  <div className="flex items-center gap-3">
-                    <svg className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <div className="flex items-center justify-center gap-3">
+                    <svg className="w-8 h-8 sm:w-10 sm:h-10 text-emerald-400 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                       <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                     </svg>
-                    <span>{isCertified ? 'CERTIFIED BY PLAYERSIDE' : 'REJECTED BY PLAYERSIDE'}</span>
+                    <span className="text-center">{isCertified ? 'CERTIFIED BY PLAYERSIDE' : 'REJECTED BY PLAYERSIDE'}</span>
                   </div>
                   <div className="text-[10px] sm:text-xs text-center font-normal tracking-normal text-zinc-400 mt-1">
                     VERIFIED IN REGULATOR REGISTER • LOGGED IN VERCEL BLOB
@@ -142,24 +142,24 @@ export function Review3DStampReactor({
             )}
 
             {/* Content under Stamp */}
-            <div className="relative z-10 space-y-4">
+            <div className="relative z-10 space-y-5">
               <div className="flex items-center justify-between pb-3 border-b border-zinc-800">
-                <span className="text-xs font-mono text-zinc-400 font-bold uppercase">Evidence Audit Certificate</span>
-                <span className="text-xs font-mono text-amber-400">{evidenceHash}</span>
+                <span className="text-xs font-mono text-zinc-400 font-bold uppercase tracking-wider">EVIDENCE AUDIT CERTIFICATE</span>
+                <span className="text-xs font-mono text-amber-400 font-bold">{evidenceHash}</span>
               </div>
 
-              <div className="space-y-2 text-xs font-mono">
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Target Operator:</span>
-                  <span className="text-zinc-200 font-bold">{operatorName}</span>
+              <div className="space-y-3 text-xs font-mono">
+                <div className="flex justify-between items-center p-2.5 bg-zinc-900/60 rounded-lg border border-zinc-800/80">
+                  <span className="text-zinc-400">Target Operator:</span>
+                  <span className="text-zinc-100 font-bold text-sm">{operatorName}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Measured Payout:</span>
-                  <span className="text-emerald-400 font-bold">{measuredWithdrawalTime}</span>
+                <div className="flex justify-between items-center p-2.5 bg-zinc-900/60 rounded-lg border border-zinc-800/80">
+                  <span className="text-zinc-400">Measured Payout:</span>
+                  <span className="text-emerald-400 font-bold text-sm">{measuredWithdrawalTime}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-zinc-500">Licence Status:</span>
-                  <span className="text-zinc-200">{licenceStatus}</span>
+                <div className="flex justify-between items-center p-2.5 bg-zinc-900/60 rounded-lg border border-zinc-800/80">
+                  <span className="text-zinc-400">Licence Status:</span>
+                  <span className="text-zinc-200 font-semibold">{licenceStatus}</span>
                 </div>
               </div>
             </div>
@@ -168,7 +168,7 @@ export function Review3DStampReactor({
               <span className="text-zinc-500">Playerside Audit Record #2026</span>
               <button
                 onClick={handleReveal}
-                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-300 border border-zinc-800 rounded-lg text-xs transition-colors cursor-pointer"
+                className="px-4 py-2 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 border border-zinc-700 rounded-lg text-xs font-semibold transition-colors cursor-pointer"
               >
                 Flip Back
               </button>
