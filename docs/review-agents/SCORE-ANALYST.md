@@ -21,6 +21,7 @@ You must have all of the following before scoring:
 
 If any hands-on results are missing, do not score that sub-category. Output `null` with `"pendingHandsOn": true`.
 
+Note: in the committed schema, desk research verification statuses use `verified` | `corroborated` | `unverified`. The Score Analyst must treat `corroborated` as equivalent to `verified` for scoring decisions where the code expects a binary verified/unverified classification.
 ---
 
 ## Scoring Rules

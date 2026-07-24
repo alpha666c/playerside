@@ -1,0 +1,7 @@
+agent-framework-foundry
+agent-framework-foundry-hosting
+azure-identity
+python-dotenv
+pydantic
+debugpy
+agent-dev-cli>=0.0.1b260427

@@ -82,11 +82,11 @@ Return a JSON object matching the Playerside ResearchQueue `deskResearchOutput` 
   "value": "[the fact]",
   "sourceUrl": "[direct URL]",
   "accessDate": "YYYY-MM-DD",
-  "confidence": "VERIFIED" | "UNVERIFIED"
+  "confidence": "verified" | "corroborated" | "unverified"
 }
 ```
 
-Do not leave a field blank. If you cannot verify it: `"confidence": "UNVERIFIED"` with a `"unverifiedReason"` field explaining what source would be needed.
+Do not leave a field blank. If you cannot verify it: `"confidence": "unverified"` with a `"unverifiedReason"` field explaining what source would be needed.
 
 ---
 

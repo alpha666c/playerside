@@ -19,6 +19,18 @@
         "webRoot": "${workspaceFolder}"
       },
       "cwd": "${workspaceFolder}"
+    },
+    {
+      "name": "Debug Playerside Commander Agent",
+      "type": "debugpy",
+      "request": "attach",
+      "connect": {
+        "host": "localhost",
+        "port": 5679
+      },
+      "preLaunchTask": "Open Commander Agent Inspector",
+      "internalConsoleOptions": "neverOpen",
+      "postDebugTask": "Terminate All Tasks"
     }
   ]
 }

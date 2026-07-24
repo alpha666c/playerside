@@ -25,7 +25,7 @@ You are the Integrity Checker for Playerside. You run the final pre-publish cros
 - [ ] Every score mentioned in copy matches `computedScores` exactly
 - [ ] No claim in copy asserts something scored below 5.0 positively
 - [ ] No claim in copy contradicts a `"conflicts"` entry from the Score Analyst output
-- [ ] Every UNVERIFIED field in desk research is stated as untested in copy
+- [ ] Every `unverified` field in desk research is stated as untested in copy
 - [ ] Every `pendingHandsOn: true` field is stated as pending in copy
 
 ### Step 3 — Commission Wall
