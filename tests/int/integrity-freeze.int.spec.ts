@@ -1,8 +1,16 @@
 import fs from 'fs'
 import path from 'path'
 import { describe, expect, it } from 'vitest'
+import React from 'react'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { loadCaseContextAllowlist } from '@/lib/reviewChat/loadCaseContext'
 import { enforceStatusTransition } from '@/collections/ResearchQueue'
+import { PublicHomepageView } from '@/components/public/PublicHomepageView'
+import { VerifiedOperatorGrid } from '@/components/public/VerifiedOperatorGrid'
+import { LivePayoutLeaderboard } from '@/components/public/LivePayoutLeaderboard'
+import { ClaimVsRealityReactor } from '@/components/public/ClaimVsRealityReactor'
+import { Review3DStampReactor } from '@/components/public/Review3DStampReactor'
+import { InstantFilterBar } from '@/components/public/InstantFilterBar'
 
 describe('Integrity Freeze Required Tests', () => {
   // Test 1: Public responses never include internal notes or account metadata
@@ -53,11 +61,13 @@ describe('Integrity Freeze Required Tests', () => {
     expect(invalidJump).toThrow(/Cannot move a case from "queued" to "published"/)
   })
 
-  // Test 5: CI Guard — Banned public marketing copy & hardcoded real brand payouts scanner
+  // Test 5: Source Code CI Guard
   it('public source code contains ZERO banned marketing copy or hardcoded real brand payouts', () => {
     const bannedPatterns = [
       'Stake.com',
       'BitStarz',
+      'BC.Game',
+      'Roobet',
       'EV-PAYOUT-',
       'Real Tested Payouts',
       'Live Verified Intel',
@@ -80,5 +90,39 @@ describe('Integrity Freeze Required Tests', () => {
         })
       }
     })
+  })
+
+  // Test 6: Rendered Component DOM Guard — Rendered components must NOT contain banned strings and MUST contain sample labels
+  it('rendered React public components contain ZERO banned strings and DO contain sample labels', () => {
+    const bannedPatterns = [
+      'Stake.com',
+      'BitStarz',
+      'BC.Game',
+      'Roobet',
+      'EV-PAYOUT-',
+      'Real Tested Payouts',
+      'Live Verified Intel',
+    ]
+
+    const renderedMarkup = renderToStaticMarkup(
+      React.createElement(
+        React.Fragment,
+        null,
+        React.createElement(PublicHomepageView),
+        React.createElement(VerifiedOperatorGrid),
+        React.createElement(LivePayoutLeaderboard),
+        React.createElement(ClaimVsRealityReactor),
+        React.createElement(Review3DStampReactor),
+        React.createElement(InstantFilterBar, { onFilterChange: () => {} }),
+      ),
+    )
+
+    bannedPatterns.forEach((banned) => {
+      expect(renderedMarkup).not.toContain(banned)
+    })
+
+    // Assert sample labels are explicitly rendered
+    expect(renderedMarkup).toContain('Aurora Bay Casino [Sample]')
+    expect(renderedMarkup).toContain('Illustrative / Not Measured')
   })
 })
