@@ -1,5 +1,7 @@
 import crypto from 'crypto'
+// @ts-ignore
 import { JSDOM } from 'jsdom'
+
 
 async function verifyLiveUrl() {
   const url = process.env.LIVE_URL || 'https://playerside.vercel.app/'
