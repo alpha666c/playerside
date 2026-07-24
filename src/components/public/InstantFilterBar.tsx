@@ -109,9 +109,10 @@ export function InstantFilterBar({ onFilterChange }: { onFilterChange?: (filters
         </div>
 
         <div className="hidden sm:flex items-center gap-2 text-zinc-500 text-[11px] font-mono">
-          <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-          Live Verified Intel
+          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+          Traceable Protocol Spec
         </div>
+
       </div>
     </div>
   )

@@ -37,11 +37,12 @@ export function PublicHomepageView() {
           {/* Headline & Subhead */}
           <div className="text-center space-y-5 max-w-4xl mx-auto">
             <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.05]">
-              Real Tested Payouts. <br />
+              Evidence-Backed Protocol. <br />
               <span className="bg-gradient-to-r from-amber-400 via-amber-200 to-emerald-400 bg-clip-text text-transparent">
                 Zero Bonus Traps.
               </span>
             </h1>
+
             <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
               We test withdrawals with real cash, verify licenses directly at regulator databases, and decode bonus fine print so you never get trapped.
             </p>

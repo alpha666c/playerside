@@ -1,3 +1,5 @@
+import fs from 'fs'
+import path from 'path'
 import { describe, expect, it } from 'vitest'
 import { loadCaseContextAllowlist } from '@/lib/reviewChat/loadCaseContext'
 import { enforceStatusTransition } from '@/collections/ResearchQueue'
@@ -49,5 +51,34 @@ describe('Integrity Freeze Required Tests', () => {
       } as any)
 
     expect(invalidJump).toThrow(/Cannot move a case from "queued" to "published"/)
+  })
+
+  // Test 5: CI Guard — Banned public marketing copy & hardcoded real brand payouts scanner
+  it('public source code contains ZERO banned marketing copy or hardcoded real brand payouts', () => {
+    const bannedPatterns = [
+      'Stake.com',
+      'BitStarz',
+      'EV-PAYOUT-',
+      'Real Tested Payouts',
+      'Live Verified Intel',
+    ]
+
+    const publicFiles = [
+      path.join(process.cwd(), 'src/app/(frontend)/page.tsx'),
+      path.join(process.cwd(), 'src/components/public/PublicHomepageView.tsx'),
+      path.join(process.cwd(), 'src/components/public/VerifiedOperatorGrid.tsx'),
+      path.join(process.cwd(), 'src/components/public/LivePayoutLeaderboard.tsx'),
+      path.join(process.cwd(), 'src/components/public/ClaimVsRealityReactor.tsx'),
+      path.join(process.cwd(), 'src/components/public/InstantFilterBar.tsx'),
+    ]
+
+    publicFiles.forEach((filePath) => {
+      if (fs.existsSync(filePath)) {
+        const content = fs.readFileSync(filePath, 'utf-8')
+        bannedPatterns.forEach((banned) => {
+          expect(content).not.toContain(banned)
+        })
+      }
+    })
   })
 })

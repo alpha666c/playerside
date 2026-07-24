@@ -9,7 +9,8 @@ export default function HomePage() {
 export async function generateMetadata(): Promise<Metadata> {
   const title = 'Playerside — Evidence-Backed Casino & Bonus Intelligence'
   const description =
-    'Real tested payouts, decoded bonus wagering terms, and direct regulator licence verification. 100% commission-blind.'
+    'Commission-blind casino reviews, decoded bonus terms, and direct regulator licence verification.'
+
 
   return {
     title,
