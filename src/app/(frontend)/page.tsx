@@ -6,9 +6,16 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default function HomePage() {
+  const rawSha =
+    process.env.VERCEL_GIT_COMMIT_SHA ||
+    process.env.NEXT_PUBLIC_VERCEL_GIT_COMMIT_SHA ||
+    process.env.GIT_SHA ||
+    ''
+  const shortSha = rawSha ? rawSha.slice(0, 7) : 'unknown'
+
   return (
     <div
-      data-build-sha="8b1db90f5cd9c6f58bf62756161abd56a0fd4e1e"
+      data-build-sha={shortSha}
       data-homepage-source="src/app/(frontend)/page.tsx"
       data-homepage-data-source="static-client-constants"
       data-homepage-data-version="sample-only-v2-2026-07-24"

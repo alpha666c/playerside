@@ -61,7 +61,6 @@ const run = async () => {
     // incomplete and cast past Payload's generated create-data type.
     await payload.create({
       collection: 'agent-logs',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       data: {
         agentId: 'verify-logging-script',
         brand: '01-playerside',

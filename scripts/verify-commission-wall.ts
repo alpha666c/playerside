@@ -115,7 +115,6 @@ const run = async () => {
     data: {
       ...baseReviewData,
       slug: 'commission-wall-test-temp-spiked',
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       ...({
         commissionRate: 45,
         cpaDealUsd: 250,

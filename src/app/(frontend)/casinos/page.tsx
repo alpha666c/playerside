@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 
 import configPromise from '@payload-config'
 import { getPayload } from 'payload'
+import Link from 'next/link'
 import React from 'react'
 
 import { CategoryMarker } from '@/components/CategoryMarker/CategoryMarker'
@@ -14,14 +15,16 @@ export default async function CasinosPage() {
 
   const reviews = await payload.find({
     collection: 'traditional-casino-reviews',
-    depth: 0,
+    depth: 1,
     limit: 100,
     overrideAccess: false,
-    sort: '-overallScore',
+    where: {
+      _status: { equals: 'published' },
+    },
   })
 
   return (
-    <div className="pb-24 pt-16 sm:pt-20">
+    <div className="py-14 sm:py-20">
       <div className="container mb-12 max-w-[720px] sm:mb-14">
         <CategoryMarker className="mb-4" kind="traditional" />
         <h1 className="mb-4 text-[30px] leading-[1.1] sm:text-[38px] lg:text-[46px]">
@@ -31,9 +34,9 @@ export default async function CasinosPage() {
           Licensed operators in the Netherlands, Sweden, Germany, and the UK — scored on nine
           categories, every score traceable to logged evidence. Never bought, never adjusted for
           commission.{' '}
-          <a className="text-evidence underline" href="/#wall">
+          <Link className="text-evidence underline" href="/#wall">
             See how the wall works
-          </a>
+          </Link>
           .
         </p>
       </div>

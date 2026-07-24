@@ -197,7 +197,6 @@ const run = async () => {
         collection: 'research-queue',
         // Intentionally invalid enum value — expected to throw at runtime
         // (that's what's being tested), cast past the generated type.
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: { evidenceRegister: [{ label: 'bad enum', verificationStatus: 'super-duper-verified' }] } as any,
       }),
     ),
@@ -208,7 +207,6 @@ const run = async () => {
       payload.update({
         id: caseFile.id,
         collection: 'research-queue',
-        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         data: { evidenceRegister: [{ label: 'bad source', sourceType: 'made-up-source', verificationStatus: 'verified' }] } as any,
       }),
     ),

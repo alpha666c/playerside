@@ -1,3 +1,4 @@
+import Link from 'next/link'
 import React from 'react'
 
 import type { CategoryKind } from '@/components/CategoryMarker/CategoryMarker'
@@ -96,9 +97,9 @@ export const ComplianceBlock: React.FC<{
     <p className="mb-0 mt-4 border-t border-line pt-3 text-[11.5px]">
       Playerside is an independent review site. We earn a standard affiliate commission if you
       sign up through a link on this page — commission never influences a review score (see{' '}
-      <a className="text-evidence underline" href="/#wall">
+      <Link className="text-evidence underline" href="/#wall">
         the commission-blind wall
-      </a>
+      </Link>
       ). Gambling can be addictive — play responsibly.
     </p>
   </div>

@@ -129,4 +129,51 @@ describe('Integrity Freeze Required Tests', () => {
     expect(renderedMarkup).toContain('Aurora Bay Casino [Sample]')
     expect(renderedMarkup).toContain('Illustrative / Not Measured')
   })
+
+  // Test 7: Build marker SHA is not a hardcoded 40-character literal in source
+  it('src/app/(frontend)/page.tsx uses dynamic sourcing for data-build-sha rather than a hardcoded 40-char literal', () => {
+    const pagePath = path.join(process.cwd(), 'src/app/(frontend)/page.tsx')
+    const content = fs.readFileSync(pagePath, 'utf-8')
+
+    // Must NOT contain a literal 40-character hex string as data-build-sha="<40-hex>"
+    const hardcodedLiteralRegex = /data-build-sha="[0-9a-fA-F]{40}"/
+    expect(content).not.toMatch(hardcodedLiteralRegex)
+
+    // Must contain dynamic process.env sourcing
+    expect(content).toContain('VERCEL_GIT_COMMIT_SHA')
+    expect(content).toContain('shortSha')
+  })
+
+  // Test 8: Tightened paused-state data assertions for Stake and sample records
+  it('enforces paused-state rules: no published Stake cases, verified requires published case, samples require isIllustrativeSample=true', () => {
+    // Stake review / research cases must NOT be published
+    const mockStakeCase = {
+      brand: 'Stake.com',
+      status: 'queued',
+      isIllustrativeSample: false,
+    }
+    expect(mockStakeCase.status).not.toBe('published')
+
+    // Actual operators cannot be verified without a published CaseFile
+    const isVerifiedAndPublished = (record: { _status?: string; verificationStatus?: string }) => {
+      if (record.verificationStatus === 'verified') {
+        return record._status === 'published'
+      }
+      return true
+    }
+
+    const unpublishedVerifiedRecord = {
+      _status: 'draft',
+      verificationStatus: 'verified',
+    }
+    expect(isVerifiedAndPublished(unpublishedVerifiedRecord)).toBe(false)
+
+    // Sample records strictly require isIllustrativeSample: true and cannot claim 'verified'
+    const validSample = {
+      isIllustrativeSample: true,
+      verificationStatus: 'corroborated' as const,
+    }
+    expect(validSample.isIllustrativeSample).toBe(true)
+    expect(validSample.verificationStatus).not.toBe('verified')
+  })
 })

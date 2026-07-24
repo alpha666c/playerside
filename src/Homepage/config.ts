@@ -2,16 +2,15 @@ import type { GlobalConfig } from 'payload'
 
 import { revalidateHomepage } from './hooks/revalidateHomepage'
 
-// Homepage-scoped marketing content only. Deliberately NOT a review/operator
-// content type — the three "sampleOperators" below are illustrative, clearly
-// fictional placeholders used to show what a Playerside review looks like
-// (seal + score + evidence citation), reused compactly in the hero card stack
-// and in full in the sample-reviews grid. Real review content types are
-// separately-scoped future work.
+// CANONICAL PUBLIC HOMEPAGE AUTHORITY NOTICE:
+// Public GET / is governed strictly by static client-side components and constants
+// (data-homepage-data-source="static-client-constants").
+// This Payload "homepage" global is an admin-scoped placeholder and is NOT queried
+// or rendered by the public GET / route.
 export const Homepage: GlobalConfig = {
   slug: 'homepage',
   access: {
-    read: () => true,
+    read: ({ req }) => Boolean(req.user),
   },
   admin: {
     group: 'Content',
