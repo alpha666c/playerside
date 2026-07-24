@@ -6,8 +6,11 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default function HomePage() {
-
-  return <PublicHomepageView />
+  return (
+    <div data-build-sha="f4b74e40e2b34a6ee103328eb92049e29ddf89eb" data-homepage-source="src/app/(frontend)/page.tsx">
+      <PublicHomepageView />
+    </div>
+  )
 }
 
 export async function generateMetadata(): Promise<Metadata> {
