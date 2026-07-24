@@ -14,6 +14,7 @@ import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
 import { QualitativeContext } from '@/components/QualitativeContext/QualitativeContext'
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
 import { traditionalRubric } from '@/rubrics/traditional'
+import { Review3DStampReactor } from '@/components/public/Review3DStampReactor'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -69,6 +70,17 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
         />
       </div>
 
+      {/* 3D Flip Card & Impact Stamp Reactor */}
+      <div className="container mb-12 max-w-[760px]">
+        <Review3DStampReactor
+          operatorName={review.name}
+          overallScore={review.overallScore ?? 8.5}
+          isCertified={true}
+          whatsGood={review.verdict?.whatsGood?.map((w) => w.point) ?? []}
+          whatsBad={review.verdict?.whatsBad?.map((w) => w.point) ?? []}
+        />
+      </div>
+
       {review.verdict ? (
         <div className="container mb-12 grid max-w-[760px] gap-6 sm:mb-14 sm:grid-cols-2">
           <div className="rounded-[var(--radius)] border border-evidence/35 bg-dusk p-5 sm:p-6">
@@ -104,6 +116,7 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
     </article>
   )
 }
+
 
 export async function generateMetadata({ params: paramsPromise }: Args): Promise<Metadata> {
   const { slug = '' } = await paramsPromise
