@@ -15,40 +15,31 @@ export interface PayoutEntry {
 
 const SAMPLE_PAYOUTS: PayoutEntry[] = [
   {
-    operatorName: 'Stake.com',
-    testedTime: '4m 12s',
-    method: 'USDT (TRC-20)',
-    amount: '$250.00',
+    operatorName: 'Aurora Bay Casino [Sample]',
+    testedTime: 'Illustrative / Not Measured',
+    method: 'Fiat Bank Transfer (Sample)',
+    amount: '€50.00 (Sample)',
     testedAt: '2026-07-22',
-    verificationStatus: 'verified',
-    evidenceHash: 'EV-PAYOUT-0842-STAKE',
+    verificationStatus: 'corroborated',
+    evidenceHash: 'SAMPLE-REF-2026-S01',
   },
   {
-    operatorName: 'BitStarz',
-    testedTime: '8m 45s',
-    method: 'Bitcoin (BTC)',
-    amount: '0.015 BTC',
+    operatorName: 'Northlight Casino [Sample]',
+    testedTime: 'Illustrative / Not Measured',
+    method: 'Trustly (Sample)',
+    amount: '€50.00 (Sample)',
     testedAt: '2026-07-21',
-    verificationStatus: 'verified',
-    evidenceHash: 'EV-PAYOUT-0841-BITSTARZ',
+    verificationStatus: 'corroborated',
+    evidenceHash: 'SAMPLE-REF-2026-S02',
   },
   {
-    operatorName: 'BC.Game',
-    testedTime: '12m 00s',
-    method: 'Ethereum (ETH)',
-    amount: '0.25 ETH',
+    operatorName: 'Ferrous Casino [Sample]',
+    testedTime: 'Illustrative / Not Measured',
+    method: 'USDT TRC-20 (Sample)',
+    amount: '$100.00 (Sample)',
     testedAt: '2026-07-20',
-    verificationStatus: 'verified',
-    evidenceHash: 'EV-PAYOUT-0840-BCGAME',
-  },
-  {
-    operatorName: 'Roobet',
-    testedTime: '14m 30s',
-    method: 'USDC (Solana)',
-    amount: '$500.00',
-    testedAt: '2026-07-19',
-    verificationStatus: 'verified',
-    evidenceHash: 'EV-PAYOUT-0839-ROOBET',
+    verificationStatus: 'corroborated',
+    evidenceHash: 'SAMPLE-REF-2026-S03',
   },
 ]
 
@@ -58,18 +49,19 @@ export function LivePayoutLeaderboard({ onSelectEvidence }: { onSelectEvidence?:
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-zinc-800">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-            <h3 className="text-lg font-bold text-white tracking-tight">Fastest Verified Payout Leaderboard</h3>
+            <span className="w-2.5 h-2.5 rounded-full bg-amber-500"></span>
+            <h3 className="text-lg font-bold text-white tracking-tight">Sample Payout Measurement Protocol</h3>
           </div>
           <p className="text-xs text-zinc-400 mt-1">
-            Real cash withdrawals executed and timed by Playerside testers. Every time links to archived proof.
+            Illustrative testing protocol demonstration. Live operator reviews appear only when a CaseFile passes human publication.
           </p>
         </div>
 
-        <span className="px-3 py-1 bg-emerald-950/80 border border-emerald-800 text-emerald-400 text-xs font-mono font-bold rounded-lg">
-          Updated Today
+        <span className="px-3 py-1 bg-zinc-950 border border-zinc-800 text-zinc-400 text-xs font-mono font-bold rounded-lg">
+          Protocol Spec
         </span>
       </div>
+
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         {SAMPLE_PAYOUTS.map((entry, idx) => (

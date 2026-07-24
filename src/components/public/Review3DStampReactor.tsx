@@ -14,15 +14,16 @@ export interface Review3DStampProps {
 }
 
 export function Review3DStampReactor({
-  operatorName,
-  overallScore = 8.8,
+  operatorName = 'Aurora Bay Casino [Sample]',
+  overallScore = 8.6,
   isCertified = true,
-  evidenceHash = 'EV-FULL-0914-PLAYERSIDE',
+  evidenceHash = 'SAMPLE-REF-2026-S01',
   whatsGood = ['Withdrawal processed in under 5 minutes', 'Licensed by MGA', 'No hidden deposit fees'],
   whatsBad = ['KYC required above €2,000 threshold'],
-  measuredWithdrawalTime = '4m 12s',
-  licenceStatus = 'Active & Verified',
+  measuredWithdrawalTime = 'Illustrative / Not Measured',
+  licenceStatus = 'MGA Verified (Sample)',
 }: Review3DStampProps) {
+
   const [isFlipped, setIsFlipped] = useState(false)
   const [stampAnimationDone, setStampAnimationDone] = useState(false)
 

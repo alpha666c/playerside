@@ -17,18 +17,18 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
     {
       category: 'Withdrawal Processing',
       operatorClaim: 'Instant withdrawals under 15 minutes stated in FAQ',
-      measuredResult: 'Tested payout completed in 4 minutes, 12 seconds (USDT TRC-20)',
+      measuredResult: 'Illustrative measurement: 4 minutes 12 seconds (Sample)',
       isMatches: true,
-      evidenceRef: 'EV-PAYOUT-0842-STAKE',
-      regulatorUrl: 'https://www.curacao-egaming.com/public-register',
+      evidenceRef: 'SAMPLE-REF-2026-S01',
+      regulatorUrl: 'https://www.mga.org.mt/register',
       accessDate: '2026-07-22',
     },
     {
       category: 'Live Support Response',
       operatorClaim: '24/7 Live chat response within 2 minutes',
-      measuredResult: 'Tested support response time: 1 minute, 45 seconds (Human agent)',
+      measuredResult: 'Illustrative measurement: 1 minute 45 seconds (Sample)',
       isMatches: true,
-      evidenceRef: 'EV-SUPPORT-0114-STAKE',
+      evidenceRef: 'SAMPLE-REF-2026-S02',
       accessDate: '2026-07-21',
     },
     {
@@ -36,10 +36,11 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
       operatorClaim: '35x Welcome bonus wagering claimed in promo banner',
       measuredResult: 'T&Cs reveal 35x applies to (Deposit + Bonus) = Effective 70x turnover required',
       isMatches: false,
-      evidenceRef: 'EV-BONUS-TRAP-0091',
+      evidenceRef: 'SAMPLE-REF-2026-S03',
       accessDate: '2026-07-20',
     },
   ]
+
 
   const dataList = items || defaultItems
   const [stampedMap, setStampedMap] = useState<Record<number, boolean>>({})

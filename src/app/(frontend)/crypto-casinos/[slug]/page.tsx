@@ -141,48 +141,7 @@ const queryReviewBySlug = cache(async (slug: string) => {
     where: { slug: { equals: slug } },
   })
 
-  if (result.docs?.[0]) return result.docs[0]
-
-  // Dynamic illustrative fallback if slug is not yet created in Payload database
-  const formattedName = slug
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-
-  return {
-    id: `sample-crypto-${slug}`,
-    name: formattedName,
-    slug,
-    isIllustrativeSample: true,
-    overallScore: 8.9,
-    summary: `Commission-blind evaluation of crypto operator ${formattedName}. Tested for crypto withdrawal speed, provably-fair verification, and license legitimacy.`,
-    compliance: {
-      licenseAuthority: 'Curaçao eGaming',
-      licenseNumber: 'OGL/2024/102/0129',
-      notLicensedInRegulatedMarkets: true,
-      provablyFairInfo: 'Supports client seed & server seed hash verification for custom games.',
-    },
-    scores: {
-      licenseLegitimacy: 8.8,
-      promotions: 9.0,
-      withdrawals: 9.5,
-      kycApproach: 8.5,
-      provablyFair: 9.2,
-      support: 8.4,
-      deposits: 9.0,
-      gameVariety: 8.7,
-      geoCompliance: 8.0,
-    },
-    verdict: {
-      whatsGood: [
-        { point: 'Measured crypto payout completed in 3 minutes 45 seconds (USDT TRC-20)' },
-        { point: 'Provably fair game hashes verifiable directly on-chain' },
-        { point: 'No deposit minimums or network withdrawal surcharges' },
-      ],
-      whatsBad: [{ point: 'Not available to players residing in regulated European markets' }],
-      narrative: `${formattedName} passes all 5 pre-publish Playerside integrity gates for crypto casinos. Scoring is 100% commission-blind and backed by logged test evidence.`,
-    },
-    communitySentimentNote: 'High community trust rating for instant crypto cashouts and active Telegram support channel.',
-  } as any
+  return result.docs?.[0] || null
 })
+
 

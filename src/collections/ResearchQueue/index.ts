@@ -85,7 +85,8 @@ const STAGE_ENTRY_GATES: Partial<Record<Stage, (merged: Record<string, unknown>)
  * change, so a transition can't sneak in alongside the very data that
  * satisfies its own gate in a way that doesn't actually land.
  */
-const enforceStatusTransition: CollectionBeforeChangeHook = ({ data, operation, originalDoc }) => {
+export const enforceStatusTransition: CollectionBeforeChangeHook = ({ data, operation, originalDoc }) => {
+
   const nextStatus = data?.status
   if (!nextStatus) return data
 

@@ -142,46 +142,7 @@ const queryReviewBySlug = cache(async (slug: string) => {
     where: { slug: { equals: slug } },
   })
 
-  if (result.docs?.[0]) return result.docs[0]
-
-  // Dynamic illustrative fallback if slug is not yet created in Payload database
-  const formattedName = slug
-    .split('-')
-    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-    .join(' ')
-
-  return {
-    id: `sample-${slug}`,
-    name: formattedName,
-    slug,
-    isIllustrativeSample: true,
-    overallScore: 8.6,
-    summary: `Commission-blind evaluation of ${formattedName}. Tested for withdrawal speed, licensing standing, and bonus terms transparency.`,
-    compliance: {
-      licenseAuthority: 'KSA (Kansspelautoriteit)',
-      licenseNumber: 'MGA/B2C/110/2021',
-    },
-    markets: ['nl', 'uk'],
-    scores: {
-      promotions: 8.5,
-      licensing: 9.0,
-      support: 8.2,
-      withdrawals: 9.1,
-      kyc: 8.0,
-      gameVariety: 8.8,
-      deposits: 8.7,
-      liveCasino: 8.4,
-    },
-    verdict: {
-      whatsGood: [
-        { point: 'Measured payout completed in 4 minutes 12 seconds' },
-        { point: 'License verified directly at regulator public register' },
-        { point: 'Zero hidden deposit or withdrawal fees' },
-      ],
-      whatsBad: [{ point: 'Strict KYC verification required above €2,000 threshold' }],
-      narrative: `${formattedName} passes all 5 pre-publish Playerside integrity gates. Scoring is 100% commission-blind and backed by logged test evidence.`,
-    },
-    communitySentimentNote: 'Qualitative player sentiment tracks positive for payout reliability and fast chat support.',
-  } as any
+  return result.docs?.[0] || null
 })
+
 

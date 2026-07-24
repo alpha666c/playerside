@@ -11,19 +11,7 @@ export type AgentRole =
   | 'monitor'
   | 'monitoring'
 
-/**
- * Load a tightly-scoped context for the given role and case. Always uses
- * the calling user's own request-level permissions (pass the payload req).
- * Returns only the allowlisted fields for that role.
- */
-export async function loadCaseContext(
-  caseId: string | number,
-  role: AgentRole,
-  req: PayloadRequest,
-) {
-  const payload = req.payload
-
-  // allowlists per AI-AGENTS-GUIDE §3
+export function loadCaseContextAllowlist(role: AgentRole): string[] {
   const allowlists: Record<string, string[]> = {
     'desk-research': [
       'caseNumber',
@@ -94,7 +82,21 @@ export async function loadCaseContext(
     ],
   }
 
-  const fields = allowlists[role] ?? ['caseNumber', 'operatorName']
+  return allowlists[role] ?? ['caseNumber', 'operatorName']
+}
+
+/**
+ * Load a tightly-scoped context for the given role and case. Always uses
+ * the calling user's own request-level permissions (pass the payload req).
+ * Returns only the allowlisted fields for that role.
+ */
+export async function loadCaseContext(
+  caseId: string | number,
+  role: AgentRole,
+  req: PayloadRequest,
+) {
+  const payload = req.payload
+  const fields = loadCaseContextAllowlist(role)
 
   // Use payload.findByID with req so access control is enforced
   const doc = await payload

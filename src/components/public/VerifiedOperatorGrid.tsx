@@ -17,60 +17,51 @@ export interface OperatorCardData {
 
 const SAMPLE_OPERATORS: OperatorCardData[] = [
   {
-    name: 'Stake.com',
-    slug: 'stake',
-    category: 'crypto',
-    score: 9.1,
-    payoutSpeed: '4m 12s',
-    license: 'Curaçao Verified',
-    welcomeBonus: '100% Up to $1,000 + 5% Rakeback',
-    highlights: ['Instant Crypto Cashouts', 'Provably Fair Games', 'Zero KYC under $2k'],
-    evidenceHash: 'EV-PAYOUT-0842-STAKE',
-  },
-  {
-    name: 'BitStarz',
-    slug: 'bitstarz',
-    category: 'crypto',
-    score: 8.9,
-    payoutSpeed: '8m 45s',
-    license: 'Curaçao Verified',
-    welcomeBonus: '5 BTC + 180 Free Spins',
-    highlights: ['Multi-currency Support', '24/7 Live Support', 'Award Winner'],
-    evidenceHash: 'EV-PAYOUT-0841-BITSTARZ',
-  },
-  {
-    name: 'BC.Game',
-    slug: 'bcgame',
-    category: 'crypto',
-    score: 8.8,
-    payoutSpeed: '12m 00s',
-    license: 'Curaçao Verified',
-    welcomeBonus: 'Up to 360% Deposit Match',
-    highlights: ['Original Crypto Games', 'Low Network Fees', 'Active Community'],
-    evidenceHash: 'EV-PAYOUT-0840-BCGAME',
-  },
-  {
-    name: 'Toto NL',
-    slug: 'toto-nl',
+    name: 'Aurora Bay Casino [Sample]',
+    slug: 'aurora-bay',
     category: 'traditional',
     score: 8.6,
-    payoutSpeed: '1h 15m',
-    license: 'Netherlands (KSA)',
-    welcomeBonus: '€50 Free Bet + 20 Spins',
-    highlights: ['100% Licensed in NL', 'Direct iDEAL Cashouts', 'State Regulated'],
-    evidenceHash: 'EV-PAYOUT-0835-TOTO',
+    payoutSpeed: 'Illustrative / Not Measured',
+    license: 'MGA (Sample)',
+    welcomeBonus: '100% Up to €200 (Sample Offer)',
+    highlights: ['Sample Licensing Entry', 'Illustrative Rubric Score', 'Commission-Blind Spec'],
+    evidenceHash: 'SAMPLE-REF-2026-S01',
+  },
+  {
+    name: 'Northlight Casino [Sample]',
+    slug: 'northlight',
+    category: 'traditional',
+    score: 8.4,
+    payoutSpeed: 'Illustrative / Not Measured',
+    license: 'Sweden Spelinspektionen (Sample)',
+    welcomeBonus: '100 Spins (Sample Offer)',
+    highlights: ['Sample Regulatory Record', 'Illustrative Score', 'Evidence Architecture'],
+    evidenceHash: 'SAMPLE-REF-2026-S02',
+  },
+  {
+    name: 'Ferrous Casino [Sample]',
+    slug: 'ferrous',
+    category: 'crypto',
+    score: 8.8,
+    payoutSpeed: 'Illustrative / Not Measured',
+    license: 'Curaçao eGaming (Sample)',
+    welcomeBonus: '1 BTC (Sample Offer)',
+    highlights: ['Sample Provably Fair', 'Illustrative Score', 'Offshore Category Spec'],
+    evidenceHash: 'SAMPLE-REF-2026-S03',
   },
 ]
+
 
 export function VerifiedOperatorGrid({ onSelectEvidence }: { onSelectEvidence?: (hash: string) => void }) {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
         <div>
-          <h3 className="text-xl font-bold text-white tracking-tight">Verified Casino Intelligence Directory</h3>
+          <h3 className="text-xl font-bold text-white tracking-tight">Illustrative Casino Intelligence Directory</h3>
           <p className="text-xs text-zinc-400 mt-1">
-            Commission-blind evaluations scored across 8–9 rubric categories. Select an operator to view live 3D review findings.
+            System demonstration of 8–9 rubric category evaluations. Sample cases map to Master Blueprint §2 seed models.
           </p>
+
         </div>
 
         <div className="flex gap-2">
