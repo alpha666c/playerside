@@ -1,38 +1,23 @@
 import type { Metadata } from 'next'
-
-import { HomepageView } from '@/components/homepage/HomepageView'
-import { getCachedGlobal } from '@/utilities/getGlobals'
-import { mergeOpenGraph } from '@/utilities/mergeOpenGraph'
 import React from 'react'
+import { PublicHomepageView } from '@/components/public/PublicHomepageView'
 
-// The homepage is a dedicated, hand-built page (not the generic CMS
-// pages/blocks pipeline used by `/[slug]`) — see the Homepage global
-// (`src/Homepage/config.ts`) for the editable content behind it.
-export default async function HomePage() {
-  const data = await getCachedGlobal('homepage', 1)()
-
-  return (
-    <article>
-      <HomepageView data={data} />
-    </article>
-  )
+export default function HomePage() {
+  return <PublicHomepageView />
 }
 
 export async function generateMetadata(): Promise<Metadata> {
-  const data = await getCachedGlobal('homepage', 1)()
-
-  const title = data.heroHeadline || 'Playerside'
+  const title = 'Playerside — Evidence-Backed Casino & Bonus Intelligence'
   const description =
-    data.heroSubhead ||
-    'Commission-blind casino reviews — evidence-backed scores, exact bonus terms.'
+    'Real tested payouts, decoded bonus wagering terms, and direct regulator licence verification. 100% commission-blind.'
 
   return {
-    description,
-    openGraph: mergeOpenGraph({
-      description,
-      title,
-      url: '/',
-    }),
     title,
+    description,
+    openGraph: {
+      title,
+      description,
+      url: '/',
+    },
   }
 }
