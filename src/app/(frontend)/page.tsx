@@ -2,7 +2,11 @@ import type { Metadata } from 'next'
 import React from 'react'
 import { PublicHomepageView } from '@/components/public/PublicHomepageView'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export default function HomePage() {
+
   return <PublicHomepageView />
 }
 
