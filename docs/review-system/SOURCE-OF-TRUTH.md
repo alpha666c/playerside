@@ -57,9 +57,26 @@ This file is a **navigation guide**, not a new top-level authority. It does not 
 
 ---
 
-## Conflict Escalation
+## Release Gate & Production Alias Verification Checklist
 
-If two layers in the same rank conflict (e.g., two different migrations, or two role files contradict each other):
-1. Escalate to Viktor (project owner).
-2. Viktor decides which is current and updates this document (along with CHANGELOG.md).
-3. Locked version date bumped.
+Before any release is marked ready or deployed to production, the following automated release verification checklist must be executed and confirmed:
+
+1. **Pre-Deploy Verification**:
+   - `pnpm run typecheck` (Must complete with 0 errors)
+   - `pnpm run typecheck:scripts` (Must complete with 0 errors)
+   - `pnpm run lint` (Must complete with 0 errors and 0 warnings)
+   - `pnpm run test:int` (All Vitest integration tests must pass)
+
+2. **Post-Deploy Live Alias Verification Command**:
+   ```bash
+   pnpm run verify:live
+   # Or explicitly:
+   # npx tsx scripts/verify-live-alias.ts
+   ```
+
+3. **Mandatory Post-Deploy Assertion Rules**:
+   - **Build Marker Match**: `data-build-sha` extracted from the live response HTML **MUST EQUAL** expected `git rev-parse --short HEAD` (or `VERCEL_GIT_COMMIT_SHA`).
+   - **Banned Strings Zero Tolerance**: Verification MUST fail with non-zero exit code if any prohibited marketing/unapproved operator string (`Stake.com`, `BitStarz`, `BC.Game`, `Roobet`, `EV-PAYOUT-`, `EV-SUPPORT-`, `EV-BONUS-`, `Real Tested Payouts`, `Live Verified Intel`, `Updated Today`) is present in the response body.
+   - **Sample Marker Requirement**: Verification MUST fail if sample markers (`Aurora Bay`, `[Sample]`, `Illustrative`, `Not Measured`, `SAMPLE-REF`) are missing.
+   - **Body Hashing**: The script MUST record and print the raw HTTP response body SHA256 hash alongside headers (`x-vercel-id`, `x-vercel-cache`, `x-matched-path`).
+
