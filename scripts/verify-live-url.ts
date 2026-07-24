@@ -1,6 +1,6 @@
 import crypto from 'crypto'
-// @ts-ignore
 import { JSDOM } from 'jsdom'
+
 
 
 async function verifyLiveUrl() {
