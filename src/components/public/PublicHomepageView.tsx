@@ -6,7 +6,7 @@ import { LivePayoutLeaderboard, PayoutEntry } from './LivePayoutLeaderboard'
 import { BonusCalculator } from './BonusCalculator'
 import { EvidenceDrawer } from './EvidenceDrawer'
 import { ClaimVsRealityReactor } from './ClaimVsRealityReactor'
-
+import { VerifiedOperatorGrid } from './VerifiedOperatorGrid'
 
 export function PublicHomepageView() {
   const [selectedEvidence, setSelectedEvidence] = useState<PayoutEntry | null>(null)
@@ -82,24 +82,29 @@ export function PublicHomepageView() {
         </div>
       </section>
 
-      {/* Feature 1: Live Payout Speed Leaderboard */}
-      <section className="max-w-6xl mx-auto px-4 py-16 sm:px-6 lg:px-8 space-y-6">
+      {/* Feature 1: Verified Operator Grid */}
+      <section className="max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-6">
+        <VerifiedOperatorGrid />
+      </section>
+
+      {/* Feature 2: Live Payout Speed Leaderboard */}
+      <section className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-6">
         <LivePayoutLeaderboard onSelectEvidence={(entry) => setSelectedEvidence(entry)} />
       </section>
 
-      {/* Feature 2: Operator Claim vs. Measured Reality Reactor */}
+      {/* Feature 3: Operator Claim vs. Measured Reality Reactor */}
       <section className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
         <ClaimVsRealityReactor />
       </section>
 
-      {/* Feature 3: Interactive Bonus Wager Trap Calculator */}
+      {/* Feature 4: Interactive Bonus Wager Trap Calculator */}
       <section className="max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-6">
         <BonusCalculator />
       </section>
-
 
       {/* Slide-over Evidence Drawer */}
       <EvidenceDrawer entry={selectedEvidence} onClose={() => setSelectedEvidence(null)} />
     </div>
   )
 }
+
