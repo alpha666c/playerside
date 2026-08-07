@@ -26,6 +26,7 @@ const navItems = [
   { link: { type: 'custom' as const, label: 'Casino reviews', url: '/casinos' } },
   { link: { type: 'custom' as const, label: 'Crypto reviews', url: '/crypto-casinos' } },
   { link: { type: 'custom' as const, label: 'Bonuses', url: '/bonuses' } },
+  { link: { type: 'custom' as const, label: 'Missions', url: '/missions' } },
 ]
 
 const run = async () => {

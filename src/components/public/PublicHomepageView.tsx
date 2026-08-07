@@ -10,6 +10,7 @@ import { VerifiedOperatorGrid } from './VerifiedOperatorGrid'
 import { HeroFieldView } from '@/components/three/HeroFieldView'
 import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
 import { ProtocolScrub } from './ProtocolScrub'
+import { MissionsPromo } from './MissionsPromo'
 
 export function PublicHomepageView() {
   const [selectedEvidence, setSelectedEvidence] = useState<PayoutEntry | null>(null)
@@ -114,6 +115,9 @@ export function PublicHomepageView() {
       <section className="max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-6">
         <BonusCalculator />
       </section>
+
+      {/* Vex Missions — learn the terms, earn the rank */}
+      <MissionsPromo />
 
       {/* Slide-over Evidence Drawer */}
       <EvidenceDrawer entry={selectedEvidence} onClose={() => setSelectedEvidence(null)} />

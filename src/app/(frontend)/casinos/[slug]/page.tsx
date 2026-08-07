@@ -15,6 +15,7 @@ import { QualitativeContext } from '@/components/QualitativeContext/QualitativeC
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
 import { traditionalRubric } from '@/rubrics/traditional'
 import { Review3DStampReactor } from '@/components/public/Review3DStampReactor'
+import { MissionBoardCTA } from '@/components/vex/MissionBoardCTA'
 import { VexMissionLayer } from '@/components/vex/VexMissionLayer'
 
 export async function generateStaticParams() {
@@ -116,6 +117,8 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
       </div>
 
       <QualitativeContext note={review.communitySentimentNote} />
+
+      <MissionBoardCTA />
 
       <VexMissionLayer />
     </article>
