@@ -71,3 +71,19 @@ Reasoning, file by file (full detail in `docs/review-handoffs/2026-07-22-platfor
 - **Not yet resolved by this decision:** Score Analyst's two drafts disagree on whether a case with incomplete hands-on scores should proceed with conservative defaults (committed) or hard-block at Editorial (package). Neither policy is currently enforced in code (`STAGE_ENTRY_GATES` checks hands-on/evidence population, not `computedScores` completeness). This is a genuine open policy question for Viktor, not something this reconciliation resolves.
 
 **Execution status: not yet done.** No `docs/review-agents/*.md` file was edited during this reconciliation — editing role-file content is a follow-up implementation task, deliberately kept out of this documentation-only pass.
+
+## 2026-08-07 — Full-codebase audit: S1 answer-key leak confirmed & fix plan approved
+
+A full-codebase audit (reviewer → QA → fix-planner pipeline) found **2 S1, 4 S2, 9 S3** findings; full plan in `docs/review-handoffs/2026-08-07-full-codebase-audit-and-fix-plan.md`.
+
+**Headline S1 (live-verified):** anonymous `GET /api/quests` — Payload's default REST surface — returns mission `steps` including `correctKey`/`bonusSlug`, bypassing the sanitized `/api/gamification/*` endpoints (`sanitizeQuestForClient`). The `quests` collection's `read: authenticatedOrPublished` makes published docs publicly readable. **Fix approved: `read → authenticated` + regression test (FIX-01).** Same-date CHANGELOG entry carries the audit summary.
+
+**Second S1:** `payload.config.ts` falls back to the public `development-secret-key-change-in-production` when `PAYLOAD_SECRET` is unset. **Fix approved: hard-fail outside `NODE_ENV=development` (FIX-02).**
+
+**S2s:** rate limiting on anonymous gamification endpoints (FIX-03); profile row-creation bounds via playerKey policy (FIX-04 — **open decision for Viktor:** strict UUID vs legacy-accept + per-IP cap, recommendation: per-IP cap); "5 required tests" claim partially unbacked — reconcile tests or skill (FIX-05); `clicks`/`clicks/confirm`/`offers?path=` are spec-only, documented as deferred — the "outbound XP only after verified click_id" containment gate is dormant until that ships (FIX-06).
+
+**S3s:** `@types/three` 0.185 vs `three` 0.182 drift, `three` in devDependencies, dual lockfiles, engines Node 18, `.env.example` sync, e2e CI-ability, zinc/brand token unification, counter-reconciliation note.
+
+**Known-good reconfirmed:** idempotency (unique index + fail-closed), daily cap in transaction, anti-cheat step-gating, deny-write ledger access, sanitization, reduced-motion, migration-driven schema, 74 tests, build green with the prebuild guard.
+
+**Pending:** Viktor's green light to execute the fix plan; execution starts with Tranche 0 (both S1s) as one security commit.
