@@ -1,6 +1,17 @@
 'use client'
 
-import React from 'react'
+import { useGSAP } from '@gsap/react'
+import gsap from 'gsap'
+import { ScrollTrigger } from 'gsap/ScrollTrigger'
+import React, { useRef } from 'react'
+
+import { useReducedMotion } from '@/hooks/useReducedMotion'
+
+// Register lazily — ScrollTrigger.register reads window.matchMedia at module
+// scope, which jsdom (vitest) doesn't implement; the browser path is unchanged.
+if (typeof window !== 'undefined' && typeof window.matchMedia === 'function') {
+  gsap.registerPlugin(ScrollTrigger)
+}
 
 export interface PayoutEntry {
   operatorName: string
@@ -41,11 +52,75 @@ const SAMPLE_PAYOUTS: PayoutEntry[] = [
     verificationStatus: 'corroborated',
     evidenceHash: 'SAMPLE-REF-2026-S03',
   },
+  {
+    operatorName: 'Hollowpoint Casino [Sample]',
+    testedTime: 'Illustrative / Not Measured',
+    method: 'Bitcoin Lightning (Sample)',
+    amount: '0.001 BTC (Sample)',
+    testedAt: '2026-07-19',
+    verificationStatus: 'corroborated',
+    evidenceHash: 'SAMPLE-REF-2026-S04',
+  },
+  {
+    operatorName: 'Vantablack Casino [Sample]',
+    testedTime: 'Illustrative / Not Measured',
+    method: 'SEPA Instant (Sample)',
+    amount: '€100.00 (Sample)',
+    testedAt: '2026-07-18',
+    verificationStatus: 'verified',
+    evidenceHash: 'SAMPLE-REF-2026-S05',
+  },
+  {
+    operatorName: 'Ghostline Casino [Sample]',
+    testedTime: 'Illustrative / Not Measured',
+    method: 'Litecoin (Sample)',
+    amount: '$75.00 (Sample)',
+    testedAt: '2026-07-17',
+    verificationStatus: 'verified',
+    evidenceHash: 'SAMPLE-REF-2026-S06',
+  },
 ]
 
 export function LivePayoutLeaderboard({ onSelectEvidence }: { onSelectEvidence?: (entry: PayoutEntry) => void }) {
+  const sectionRef = useRef<HTMLDivElement>(null)
+  const trackRef = useRef<HTMLDivElement>(null)
+  const reducedMotion = useReducedMotion()
+
+  // Desktop-only: pin the section and translate the card track horizontally
+  // as the user scrolls — a gallery walkthrough instead of a static grid.
+  useGSAP(
+    () => {
+      if (reducedMotion) return
+      if (!window.matchMedia('(min-width: 1024px)').matches) return
+
+      const section = sectionRef.current
+      const track = trackRef.current
+      if (!section || !track) return
+
+      const getAmount = () => Math.max(track.scrollWidth - track.clientWidth, 0)
+      if (getAmount() <= 0) return
+
+      gsap.to(track, {
+        x: () => -getAmount(),
+        ease: 'none',
+        scrollTrigger: {
+          trigger: section,
+          start: 'top top',
+          end: () => '+=' + getAmount() * 1.4,
+          pin: true,
+          scrub: 0.6,
+          invalidateOnRefresh: true,
+        },
+      })
+    },
+    { scope: sectionRef },
+  )
+
   return (
-    <div className="bg-zinc-900/80 border border-zinc-800/90 rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-5">
+    <div
+      className="bg-zinc-900/80 border border-zinc-800/90 rounded-2xl p-6 backdrop-blur-xl shadow-xl space-y-5 lg:overflow-hidden"
+      ref={sectionRef}
+    >
       <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-zinc-800">
         <div>
           <div className="flex items-center gap-2">
@@ -63,11 +138,11 @@ export function LivePayoutLeaderboard({ onSelectEvidence }: { onSelectEvidence?:
       </div>
 
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="flex flex-col gap-4 md:grid md:grid-cols-2 lg:flex lg:flex-row lg:overflow-visible" ref={trackRef}>
         {SAMPLE_PAYOUTS.map((entry, idx) => (
           <div
             key={idx}
-            className="bg-zinc-950/90 border border-zinc-800/80 hover:border-amber-500/50 rounded-xl p-4 transition-all hover:shadow-lg space-y-3 group"
+            className="bg-zinc-950/90 border border-zinc-800/80 hover:border-amber-500/50 rounded-xl p-4 transition-all hover:shadow-lg space-y-3 group lg:min-w-[300px]"
           >
             <div className="flex items-center justify-between">
               <span className="text-xs font-bold text-zinc-200 group-hover:text-amber-400 transition-colors">

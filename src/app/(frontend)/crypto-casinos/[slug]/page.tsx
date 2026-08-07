@@ -10,7 +10,7 @@ import { CategoryMarker } from '@/components/CategoryMarker/CategoryMarker'
 import { ComplianceBlock } from '@/components/ComplianceBlock/ComplianceBlock'
 import { IllustrativeBanner } from '@/components/IllustrativeBanner/IllustrativeBanner'
 import { LivePreviewListener } from '@/components/LivePreviewListener'
-import { VerificationSeal } from '@/components/VerificationSeal/VerificationSeal'
+import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
 import { QualitativeContext } from '@/components/QualitativeContext/QualitativeContext'
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
 import { cryptoRubric } from '@/rubrics/crypto'
@@ -49,7 +49,7 @@ export default async function CryptoCasinoReviewPage({ params: paramsPromise }: 
           <h1 className="text-[30px] leading-[1.1] sm:text-[38px] lg:text-[46px]">
             {review.name}
           </h1>
-          <VerificationSeal active size={64} title={`${review.name} — verified score, evidence logged.`} />
+          <MachinedSealLazy size={64} title={`${review.name} — verified score, evidence logged.`} />
         </div>
 
         {typeof review.overallScore === 'number' ? (

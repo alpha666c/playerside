@@ -7,6 +7,9 @@ import { BonusCalculator } from './BonusCalculator'
 import { EvidenceDrawer } from './EvidenceDrawer'
 import { ClaimVsRealityReactor } from './ClaimVsRealityReactor'
 import { VerifiedOperatorGrid } from './VerifiedOperatorGrid'
+import { HeroFieldView } from '@/components/three/HeroFieldView'
+import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
+import { ProtocolScrub } from './ProtocolScrub'
 
 export function PublicHomepageView() {
   const [selectedEvidence, setSelectedEvidence] = useState<PayoutEntry | null>(null)
@@ -22,10 +25,16 @@ export function PublicHomepageView() {
     <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
       {/* Dynamic State-of-the-Art Hero Section */}
       <section className="relative isolate px-4 pt-16 pb-20 sm:px-6 sm:pt-24 sm:pb-28 lg:px-12 overflow-hidden border-b border-zinc-800/80">
+        {/* Living evidence field — WebGL atmosphere (gated, decorative). */}
+        <HeroFieldView />
         {/* Glow Ambient Lights */}
         <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-amber-500/15 via-emerald-500/5 to-transparent blur-[120px] rounded-full"></div>
 
         <div className="max-w-6xl mx-auto space-y-10 relative z-10">
+          {/* Signature machined seal — the one true 3D brand mark (code-split, graceful fallback). */}
+          <div className="flex justify-center">
+            <MachinedSealLazy size={72} title="Playerside verification seal" />
+          </div>
           {/* Top Badge */}
           <div className="flex justify-center">
             <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800/90 text-xs font-mono text-amber-400 backdrop-blur-xl shadow-lg">
@@ -82,6 +91,9 @@ export function PublicHomepageView() {
           </div>
         </div>
       </section>
+
+      {/* The Protocol — pinned scroll-scrubbed walkthrough (desktop) */}
+      <ProtocolScrub />
 
       {/* Feature 1: Verified Operator Grid */}
       <section className="max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-6">

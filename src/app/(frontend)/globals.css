@@ -230,23 +230,9 @@ html[data-theme='light'] {
 }
 
 /*
- * Homepage motion primitives — see brands/01-playerside/design/design-tokens.md
- * "Motion principles": orchestrated, not scattered; prefers-reduced-motion
- * collapses everything to plain opacity fades, never a transform.
+ * Verification Seal stamp-in — used by the flat VerificationSeal and as the
+ * fallback for the 3D MachinedSeal.
  */
-
-/* Ambient grain layer, matches homepage-concept.html's .grain */
-.grain-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2;
-  opacity: 0.05;
-  mix-blend-mode: overlay;
-  pointer-events: none;
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
-}
-
-/* Verification Seal stamp-in */
 @keyframes seal-stamp-in {
   0% {
     opacity: 0;
@@ -283,152 +269,6 @@ html[data-theme='light'] {
   opacity: 1;
 }
 
-/*
- * The Blind — boundary grammar shared by the hero artifact and the Pressure
- * Test. All motion is causal (arrive → struck → sealed) and one-shot; nothing
- * loops. 3D is CSS perspective only — no WebGL anywhere on the page.
- */
-
-.blind-stage {
-  perspective: 1200px;
-}
-
-.blind-plane {
-  transform-style: preserve-3d;
-  transform: rotateY(-6deg) rotateX(3deg);
-  transition: transform 0.3s ease-out;
-}
-
-/* Hero intake lines: settle in from the commercial side, one after another. */
-@keyframes blind-line-in {
-  from {
-    opacity: 0;
-    transform: translateX(28px);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.blind-line[data-animate='true'] {
-  animation: blind-line-in 0.5s ease-out both;
-}
-
-/* Strike-through drawn across a denied figure. Struck by default so
-   reduced-motion and already-settled lines render in the final state. */
-.offer-struck::after {
-  content: '';
-  position: absolute;
-  left: -2px;
-  right: -2px;
-  top: 52%;
-  height: 2px;
-  background: var(--coral);
-  transform-origin: left center;
-}
-
-.offer-struck[data-animate='true']::after {
-  animation: strike-in 0.35s cubic-bezier(0.3, 0.9, 0.4, 1) both;
-  animation-delay: var(--strike-delay, 300ms);
-}
-
-@keyframes strike-in {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
-}
-
-/* Pressure Test: the newest offer arrives with a little depth, then rests. */
-@keyframes offer-in {
-  from {
-    opacity: 0;
-    transform: translateX(36px) rotateY(16deg);
-  }
-  to {
-    opacity: 1;
-    transform: none;
-  }
-}
-
-.offer-line {
-  perspective: 600px;
-}
-
-.offer-line[data-animate='true'] {
-  animation: offer-in 0.45s cubic-bezier(0.2, 0.8, 0.3, 1) both;
-}
-
-/* The wall line inside the Pressure Test: horizontal on mobile, vertical
-   from md up (the dash direction follows). */
-[data-wall-line] {
-  --wall-angle: 90deg;
-}
-
-@media (min-width: 48rem) {
-  [data-wall-line] {
-    --wall-angle: 180deg;
-  }
-}
-
-/* Redacted figure — the value physically cannot render, only its shape. */
-.redaction {
-  display: inline-block;
-  height: 0.85em;
-  border-radius: 2px;
-  background: repeating-linear-gradient(
-    90deg,
-    rgba(243, 238, 232, 0.5) 0 6px,
-    rgba(243, 238, 232, 0.32) 6px 12px
-  );
-}
-
-/* Commission-pressure slider — a native range input, brand-dressed. */
-.pressure-slider {
-  appearance: none;
-  height: 6px;
-  border-radius: 999px;
-  background: var(--dusk-2);
-  cursor: pointer;
-}
-
-.pressure-slider::-webkit-slider-thumb {
-  appearance: none;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--coral);
-  border: 3px solid var(--ink-2);
-  box-shadow: 0 2px 12px rgba(255, 93, 69, 0.4);
-}
-
-.pressure-slider::-moz-range-thumb {
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: var(--coral);
-  border: 3px solid var(--ink-2);
-  box-shadow: 0 2px 12px rgba(255, 93, 69, 0.4);
-}
-
-/* Belt-and-braces safety net on top of the JS-level useReducedMotion checks:
-   collapse any transform-driven motion outright when the OS asks for it. */
-@media (prefers-reduced-motion: reduce) {
-  .blind-plane {
-    transform: none !important;
-    transition: none !important;
-  }
-
-  .blind-line[data-animate='true'],
-  .offer-line[data-animate='true'],
-  .offer-struck[data-animate='true']::after {
-    animation: none !important;
-  }
-}
-
 /* 3D Card Flip & Perspective Utilities */
 .perspective-1000 {
   perspective: 1000px;
@@ -441,5 +281,10 @@ html[data-theme='light'] {
 }
 .rotate-y-180 {
   transform: rotateY(180deg);
+}
+
+/* The Protocol scrub rail starts empty and fills with scroll progress. */
+.protocol-step {
+  will-change: transform, opacity;
 }
 
