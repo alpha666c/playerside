@@ -79,6 +79,10 @@ export interface Config {
     'agent-logs': AgentLog;
     operators: Operator;
     'research-queue': ResearchQueue;
+    quests: Quest;
+    'gamification-profiles': GamificationProfile;
+    'user-quests': UserQuest;
+    'xp-events': XpEvent;
     redirects: Redirect;
     forms: Form;
     'form-submissions': FormSubmission;
@@ -108,6 +112,10 @@ export interface Config {
     'agent-logs': AgentLogsSelect<false> | AgentLogsSelect<true>;
     operators: OperatorsSelect<false> | OperatorsSelect<true>;
     'research-queue': ResearchQueueSelect<false> | ResearchQueueSelect<true>;
+    quests: QuestsSelect<false> | QuestsSelect<true>;
+    'gamification-profiles': GamificationProfilesSelect<false> | GamificationProfilesSelect<true>;
+    'user-quests': UserQuestsSelect<false> | UserQuestsSelect<true>;
+    'xp-events': XpEventsSelect<false> | XpEventsSelect<true>;
     redirects: RedirectsSelect<false> | RedirectsSelect<true>;
     forms: FormsSelect<false> | FormsSelect<true>;
     'form-submissions': FormSubmissionsSelect<false> | FormSubmissionsSelect<true>;
@@ -1657,6 +1665,125 @@ export interface ResearchQueue {
 }
 /**
  * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quests".
+ */
+export interface Quest {
+  id: number;
+  /**
+   * Stable machine id, e.g. bonus_hunter. Unique per mission.
+   */
+  missionId: string;
+  title: string;
+  /**
+   * One-paragraph player-facing brief (vex-canon copy).
+   */
+  brief: string;
+  /**
+   * XP minted once, server-side, on full completion.
+   */
+  rewardXp: number;
+  /**
+   * Where this mission can be offered.
+   */
+  pageTarget: 'casino-review' | 'crypto-review' | 'homepage';
+  /**
+   * Feature flag for this mission (vex_enabled).
+   */
+  enabled?: boolean | null;
+  /**
+   * QuestStep[] JSON — { kind: "quiz", options, correctKey, rgExplain } or { kind: "wagering_math", bonusSlug, depositAmount, options, rgExplain }. Answers are validated by src/gamification/validators.ts.
+   */
+  steps:
+    | {
+        [k: string]: unknown;
+      }
+    | unknown[]
+    | string
+    | number
+    | boolean
+    | null;
+  updatedAt: string;
+  createdAt: string;
+  _status?: ('draft' | 'published') | null;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gamification-profiles".
+ */
+export interface GamificationProfile {
+  id: number;
+  /**
+   * Client-generated anonymous identity (UUID).
+   */
+  playerKey: string;
+  /**
+   * Cached aggregate; source of truth is xp-events (append-only).
+   */
+  totalXp: number;
+  /**
+   * Recomputed from totalXp via xp_required(L) = floor(100*L^1.5).
+   */
+  level: number;
+  /**
+   * Canon ladder title for the current level (vex-canon flavor).
+   */
+  rankTitle?: string | null;
+  completedMissions?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-quests".
+ */
+export interface UserQuest {
+  id: number;
+  /**
+   * Anonymous player identity.
+   */
+  playerKey: string;
+  /**
+   * The mission definition.
+   */
+  quest: number | Quest;
+  status: 'offered' | 'active' | 'completed';
+  /**
+   * Next unanswered step (0-based).
+   */
+  stepIndex?: number | null;
+  /**
+   * Last processed idempotency key (dedup guard).
+   */
+  lastEvidenceId?: string | null;
+  completedAt?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "xp-events".
+ */
+export interface XpEvent {
+  id: number;
+  /**
+   * Anonymous player identity.
+   */
+  playerKey: string;
+  /**
+   * XP minted. NEVER updated after insert.
+   */
+  amount: number;
+  reason: 'mission_completed' | 'badge_granted';
+  quest?: (number | null) | Quest;
+  /**
+   * Idempotency key — (playerKey, evidenceId) must be unique.
+   */
+  evidenceId?: string | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "redirects".
  */
 export interface Redirect {
@@ -1892,6 +2019,22 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'research-queue';
         value: number | ResearchQueue;
+      } | null)
+    | ({
+        relationTo: 'quests';
+        value: number | Quest;
+      } | null)
+    | ({
+        relationTo: 'gamification-profiles';
+        value: number | GamificationProfile;
+      } | null)
+    | ({
+        relationTo: 'user-quests';
+        value: number | UserQuest;
+      } | null)
+    | ({
+        relationTo: 'xp-events';
+        value: number | XpEvent;
       } | null)
     | ({
         relationTo: 'redirects';
@@ -2654,6 +2797,62 @@ export interface ResearchQueueSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "quests_select".
+ */
+export interface QuestsSelect<T extends boolean = true> {
+  missionId?: T;
+  title?: T;
+  brief?: T;
+  rewardXp?: T;
+  pageTarget?: T;
+  enabled?: T;
+  steps?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  _status?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "gamification-profiles_select".
+ */
+export interface GamificationProfilesSelect<T extends boolean = true> {
+  playerKey?: T;
+  totalXp?: T;
+  level?: T;
+  rankTitle?: T;
+  completedMissions?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "user-quests_select".
+ */
+export interface UserQuestsSelect<T extends boolean = true> {
+  playerKey?: T;
+  quest?: T;
+  status?: T;
+  stepIndex?: T;
+  lastEvidenceId?: T;
+  completedAt?: T;
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "xp-events_select".
+ */
+export interface XpEventsSelect<T extends boolean = true> {
+  playerKey?: T;
+  amount?: T;
+  reason?: T;
+  quest?: T;
+  evidenceId?: T;
   updatedAt?: T;
   createdAt?: T;
 }

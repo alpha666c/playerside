@@ -7,15 +7,19 @@ import { fileURLToPath } from 'url'
 import { AgentLogs } from './collections/AgentLogs'
 import { Categories } from './collections/Categories'
 import { CryptoCasinoReviews } from './collections/CryptoCasinoReviews'
+import { GamificationProfiles } from './collections/GamificationProfiles'
 import { Media } from './collections/Media'
 import { NoWageringBonuses } from './collections/NoWageringBonuses'
 import { Operator } from './collections/Operator'
 import { Pages } from './collections/Pages'
 import { Posts } from './collections/Posts'
+import { Quests } from './collections/Quests'
 import { ResearchQueue } from './collections/ResearchQueue'
 import { TraditionalCasinoReviews } from './collections/TraditionalCasinoReviews'
+import { UserQuests } from './collections/UserQuests'
 import { Users } from './collections/Users'
 import { WageringBonuses } from './collections/WageringBonuses'
+import { XpEvents } from './collections/XpEvents'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { Homepage } from './Homepage/config'
@@ -89,6 +93,10 @@ export default buildConfig({
     AgentLogs,
     Operator,
     ResearchQueue,
+    Quests,
+    GamificationProfiles,
+    UserQuests,
+    XpEvents,
   ],
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, Homepage],

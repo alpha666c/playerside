@@ -9,6 +9,7 @@ import * as migration_20260722_025903_harden_governance_phase2a from './20260722
 import * as migration_20260722_025946_remove_chat_history_placeholder from './20260722_025946_remove_chat_history_placeholder';
 import * as migration_20260722_033154_protect_evidence_media from './20260722_033154_protect_evidence_media';
 import * as migration_20260723_002255_add_research_queue_version from './20260723_002255_add_research_queue_version';
+import * as migration_20260806_225622 from './20260806_225622';
 
 export const migrations = [
   {
@@ -64,6 +65,11 @@ export const migrations = [
   {
     up: migration_20260723_002255_add_research_queue_version.up,
     down: migration_20260723_002255_add_research_queue_version.down,
-    name: '20260723_002255_add_research_queue_version'
+    name: '20260723_002255_add_research_queue_version',
+  },
+  {
+    up: migration_20260806_225622.up,
+    down: migration_20260806_225622.down,
+    name: '20260806_225622'
   },
 ];

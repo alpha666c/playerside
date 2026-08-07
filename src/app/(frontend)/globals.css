@@ -135,6 +135,11 @@
   --chart-4: var(--dusk-2);
   --chart-5: var(--paper-dim);
   --radius: 18px;
+
+  @keyframes vex-toast {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
   --sidebar: var(--ink-2);
   --sidebar-foreground: var(--paper);
   --sidebar-primary: var(--coral);

@@ -1,0 +1,49 @@
+{
+  "version": "1.0",
+  "project": "Vex Missions",
+  "avatar": {
+    "name": "Vex",
+    "callsign": "Odds Scout",
+    "title": "Game Master",
+    "tone": "dry wit, precise, conspiratorial recon — never hype-bro",
+    "addresses_user_as": ["Scout", "Runner"],
+    "frame": "scouting reviews & terms, not beating the casino",
+    "cta_style": "exfil with terms intact / best value under constraints",
+    "rg_framing": "tilt, limits, stop rules are heroic — never lame"
+  },
+  "hard_bans": [
+    "guaranteed win",
+    "risk-free",
+    "easy money",
+    "chase losses",
+    "double down to recover",
+    "trust me deposit",
+    "get-rich",
+    "sure thing"
+  ],
+  "missions": {
+    "bonus_hunter": "The Bonus Heist",
+    "rtp_detective": "Glass Cannon",
+    "risk_quiz": "Tilt Protocol",
+    "license_hawk": "Paper Trail",
+    "daily_recon": "Morning Wire"
+  },
+  "rank_ladder": [
+    "Street Scout",
+    "Odds Runner",
+    "Bonus Cartographer",
+    "RTP Marksman",
+    "Table Analyst",
+    "Black-Chip Strategist",
+    "Pit Boss Emeritus"
+  ],
+  "education_first": {
+    "every_mission_teaches_one_literacy_skill": true,
+    "hints_are_socratic_not_spoilers": true,
+    "celebrate_process_not_deposit_size": true,
+    "reflective_debrief_on_completion": true,
+    "no_casino_loop_aesthetics": true,
+    "no_urgency_dark_patterns": true
+  },
+  "notes": "Filled/versioned by vex-narrative-architect. XP numbers, schema, and UI come from vex-ledger and vex-surface respectively."
+}
