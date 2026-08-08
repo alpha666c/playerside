@@ -147,6 +147,41 @@ describe('Vex Missions flows', () => {
     ).rejects.toThrow()
   })
 
+  it('containment: anonymous REST read of quests is denied — no answer-key leak (M1 regression)', async () => {
+    // overrideAccess: false mirrors the anonymous REST surface (/api/quests),
+    // which always evaluates collection access. read: authenticated must deny
+    // public reads of the raw `steps` JSON (correctKey / bonusSlug / rgExplain).
+    // read: authenticated must deny the anonymous read — the local API throws
+    // the same error the REST surface returns as 403.
+    await expect(
+      payload.find({
+        collection: 'quests',
+        limit: 10,
+        overrideAccess: false,
+        draft: false,
+      } as any),
+    ).rejects.toThrow('You are not allowed to perform this action.')
+
+    // The sanitized custom surface still serves published missions — with no
+    // answer-bearing fields anywhere (sanitizeQuestForClient).
+    const scout = 'm1-regression-scout'
+    const missions = await missionsFlow(payload, scout)
+    expect(missions.missions.length).toBeGreaterThan(0)
+    for (const m of missions.missions) {
+      for (const s of m.quest.steps) {
+        expect(s).not.toHaveProperty('correctKey')
+        expect(s).not.toHaveProperty('bonusSlug')
+        expect(s).not.toHaveProperty('rgExplain')
+        expect(s).not.toHaveProperty('hint')
+      }
+    }
+    await payload.delete({
+      collection: 'gamification-profiles',
+      where: { playerKey: { equals: scout } },
+      overrideAccess: true,
+    })
+  })
+
   it('missions board: full roster with per-player status, never leaking answers', async () => {
     const board = 'test-board-0001'
     const id = await questId()

@@ -101,7 +101,22 @@ export default buildConfig({
   cors: [getServerSideURL()].filter(Boolean),
   globals: [Header, Footer, Homepage],
   plugins,
-  secret: process.env.PAYLOAD_SECRET || 'development-secret-key-change-in-production',
+  // FIX-02 (audit 2026-08-07): a hardcoded fallback secret would let anyone
+  // forge admin JWTs in any env that misses PAYLOAD_SECRET. Dev keeps a
+  // fallback so `pnpm dev` boots without ceremony; everything else must fail
+  // loudly at config load instead of silently running with a public secret.
+  secret: (() => {
+    const secret = process.env.PAYLOAD_SECRET
+    if (!secret) {
+      if (process.env.NODE_ENV === 'development') {
+        return 'development-secret-key-change-in-production'
+      }
+      throw new Error(
+        'PAYLOAD_SECRET is required in non-development environments (audit FIX-02, 2026-08-07)',
+      )
+    }
+    return secret
+  })(),
 
   sharp,
   typescript: {

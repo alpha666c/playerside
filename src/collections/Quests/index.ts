@@ -1,7 +1,6 @@
 import type { CollectionConfig } from 'payload'
 
 import { authenticated } from '../../access/authenticated'
-import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 
 /**
  * vex-ledger: mission definitions. The `steps` field holds a JSON array of
@@ -14,7 +13,13 @@ export const Quests: CollectionConfig<'quests'> = {
   access: {
     create: authenticated,
     delete: authenticated,
-    read: authenticatedOrPublished,
+    // REST read is admin-only (FIX-01, audit 2026-08-07): the raw `steps`
+    // JSON contains correctKey / bonusSlug / rgExplain, so a public read of
+    // published docs would leak every mission's answers via Payload's default
+    // /api/quests surface. Public mission data flows ONLY through the
+    // sanitized /api/gamification/* endpoints, which call with
+    // overrideAccess: true and are unaffected by this restriction.
+    read: authenticated,
     update: authenticated,
   },
   admin: {
