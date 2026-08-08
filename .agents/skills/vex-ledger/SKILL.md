@@ -42,19 +42,24 @@ profiles, levels, xp_events, quests, quest_steps, user_quests, badges, user_badg
 
 ## Validator kinds
 
-- casino_filter_match { free_spins_gte, wagering_lte, ... }
-- entity_select { target_game_id }
-- quiz { correct_index | correct_key, rg_explain }
-- license_field_match { expected_license_body }
-- dwell_read { article_id, min_seconds } (server-trusted beacon — gates/qualifies a step, NEVER mints XP alone; must be paired with a comprehension checkpoint to award)
+Implementation status (audit FIX-05, 2026-08-07 — `src/gamification/validators.ts`):
+
+- **IMPLEMENTED:** `quiz` (`validateQuizStep`), `wagering_math` (`validateWageringMathematics` — answer derived from the LIVE bonus doc via `bonusSlug`; this kind is what the Bonus Heist wagering step uses)
+- **PLANNED (future missions — not a bug; no mission uses them yet):** `casino_filter_match`, `entity_select`, `license_field_match`, `dwell_read` (server-trusted beacon — gates/qualifies a step, NEVER mints XP alone; must be paired with a comprehension checkpoint to award)
 
 ## API surface
+
+Implementation status (audit FIX-06, 2026-08-07):
+
+- **IMPLEMENTED:** `POST /api/gamification/quests/start`, `POST /api/gamification/quests/submit`, `GET /api/gamification/me` (accepts `?path=`), `GET /api/gamification/missions` (the missions-board payload; the original `offers?path=` was superseded by `me?path=`)
+- **PLANNED, NOT IMPLEMENTED:** `POST /api/gamification/clicks` and `POST /api/gamification/clicks/confirm`. The containment gate "outbound XP only after verified click_id" is DORMANT until this flow ships — any future outbound-XP work MUST implement the clicks flow first (see `docs/review-system/DECISION-LOG.md` 2026-08-07).
 
 ```
 POST /api/gamification/quests/start
 POST /api/gamification/quests/submit
-GET  /api/gamification/me
-GET  /api/gamification/offers?path=
+GET  /api/gamification/me?path=
+GET  /api/gamification/missions
+# Planned (not implemented):
 POST /api/gamification/clicks        (issue click_id)
 POST /api/gamification/clicks/confirm (postback/internal)
 ```
@@ -86,12 +91,14 @@ get_scout_status, list_missions, start_mission, submit_mission_evidence, get_pag
 
 ## Required tests before merge
 
-- Bonus Heist fails if WR > threshold
-- Glass Cannon fails on wrong game_id
-- Quiz "chase losses" answer grants 0 XP
-- Double submit same evidence_id grants XP once
-- User JWT cannot UPDATE profiles.total_xp
-- Streak freeze grants exactly one protected day, server-verified
+All applicable tests pass in `tests/int/*.spec.ts` (audit FIX-05, 2026-08-07 — 79 green):
+
+- Bonus Heist fails if WR > threshold → `gamification-unit.int.spec.ts` "wagering_math: wrong answer fails and cites the expected value" (35× bonus+deposit on €200 ⇒ €14,000; wrong answer fails, 0 XP)
+- Glass Cannon fails on wrong game_id → "wagering_math: fails closed when mission config drifts from bonus data" + integration "submit: wagering_math fails closed when the bonus doc is missing"
+- Quiz "chase losses" answer grants 0 XP → `gamification-unit.int.spec.ts` "quiz: \"chase losses\" answer style (a) grants 0 XP — pass is never implied"
+- Double submit same evidence_id grants XP once → `gamification.int.spec.ts` "submit: full correct run mints XP exactly once (idempotent evidenceId)"
+- User JWT cannot UPDATE profiles.total_xp → `update: () => false` on all ledger collections + "containment: direct writes without service role are denied"
+- Streak freeze: **NOT IMPLEMENTED yet** (streaks are a future ledger RFC) — do not claim coverage
 
 ## Common mistakes
 
