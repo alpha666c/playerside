@@ -7,7 +7,7 @@ import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { traditionalRubric } from '@/rubrics/traditional'
 import { enforcePublishCompliance } from '../shared/publishGate'
-import { computeOverallScore, reviewCoreFields, scoreFields } from '../shared/reviewFields'
+import { claimsVsRealityFields, computeOverallScore, reviewCoreFields, scoreFields } from '../shared/reviewFields'
 
 /**
  * Traditional Casino reviews — licensed operators, NL/SE/DE/UK only
@@ -92,6 +92,7 @@ export const TraditionalCasinoReviews: CollectionConfig<'traditional-casino-revi
     },
     scoreFields(traditionalRubric),
     ...reviewCoreFields(),
+    claimsVsRealityFields(),
     slugField(),
   ],
   hooks: {

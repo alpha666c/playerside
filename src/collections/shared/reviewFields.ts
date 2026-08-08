@@ -73,6 +73,102 @@ export const computeOverallScore =
     return data
   }
 
+/**
+ * MASTER-BLUEPRINT.md §6 — Claims vs Reality. Claimed/measured pairs for the
+ * four standardized hands-on tests. Both sides of each pair are optional:
+ * an untested field stays NULL and the public page renders "Not yet tested —
+ * pending hands-on verification" instead of a fabricated number (§6: no
+ * guessing, no estimating). The verdict (met / partial / missed) is DERIVED
+ * by src/lib/claimsVsReality.ts — never hand-set, like overallScore.
+ */
+export const claimsVsRealityFields = (): Field => ({
+  name: 'claimsVsReality',
+  type: 'group',
+  label: 'Claims vs reality (blueprint §6)',
+  admin: {
+    description:
+      'What the operator claims vs what our standardized hands-on tests actually measured. Leave measured blank until tested — never estimate.',
+  },
+  fields: [
+    {
+      name: 'withdrawal',
+      type: 'group',
+      label: 'Withdrawal speed',
+      fields: [
+        {
+          name: 'claimedHours',
+          type: 'number',
+          admin: { description: 'Stated processing time, in hours.' },
+          min: 0,
+        },
+        {
+          name: 'measuredHours',
+          type: 'number',
+          admin: { description: 'Actual elapsed time in the standardized withdrawal test, in hours.' },
+          min: 0,
+        },
+      ],
+    },
+    {
+      name: 'support',
+      type: 'group',
+      label: 'Support response (live chat)',
+      fields: [
+        {
+          name: 'claimedMinutes',
+          type: 'number',
+          admin: { description: 'Stated response time, in minutes.' },
+          min: 0,
+        },
+        {
+          name: 'measuredMinutes',
+          type: 'number',
+          admin: { description: 'Time to first HUMAN response in the RG live-chat test, in minutes.' },
+          min: 0,
+        },
+      ],
+    },
+    {
+      name: 'kyc',
+      type: 'group',
+      label: 'KYC turnaround',
+      fields: [
+        {
+          name: 'claimedDays',
+          type: 'number',
+          admin: { description: 'Stated verification time, in days.' },
+          min: 0,
+        },
+        {
+          name: 'measuredDays',
+          type: 'number',
+          admin: { description: 'Actual approval time in the standardized KYC test, in days.' },
+          min: 0,
+        },
+      ],
+    },
+    {
+      name: 'bonus',
+      type: 'group',
+      label: 'Bonus wagering',
+      fields: [
+        {
+          name: 'claimedWager',
+          type: 'number',
+          admin: { description: 'Stated wagering requirement, e.g. 35 for 35×.' },
+          min: 0,
+        },
+        {
+          name: 'measuredWager',
+          type: 'number',
+          admin: { description: 'Actual wagering requirement faced in the standardized bonus test.' },
+          min: 0,
+        },
+      ],
+    },
+  ],
+})
+
 /** Fields every review shares outside the scoring block. */
 export const reviewCoreFields = (): Field[] => [
   {

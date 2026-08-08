@@ -7,7 +7,7 @@ import { authenticated } from '../../access/authenticated'
 import { authenticatedOrPublished } from '../../access/authenticatedOrPublished'
 import { cryptoRubric } from '@/rubrics/crypto'
 import { enforcePublishCompliance } from '../shared/publishGate'
-import { computeOverallScore, reviewCoreFields, scoreFields } from '../shared/reviewFields'
+import { claimsVsRealityFields, computeOverallScore, reviewCoreFields, scoreFields } from '../shared/reviewFields'
 
 /**
  * Crypto Casino reviews — global/offshore operators, explicitly excluded
@@ -78,6 +78,7 @@ export const CryptoCasinoReviews: CollectionConfig<'crypto-casino-reviews'> = {
     },
     scoreFields(cryptoRubric),
     ...reviewCoreFields(),
+    claimsVsRealityFields(),
     slugField(),
   ],
   hooks: {

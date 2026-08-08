@@ -10,6 +10,7 @@ import * as migration_20260722_025946_remove_chat_history_placeholder from './20
 import * as migration_20260722_033154_protect_evidence_media from './20260722_033154_protect_evidence_media';
 import * as migration_20260723_002255_add_research_queue_version from './20260723_002255_add_research_queue_version';
 import * as migration_20260806_225622 from './20260806_225622';
+import * as migration_20260808_add_claims_vs_reality from './20260808_add_claims_vs_reality';
 
 export const migrations = [
   {
@@ -71,5 +72,10 @@ export const migrations = [
     up: migration_20260806_225622.up,
     down: migration_20260806_225622.down,
     name: '20260806_225622'
+  },
+  {
+    up: migration_20260808_add_claims_vs_reality.up,
+    down: migration_20260808_add_claims_vs_reality.down,
+    name: '20260808_add_claims_vs_reality'
   },
 ];

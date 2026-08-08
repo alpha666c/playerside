@@ -15,6 +15,7 @@ import { QualitativeContext } from '@/components/QualitativeContext/QualitativeC
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
 import { cryptoRubric } from '@/rubrics/crypto'
 import { Review3DStampReactor } from '@/components/public/Review3DStampReactor'
+import { ClaimsVsReality } from '@/components/public/ClaimsVsReality'
 import { ReviewToc } from '@/components/public/ReviewToc'
 import { StickyCtaBar } from '@/components/public/StickyCtaBar'
 import { VerdictBox } from '@/components/public/VerdictBox'
@@ -69,6 +70,7 @@ export default async function CryptoCasinoReviewPage({ params: paramsPromise }: 
         <ReviewToc
           items={[
             { id: 'verdict', label: 'Verdict' },
+            { id: 'claims', label: 'Claims vs reality' },
             { id: 'breakdown', label: 'Breakdown' },
             { id: 'compliance', label: 'Compliance' },
           ]}
@@ -85,6 +87,11 @@ export default async function CryptoCasinoReviewPage({ params: paramsPromise }: 
           rubric={cryptoRubric}
           scores={review.scores ?? {}}
         />
+      </div>
+
+      {/* Blueprint §6 — the first scored section, before the category breakdown. */}
+      <div className="container mb-8 max-w-[760px]">
+        <ClaimsVsReality claims={review.claimsVsReality} sample={review.isIllustrativeSample} />
       </div>
 
       {/* Appears once the verdict scrolls out of view (Phase 1 F1.4). */}

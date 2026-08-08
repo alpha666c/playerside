@@ -963,6 +963,51 @@ export interface TraditionalCasinoReview {
    */
   isIllustrativeSample?: boolean | null;
   /**
+   * What the operator claims vs what our standardized hands-on tests actually measured. Leave measured blank until tested — never estimate.
+   */
+  claimsVsReality?: {
+    withdrawal?: {
+      /**
+       * Stated processing time, in hours.
+       */
+      claimedHours?: number | null;
+      /**
+       * Actual elapsed time in the standardized withdrawal test, in hours.
+       */
+      measuredHours?: number | null;
+    };
+    support?: {
+      /**
+       * Stated response time, in minutes.
+       */
+      claimedMinutes?: number | null;
+      /**
+       * Time to first HUMAN response in the RG live-chat test, in minutes.
+       */
+      measuredMinutes?: number | null;
+    };
+    kyc?: {
+      /**
+       * Stated verification time, in days.
+       */
+      claimedDays?: number | null;
+      /**
+       * Actual approval time in the standardized KYC test, in days.
+       */
+      measuredDays?: number | null;
+    };
+    bonus?: {
+      /**
+       * Stated wagering requirement, e.g. 35 for 35×.
+       */
+      claimedWager?: number | null;
+      /**
+       * Actual wagering requirement faced in the standardized bonus test.
+       */
+      measuredWager?: number | null;
+    };
+  };
+  /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
   generateSlug?: boolean | null;
@@ -1154,6 +1199,51 @@ export interface CryptoCasinoReview {
    * Renders a prominent "illustrative sample, not a real operator" banner. Stays on until a page describes a real onboarded operator with real logged evidence.
    */
   isIllustrativeSample?: boolean | null;
+  /**
+   * What the operator claims vs what our standardized hands-on tests actually measured. Leave measured blank until tested — never estimate.
+   */
+  claimsVsReality?: {
+    withdrawal?: {
+      /**
+       * Stated processing time, in hours.
+       */
+      claimedHours?: number | null;
+      /**
+       * Actual elapsed time in the standardized withdrawal test, in hours.
+       */
+      measuredHours?: number | null;
+    };
+    support?: {
+      /**
+       * Stated response time, in minutes.
+       */
+      claimedMinutes?: number | null;
+      /**
+       * Time to first HUMAN response in the RG live-chat test, in minutes.
+       */
+      measuredMinutes?: number | null;
+    };
+    kyc?: {
+      /**
+       * Stated verification time, in days.
+       */
+      claimedDays?: number | null;
+      /**
+       * Actual approval time in the standardized KYC test, in days.
+       */
+      measuredDays?: number | null;
+    };
+    bonus?: {
+      /**
+       * Stated wagering requirement, e.g. 35 for 35×.
+       */
+      claimedWager?: number | null;
+      /**
+       * Actual wagering requirement faced in the standardized bonus test.
+       */
+      measuredWager?: number | null;
+    };
+  };
   /**
    * When enabled, the slug will auto-generate from the title field on save and autosave.
    */
@@ -2496,6 +2586,34 @@ export interface TraditionalCasinoReviewsSelect<T extends boolean = true> {
   overallScore?: T;
   communitySentimentNote?: T;
   isIllustrativeSample?: T;
+  claimsVsReality?:
+    | T
+    | {
+        withdrawal?:
+          | T
+          | {
+              claimedHours?: T;
+              measuredHours?: T;
+            };
+        support?:
+          | T
+          | {
+              claimedMinutes?: T;
+              measuredMinutes?: T;
+            };
+        kyc?:
+          | T
+          | {
+              claimedDays?: T;
+              measuredDays?: T;
+            };
+        bonus?:
+          | T
+          | {
+              claimedWager?: T;
+              measuredWager?: T;
+            };
+      };
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
@@ -2604,6 +2722,34 @@ export interface CryptoCasinoReviewsSelect<T extends boolean = true> {
   overallScore?: T;
   communitySentimentNote?: T;
   isIllustrativeSample?: T;
+  claimsVsReality?:
+    | T
+    | {
+        withdrawal?:
+          | T
+          | {
+              claimedHours?: T;
+              measuredHours?: T;
+            };
+        support?:
+          | T
+          | {
+              claimedMinutes?: T;
+              measuredMinutes?: T;
+            };
+        kyc?:
+          | T
+          | {
+              claimedDays?: T;
+              measuredDays?: T;
+            };
+        bonus?:
+          | T
+          | {
+              claimedWager?: T;
+              measuredWager?: T;
+            };
+      };
   generateSlug?: T;
   slug?: T;
   updatedAt?: T;
