@@ -3,6 +3,7 @@ import { commitTransaction, createLocalReq, killTransaction, type Payload } from
 import { badgesForProfile } from './badges'
 import {
   DAILY_XP_CAP,
+  ONBOARDING_MISSION_ID,
   ensureProfile,
   isValidPlayerKey,
   recomputeLevel,
@@ -10,7 +11,38 @@ import {
   toPublicProfile,
   xpMintedToday,
 } from './service'
-import { validateQuizStep, validateWageringMathStep } from './validators'
+import { dayFromIso, deriveStreakState, FREEZE_GRANT_MISSION_IDS, type StreakState } from './streaks'
+import {
+  validateCasinoFilterMatch,
+  validateLicenseFieldMatch,
+  validateQuizStep,
+  validateWageringMathStep,
+} from './validators'
+
+/**
+ * Phase 4 (F4.2): derives streak state from a player's completed user-quest
+ * rows. A streak day = a calendar day with a completed mission; a Focus Freeze
+ * grant = a completed freeze-grant mission (risk_quiz / Tilt Protocol).
+ */
+const streakFromCompleted = async (
+  payload: Payload,
+  completedDocs: any[],
+): Promise<StreakState> => {
+  const freezeQuests = await payload.find({
+    collection: 'quests',
+    limit: 10,
+    overrideAccess: true,
+    where: { missionId: { in: [...FREEZE_GRANT_MISSION_IDS] } },
+  })
+  const freezeQuestIds = new Set(freezeQuests.docs.map((d) => String(d.id)))
+
+  return deriveStreakState({
+    activityDays: completedDocs.map((d) => dayFromIso(d.completedAt ?? d.updatedAt)),
+    freezeGrantDays: completedDocs
+      .filter((d) => freezeQuestIds.has(String(d.quest?.id ?? d.quest)))
+      .map((d) => dayFromIso(d.completedAt ?? d.updatedAt)),
+  })
+}
 
 /**
  * vex-ledger: the flow layer. API routes are thin adapters over these pure-
@@ -69,11 +101,36 @@ export const meFlow = async (payload: Payload, player: string, path: string, ip?
   })
   const completedQuestIds = new Set(completed.docs.map((d) => String((d.quest as any)?.id ?? d.quest)))
 
+  // Phase 4 (F4.2): streak from the ledger (completed-mission days + freeze grants).
+  const streak = await streakFromCompleted(payload, completed.docs as any[])
+
+  // Phase 4 (F4.1): a fresh scout (0 completed missions) gets the onboarding
+  // mission surfaced regardless of page target — Paper Trail (license_hawk).
+  let onboarding = null
+  if (profile.completedMissions === 0) {
+    const pt = await payload.find({
+      collection: 'quests',
+      limit: 1,
+      overrideAccess: true,
+      where: {
+        and: [
+          { missionId: { equals: ONBOARDING_MISSION_ID } },
+          { enabled: { equals: true } },
+          { _status: { equals: 'published' } },
+        ],
+      },
+    })
+    const paperTrail = pt.docs[0]
+    if (paperTrail && !completedQuestIds.has(String(paperTrail.id))) {
+      onboarding = { mission: sanitizeQuestForClient(paperTrail) }
+    }
+  }
+
   const offers = quests.docs
     .filter((q) => !completedQuestIds.has(String(q.id)))
     .map((q) => sanitizeQuestForClient(q))
 
-  return { profile: toPublicProfile(profile), activeQuest, offers }
+  return { profile: toPublicProfile(profile), activeQuest, offers, streak, onboarding }
 }
 
 /**
@@ -108,9 +165,11 @@ export const missionsFlow = async (payload: Payload, player: string, ip?: string
     where: { playerKey: { equals: player } },
   })
   const stateByQuestId = new Map<number, { status: string; stepIndex: number }>()
+  const completedDocs: any[] = []
   for (const uq of userQuests.docs as any[]) {
     const questId = Number(uq.quest?.id ?? uq.quest)
     stateByQuestId.set(questId, { status: uq.status, stepIndex: uq.stepIndex ?? 0 })
+    if (uq.status === 'completed') completedDocs.push(uq)
   }
 
   const missions = (quests.docs as any[]).map((q) => {
@@ -125,10 +184,14 @@ export const missionsFlow = async (payload: Payload, player: string, ip?: string
     }
   })
 
+  // Phase 4 (F4.2): streak from the ledger, same derivation as meFlow.
+  const streak = await streakFromCompleted(payload, completedDocs)
+
   return {
     profile: toPublicProfile(profile),
     badges: badgesForProfile(profile),
     missions,
+    streak,
   }
 }
 
@@ -253,6 +316,28 @@ export const submitStepFlow = async (payload: Payload, input: SubmitStepInput) =
       },
       String(answerKey ?? ''),
     )
+  } else if (step.kind === 'license_field_match') {
+    // Phase 4 (F4.4): answer computed from the LIVE review's compliance field.
+    const review = await payload.find({
+      collection: 'traditional-casino-reviews',
+      limit: 1,
+      overrideAccess: true,
+      where: { slug: { equals: step.reviewSlug } },
+    })
+    const reviewDoc = review.docs[0]
+    if (!reviewDoc) throw new Error('review data unavailable')
+    stepResult = validateLicenseFieldMatch(step, reviewDoc as any, String(answerKey ?? ''))
+  } else if (step.kind === 'casino_filter_match') {
+    // Phase 4 (F4.4): answer computed from whether the LIVE bonus passes the filter.
+    const bonus = await payload.find({
+      collection: 'wagering-bonuses',
+      limit: 1,
+      overrideAccess: true,
+      where: { slug: { equals: step.bonusSlug } },
+    })
+    const bonusDoc = bonus.docs[0]
+    if (!bonusDoc) throw new Error('bonus data unavailable')
+    stepResult = validateCasinoFilterMatch(step, bonusDoc as any, String(answerKey ?? ''))
   } else {
     throw new Error('unsupported step kind')
   }

@@ -221,3 +221,126 @@ describe('Vex Missions flows', () => {
     await payload.delete({ collection: 'xp-events', where: { playerKey: { equals: board } }, overrideAccess: true })
   })
 })
+
+/**
+ * Phase 4 — onboarding path (F4.1), Control Streaks + Focus Freezes (F4.2),
+ * and the new step kinds (F4.4). Requires the seeded missions
+ * (scripts/seed-gamification.ts).
+ */
+describe('Phase 4: onboarding, streaks, new step kinds', () => {
+  const purge = async (player: string) => {
+    await payload.delete({ collection: 'gamification-profiles', where: { playerKey: { equals: player } }, overrideAccess: true })
+    await payload.delete({ collection: 'user-quests', where: { playerKey: { equals: player } }, overrideAccess: true })
+    await payload.delete({ collection: 'xp-events', where: { playerKey: { equals: player } }, overrideAccess: true })
+  }
+
+  const questIdFor = async (missionId: string) => {
+    const q = await payload.find({ collection: 'quests', limit: 1, overrideAccess: true, where: { missionId: { equals: missionId } } })
+    if (!q.docs[0]) throw new Error(`mission ${missionId} not seeded`)
+    return q.docs[0].id
+  }
+
+  const complete = async (player: string, missionId: string, answers: string[]) => {
+    const id = await questIdFor(missionId)
+    await startQuestFlow(payload, player, id)
+    for (let i = 0; i < answers.length; i++) {
+      const res = await submitStepFlow(payload, {
+        player,
+        questId: id,
+        stepIndex: i,
+        answerKey: answers[i],
+        evidenceId: `ev-p4-${missionId}-${i}-${player}`,
+      })
+      if (!res.stepResult.pass) throw new Error(`step ${i} of ${missionId} failed`)
+    }
+    return id
+  }
+
+  it('F4.1: a fresh scout gets Paper Trail surfaced as onboarding on any path', async () => {
+    const scout = 'p4-onboard-scout'
+    await purge(scout)
+    // Homepage path — pageTarget filter would exclude a casino-review mission
+    // from `offers`, so onboarding must be path-independent.
+    const data = await meFlow(payload, scout, '/')
+    expect(data.profile.completedMissions).toBe(0)
+    expect(data.onboarding?.mission.missionId).toBe('license_hawk')
+    expect(JSON.stringify(data.onboarding)).not.toContain('correctKey')
+    expect(JSON.stringify(data.onboarding)).not.toContain('reviewSlug')
+    await purge(scout)
+  })
+
+  it('F4.2: completing a mission starts the recon streak and clears onboarding', async () => {
+    const scout = 'p4-streak-scout'
+    await purge(scout)
+    const fresh = await meFlow(payload, scout, '/')
+    expect(fresh.streak.current).toBe(0)
+
+    // Paper Trail: quiz (a) then license_field_match (a = KSA).
+    await complete(scout, 'license_hawk', ['a', 'a'])
+
+    const after = await meFlow(payload, scout, '/')
+    expect(after.profile.completedMissions).toBe(1)
+    expect(after.streak.current).toBe(1)
+    expect(after.streak.longest).toBe(1)
+    expect(after.onboarding).toBeNull() // onboarding is only for zero-completion scouts
+    await purge(scout)
+  })
+
+  it('F4.2: completing Tilt Protocol grants exactly one Focus Freeze', async () => {
+    const scout = 'p4-freeze-scout'
+    await purge(scout)
+    // risk_quiz steps are both RG quizzes: (c) then (b).
+    await complete(scout, 'risk_quiz', ['c', 'b'])
+    const data = await meFlow(payload, scout, '/')
+    expect(data.streak.freezesAvailable).toBe(1)
+    expect(data.streak.current).toBe(1) // the completion day is an active day
+    await purge(scout)
+  })
+
+  it('F4.4: Glass Cannon (casino_filter_match) is playable end-to-end', async () => {
+    const scout = 'p4-glass-scout'
+    await purge(scout)
+    // quiz (b = long-run average) then filter: 35x vs <=30x -> fails -> (b).
+    const res = await complete(scout, 'rtp_detective', ['b', 'b'])
+    expect(res).toBeDefined()
+    const board = await missionsFlow(payload, scout)
+    const entry = board.missions.find((m) => m.quest.missionId === 'rtp_detective')
+    expect(entry?.status).toBe('completed')
+    await purge(scout)
+  })
+
+  it('F4.4: license_field_match fails closed when the review doc is missing', async () => {
+    const scout = 'p4-license-fc-scout'
+    await purge(scout)
+    const id = await questIdFor('license_hawk')
+    const q = await payload.findByID({ collection: 'quests', id, overrideAccess: true })
+    const steps = (q.steps as any[]) ?? []
+    const badStep = { ...steps[1], reviewSlug: 'does-not-exist' }
+    await payload.update({ collection: 'quests', id, overrideAccess: true, data: { steps: [steps[0], badStep] } })
+    await startQuestFlow(payload, scout, id)
+    await submitStepFlow(payload, { player: scout, questId: id, stepIndex: 0, answerKey: 'a', evidenceId: 'ev-lf-1' })
+    await expect(
+      submitStepFlow(payload, { player: scout, questId: id, stepIndex: 1, answerKey: 'a', evidenceId: 'ev-lf-2' }),
+    ).rejects.toThrow('review data unavailable')
+    await payload.update({ collection: 'quests', id, overrideAccess: true, data: { steps } })
+    await purge(scout)
+  })
+
+  it('F4.4: new step kinds leak no answer-bearing fields in sanitized output', async () => {
+    const scout = 'p4-sanitize-scout'
+    await purge(scout)
+    const board = await missionsFlow(payload, scout)
+    for (const m of board.missions) {
+      for (const s of m.quest.steps) {
+        expect(Object.keys(s).sort()).toEqual(['kind', 'options', 'prompt'])
+      }
+    }
+    // Field-name leak check on the payload (the word "filter" legitimately
+    // appears in player-facing copy, so only answer-bearing FIELD names count).
+    const blob = JSON.stringify(board.missions)
+    for (const leak of ['correctKey', 'bonusSlug', 'reviewSlug', 'expectedField', 'passKey', 'failKey', 'rgExplain', 'hint']) {
+      expect(blob).not.toContain(leak)
+    }
+    await purge(scout)
+  })
+})

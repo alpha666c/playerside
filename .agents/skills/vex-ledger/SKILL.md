@@ -42,10 +42,10 @@ profiles, levels, xp_events, quests, quest_steps, user_quests, badges, user_badg
 
 ## Validator kinds
 
-Implementation status (audit FIX-05, 2026-08-07 — `src/gamification/validators.ts`):
+Implementation status (audit FIX-05, 2026-08-07 + Phase 4, 2026-08-08 — `src/gamification/validators.ts`):
 
-- **IMPLEMENTED:** `quiz` (`validateQuizStep`), `wagering_math` (`validateWageringMathematics` — answer derived from the LIVE bonus doc via `bonusSlug`; this kind is what the Bonus Heist wagering step uses)
-- **PLANNED (future missions — not a bug; no mission uses them yet):** `casino_filter_match`, `entity_select`, `license_field_match`, `dwell_read` (server-trusted beacon — gates/qualifies a step, NEVER mints XP alone; must be paired with a comprehension checkpoint to award)
+- **IMPLEMENTED:** `quiz` (`validateQuizStep`), `wagering_math` (`validateWageringMathematics` — answer derived from the LIVE bonus doc via `bonusSlug`; this kind is what the Bonus Heist wagering step uses), `license_field_match` (`validateLicenseFieldMatch` — answer derived from the LIVE review's compliance field via `reviewSlug` + `expectedField`; Paper Trail), `casino_filter_match` (`validateCasinoFilterMatch` — answer derived from whether the LIVE bonus doc satisfies a `filter` (e.g. `wageringLte`); correct key = computed passKey/failKey, never stored; Glass Cannon).
+- **PLANNED (future missions — not a bug; no mission uses them yet):** `entity_select`, `dwell_read` (server-trusted beacon — gates/qualifies a step, NEVER mints XP alone; must be paired with a comprehension checkpoint to award).
 
 ## API surface
 
@@ -74,7 +74,7 @@ get_scout_status, list_missions, start_mission, submit_mission_evidence, get_pag
 
 - **Adaptive difficulty / flow channel:** validators can carry a `difficulty_tier`; when a user fails a tier, serve a scaffolding quest instead of a wall. Difficulty calibrates to keep the learner in flow — never gate on unexplained jargon.
 - **Mastery over time-on-page:** XP awards map to verified comprehension (correct clause-math, right license pick), not to minutes spent. `dwell_read` is a beacon, not a mint.
-- **Streaks with freeze:** streak state is server-computed; freeze tokens are earned (server-issued), never sold or anxiety-triggered.
+- **Streaks with freeze (IMPLEMENTED — Phase 4, 2026-08-08, `src/gamification/streaks.ts`):** streak state is server-computed and fully DERIVED from the append-only ledger — a streak day is a calendar day with a completed mission; a Focus Freeze is granted by completing `risk_quiz` (Tilt Protocol, `FREEZE_GRANT_MISSION_IDS`). A freeze protects EXACTLY one missed calendar day, consumed in chronological order, never retroactive. No `streak_day` event and no new table/reason were needed (DECISION-LOG 2026-08-08) — deriving avoids a Postgres enum migration (push is disabled) and mirrors the badge pattern. Freeze tokens are earned, never sold; UI frames it as consistency, not anxiety chains.
 - **XP scales with cognitive complexity:** quick quiz = base XP; full T&C audit that catches a hidden trap = Analyst-tier XP (validator-weighted).
 
 ## Output contract
@@ -98,7 +98,7 @@ All applicable tests pass in `tests/int/*.spec.ts` (audit FIX-05, 2026-08-07 —
 - Quiz "chase losses" answer grants 0 XP → `gamification-unit.int.spec.ts` "quiz: \"chase losses\" answer style (a) grants 0 XP — pass is never implied"
 - Double submit same evidence_id grants XP once → `gamification.int.spec.ts` "submit: full correct run mints XP exactly once (idempotent evidenceId)"
 - User JWT cannot UPDATE profiles.total_xp → `update: () => false` on all ledger collections + "containment: direct writes without service role are denied"
-- Streak freeze: **NOT IMPLEMENTED yet** (streaks are a future ledger RFC) — do not claim coverage
+- Streak freeze: covered by `streaks.int.spec.ts` (F4.2) — "a freeze grants exactly one protected day" (one grant covers one missed day; a second consecutive missed day breaks), one freeze cannot protect two days, two freezes protect two days, grants are never retroactive, longest tracked across breaks
 
 ## Common mistakes
 

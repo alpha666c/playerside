@@ -5,7 +5,7 @@ import { useCallback, useEffect, useState } from 'react'
 import type { BadgeStatus } from '@/gamification/badges'
 import { getPlayerKey } from '@/gamification/playerKey'
 
-import type { Profile, Quest } from './useGamification'
+import type { Profile, Quest, Streak } from './useGamification'
 
 /**
  * vex-surface hook for the /missions board.
@@ -28,6 +28,8 @@ export type MissionsData = {
   profile: Profile
   badges: BadgeStatus[]
   missions: MissionEntry[]
+  /** Phase 4 (F4.2): ledger-derived recon streak. */
+  streak: Streak | null
 }
 
 export const useMissions = () => {

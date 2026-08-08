@@ -19,7 +19,7 @@ type VexDockProps = {
  * Esc closes; focus ring on interactive elements; reduced-motion collapses to static.
  */
 export const VexDock: React.FC<VexDockProps> = ({ gamification }) => {
-  const { profile, activeQuest, offers, loading, error, actions, ui } = gamification
+  const { profile, activeQuest, offers, streak, onboarding, loading, error, actions, ui } = gamification
   const [collapsed, setCollapsed] = useState(true)
   const dockRef = useRef<HTMLDivElement>(null)
 
@@ -59,10 +59,13 @@ export const VexDock: React.FC<VexDockProps> = ({ gamification }) => {
     return () => dock.removeEventListener('keydown', onTab)
   }, [open])
 
-  if (loading) return null
+  // Loading only blanks the dock while we have nothing to show — a background
+  // refresh (e.g. the post-mission streak re-pull) never makes the dock flash.
+  if (loading && !profile) return null
   if (error && !profile) return null // fail soft — the page never breaks for Vex
 
-  const showOffering = !activeQuest && offers.length > 0 && !collapsed
+  const showOnboarding = Boolean(onboarding) && !activeQuest && !collapsed
+  const showOffering = !activeQuest && !onboarding && offers.length > 0 && !collapsed
   const showMission = activeQuest && !collapsed
 
   return (
@@ -74,7 +77,7 @@ export const VexDock: React.FC<VexDockProps> = ({ gamification }) => {
         className="fixed bottom-4 right-4 z-[80] flex w-[min(92vw,360px)] flex-col items-end gap-3"
       >
         {/* Collapsed chip / expanded panel */}
-        {open || showOffering || showMission ? (
+        {open || showOnboarding || showOffering || showMission ? (
           <div className="w-full">
             {showMission ? (
               <MissionHUD
@@ -85,6 +88,45 @@ export const VexDock: React.FC<VexDockProps> = ({ gamification }) => {
                   ui.setDockOpen(false)
                 }}
               />
+            ) : showOnboarding && onboarding ? (
+              /* Phase 4 (F4.1): first mission surfaced for fresh scouts. */
+              <div className="rounded-[var(--radius)] border border-gold/50 bg-dusk/95 p-4 shadow-2xl shadow-black/40 backdrop-blur">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-mono text-[10px] uppercase tracking-[2px] text-gold">
+                    Recommended first mission
+                  </span>
+                  <button
+                    type="button"
+                    onClick={actions.dismissOnboarding}
+                    aria-label="Not now"
+                    className="rounded p-1 text-paper-dim transition-colors hover:text-paper"
+                  >
+                    ✕
+                  </button>
+                </div>
+                <p className="mt-2 text-[15px] font-semibold leading-snug text-paper">
+                  {onboarding.mission.title}
+                </p>
+                <p className="mt-1.5 line-clamp-3 text-[12.5px] leading-relaxed text-paper-dim">
+                  {onboarding.mission.brief}
+                </p>
+                <div className="mt-3 flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => actions.startQuest(onboarding.mission.id)}
+                    className="rounded-full bg-gold px-4 py-1.5 text-[12px] font-medium text-ink transition-transform hover:scale-[1.03] active:scale-[0.98]"
+                  >
+                    Start here — {onboarding.mission.rewardXp} XP
+                  </button>
+                  <button
+                    type="button"
+                    onClick={actions.dismissOnboarding}
+                    className="rounded-full border border-line px-3 py-1.5 text-[11.5px] text-paper-dim transition-colors hover:border-evidence hover:text-paper"
+                  >
+                    Not now
+                  </button>
+                </div>
+              </div>
             ) : showOffering ? (
               <QuestCard quest={offers[0]} onStart={actions.startQuest} onDismiss={actions.dismissOffer} />
             ) : (
@@ -100,6 +142,18 @@ export const VexDock: React.FC<VexDockProps> = ({ gamification }) => {
                       </span>
                     </div>
                     <XpBar totalXp={profile.totalXp} level={profile.level} rankTitle={profile.rankTitle} />
+                    {streak ? (
+                      <div className="mt-3 flex items-center justify-between border-t border-line pt-2.5 font-mono text-[10.5px]">
+                        <span className="text-paper-dim">
+                          {streak.current > 0
+                            ? `🔥 ${streak.current}-day recon streak`
+                            : 'No streak yet — a mission today starts one'}
+                        </span>
+                        {streak.freezesAvailable > 0 ? (
+                          <span className="text-evidence">{streak.freezesAvailable} Focus Freeze</span>
+                        ) : null}
+                      </div>
+                    ) : null}
                   </>
                 ) : null}
               </div>

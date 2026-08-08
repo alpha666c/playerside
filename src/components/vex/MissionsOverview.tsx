@@ -39,8 +39,9 @@ const StatusChip: React.FC<{ status: MissionEntry['status'] }> = ({ status }) =>
 const MissionRow: React.FC<{
   entry: MissionEntry
   starting: boolean
+  recommended?: boolean
   onStart: (id: MissionEntry['quest']['id']) => void
-}> = ({ entry, starting, onStart }) => {
+}> = ({ entry, starting, recommended, onStart }) => {
   const { quest, status, stepIndex, totalSteps } = entry
   const pct = totalSteps > 0 ? Math.round((stepIndex / totalSteps) * 100) : 0
   const busy = starting
@@ -52,6 +53,11 @@ const MissionRow: React.FC<{
           <div className="flex flex-wrap items-center gap-2.5">
             <h3 className="text-[17px] font-semibold leading-tight text-paper sm:text-[19px]">{quest.title}</h3>
             <StatusChip status={status} />
+            {recommended ? (
+              <span className="rounded-full border border-gold/50 bg-gold/10 px-2.5 py-0.5 font-mono text-[10px] uppercase tracking-[1px] text-gold">
+                Recommended first mission
+              </span>
+            ) : null}
           </div>
           <p className="mt-2 max-w-[56ch] text-[13px] leading-relaxed text-paper-dim sm:text-[13.5px]">
             {quest.brief}
@@ -174,6 +180,20 @@ export const MissionsOverview: React.FC = () => {
               </div>
               <div className="mt-3">
                 <XpBar totalXp={data.profile.totalXp} level={data.profile.level} rankTitle={data.profile.rankTitle} />
+                {data.streak ? (
+                  <div className="mt-3 flex items-center justify-between border-t border-line pt-2.5 font-mono text-[10.5px]">
+                    <span className="text-paper-dim">
+                      {data.streak.current > 0
+                        ? `🔥 ${data.streak.current}-day recon streak`
+                        : 'No streak yet — a mission today starts one'}
+                    </span>
+                    <span className="text-paper-dim/80">
+                      {data.streak.freezesAvailable > 0
+                        ? `${data.streak.freezesAvailable} Focus Freeze`
+                        : 'Longest: ' + (data.streak.longest > 0 ? data.streak.longest + ' days' : '—')}
+                    </span>
+                  </div>
+                ) : null}
               </div>
             </div>
             <div className="flex flex-col justify-center gap-2 rounded-[var(--radius)] border border-line bg-dusk/60 p-5 sm:p-6">
@@ -276,6 +296,7 @@ export const MissionsOverview: React.FC = () => {
             <MissionRow
               key={entry.quest.id}
               entry={entry}
+              recommended={(data?.profile.completedMissions ?? 0) === 0 && entry.quest.missionId === 'license_hawk'}
               starting={startingId === entry.quest.id}
               onStart={actions.startMission}
             />

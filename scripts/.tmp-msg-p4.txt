@@ -1,0 +1,37 @@
+feat(gamification): Phase 4 — ledger-derived streaks + first-session onboarding
+
+Streaks (F4.2) — fully DERIVED, zero migration:
+- src/gamification/streaks.ts: deriveStreakState(activityDays, freezeGrantDays,
+  today?) => {current, longest, freezesAvailable, protectedDays, lastActiveDay}.
+  Streak day = UTC calendar day with a completed mission (existing xp_events
+  ledger, reason untouched). No new event reason, no new table, no migration.
+  Walk covers full days through yesterday; idle today never breaks; a freeze
+  (consumed chronologically, sortedGrantDays preserves same-day token counts)
+  protects exactly one missed day, never retroactive. Mirrors the badges
+  ledger->state pattern; replayable + auditable from the same rows.
+
+Onboarding (F4.1) — server-computed first-session mission path:
+- meFlow derives onboarding from completion history: unstarted -> paper_trail,
+  started -> that mission, complete -> done. Non-blocking dock card, explicit
+  dismiss, no hard gates. useGamification/useMissions contracts extended.
+
+Validators (F4.4) — two new kinds, model-opaque:
+- license_field_match (answer from the LIVE review compliance field) and
+  casino_filter_match (operator attributes from the linked review doc).
+  submitStepFlow dispatches them; unknown kinds reject (no silent XP mint).
+
+Seed + UI:
+- seed-gamification.ts: + Paper Trail / Glass Cannon / Tilt Protocol (freeze
+  grant mission) with overrideAccess for the post-FIX-01 Quests.read lookup.
+- VexDock streak chip + onboarding card + softer loading gate (post-mission
+  re-pull no longer blanks the dock); MissionsOverview streak card +
+  Recommended badge. vex-ledger SKILL.md updated (RFC status).
+
+Tests + gates: 125/125 (+29: streaks suite incl. freeze-protects-one-day +
+two-freeze token case, validator units, flow onboarding/streak/freeze/leak),
+typecheck + lint clean, build ok. Full loop live-verified (onboarding ->
+Paper Trail -> streak day 1 -> Tilt Protocol -> freezesAvailable 1).
+
+Docs: DECISION-LOG + CHANGELOG entries for 2026-08-08 (incl. accepted S3
+notes: UTC-calendar days, freeze self-protect edge, longest includes
+protected days). Reviewer pass: no S0-S2; noted items documented.

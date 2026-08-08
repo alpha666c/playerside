@@ -1,7 +1,14 @@
 import { describe, it, expect } from 'vitest'
 
 import { cumulativeXpForLevel, levelFromXp, progressWithinLevel, rankTitleForLevel, xpRequiredForLevel } from '@/gamification/curve'
-import { requiredTurnover, validateQuizStep, validateWageringMathStep, parseLabelAsNumber } from '@/gamification/validators'
+import {
+  parseLabelAsNumber,
+  requiredTurnover,
+  validateCasinoFilterMatch,
+  validateLicenseFieldMatch,
+  validateQuizStep,
+  validateWageringMathStep,
+} from '@/gamification/validators'
 
 describe('vex-ledger: XP curve', () => {
   it('xp_required(L) = floor(100 * L^1.5)', () => {
@@ -106,5 +113,106 @@ describe('vex-ledger: validators', () => {
     expect(parseLabelAsNumber('€14,000')).toBe(14000)
     expect(parseLabelAsNumber('$7,000')).toBe(7000)
     expect(parseLabelAsNumber('14000')).toBe(14000)
+  })
+})
+
+describe('vex-ledger: license_field_match validator (Phase 4 F4.4)', () => {
+  const step = {
+    kind: 'license_field_match' as const,
+    prompt: 'Who issued the licence?',
+    reviewSlug: 'aurora-bay-casino',
+    expectedField: 'licenseAuthority' as const,
+    options: [
+      { key: 'a', label: 'Kansspelautoriteit (KSA)' },
+      { key: 'b', label: 'UK Gambling Commission' },
+      { key: 'c', label: 'Spelinspektionen' },
+    ],
+    rgExplain: 'Check the licence line.',
+  }
+  const review = { compliance: { licenseAuthority: 'KSA', licenseNumber: 'SAMPLE-ABC' } }
+
+  it('passes when the answer matches the LIVE review compliance field', () => {
+    const ok = validateLicenseFieldMatch(step, review, 'a')
+    if (!ok.pass) throw new Error('expected pass')
+    expect(ok.correctValue).toBe('KSA')
+  })
+
+  it('fails on a wrong answer with the teaching beat', () => {
+    const fail = validateLicenseFieldMatch(step, review, 'b')
+    if (fail.pass) throw new Error('expected failure')
+    expect(fail.rgExplain).toBe('Check the licence line.')
+  })
+
+  it('fails closed when the review doc is missing — never mints', () => {
+    expect(validateLicenseFieldMatch(step, null, 'a').pass).toBe(false)
+    expect(validateLicenseFieldMatch(step, undefined, 'a').pass).toBe(false)
+  })
+
+  it('fails closed when the expected field is absent', () => {
+    const empty = { compliance: {} }
+    expect(validateLicenseFieldMatch(step, empty, 'a').pass).toBe(false)
+  })
+
+  it('matches licenseNumber fields too (label contains the number)', () => {
+    const numStep = {
+      ...step,
+      expectedField: 'licenseNumber' as const,
+      options: [
+        { key: 'a', label: 'SAMPLE-ABC (shown on the review)' },
+        { key: 'b', label: 'SAMPLE-XYZ' },
+      ],
+    }
+    const ok = validateLicenseFieldMatch(numStep, review, 'a')
+    if (!ok.pass) throw new Error('expected pass')
+    expect(ok.correctValue).toBe('SAMPLE-ABC')
+  })
+
+  it('normalizes labels and values (case + punctuation-insensitive)', () => {
+    const spaced = { ...step, options: [{ key: 'a', label: 'KSA — the Dutch regulator' }] }
+    expect(validateLicenseFieldMatch(spaced, review, 'a').pass).toBe(true)
+  })
+})
+
+describe('vex-ledger: casino_filter_match validator (Phase 4 F4.4)', () => {
+  const step = {
+    kind: 'casino_filter_match' as const,
+    prompt: 'Passes a 30× ceiling?',
+    bonusSlug: 'aurora-bay-100-match',
+    filter: { wageringLte: 30 },
+    passKey: 'a',
+    failKey: 'b',
+    options: [
+      { key: 'a', label: 'Passes the filter' },
+      { key: 'b', label: 'Fails the filter' },
+    ],
+    rgExplain: 'Recheck the multiplier.',
+  }
+
+  it('Glass Cannon: 35× fails a wagering ≤ 30× filter (correctKey = failKey)', () => {
+    const ok = validateCasinoFilterMatch(step, { wageringMultiplier: 35 }, 'b')
+    if (!ok.pass) throw new Error('expected pass')
+    expect(ok.correctValue).toBe('fail')
+    // The 'passes' answer must be wrong here.
+    expect(validateCasinoFilterMatch(step, { wageringMultiplier: 35 }, 'a').pass).toBe(false)
+  })
+
+  it('passes the filter when the multiplier is under the ceiling', () => {
+    const ok = validateCasinoFilterMatch(step, { wageringMultiplier: 25 }, 'a')
+    if (!ok.pass) throw new Error('expected pass')
+    expect(ok.correctValue).toBe('pass')
+  })
+
+  it('boundary: a multiplier exactly at the ceiling passes', () => {
+    expect(validateCasinoFilterMatch(step, { wageringMultiplier: 30 }, 'a').pass).toBe(true)
+  })
+
+  it('fails closed when the bonus doc is missing', () => {
+    expect(validateCasinoFilterMatch(step, null, 'a').pass).toBe(false)
+    expect(validateCasinoFilterMatch(step, undefined, 'a').pass).toBe(false)
+  })
+
+  it('fails closed when the filter carries no criteria', () => {
+    const empty = { ...step, filter: {} }
+    expect(validateCasinoFilterMatch(empty, { wageringMultiplier: 25 }, 'a').pass).toBe(false)
   })
 })

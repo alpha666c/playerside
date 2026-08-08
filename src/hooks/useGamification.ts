@@ -45,6 +45,18 @@ export type ActiveQuest = {
   quest: Quest
 }
 
+/** Phase 4 (F4.2): ledger-derived streak state — server is the source of truth. */
+export type Streak = {
+  current: number
+  longest: number
+  freezesAvailable: number
+  protectedDays: number
+  lastActiveDay: string | null
+}
+
+/** Phase 4 (F4.1): the recommended first mission for a fresh scout. */
+export type Onboarding = { mission: Quest } | null
+
 export type QuestState = {
   stepIndex: number
   status: 'active' | 'completed'
@@ -60,6 +72,9 @@ export const useGamification = () => {
   const [activeQuest, setActiveQuest] = useState<ActiveQuest | null>(null)
   const [offers, setOffers] = useState<Quest[]>([])
   const [offersDismissed, setOffersDismissed] = useState(false)
+  const [streak, setStreak] = useState<Streak | null>(null)
+  const [onboarding, setOnboarding] = useState<Onboarding>(null)
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [dockOpen, setDockOpen] = useState(false)
@@ -80,6 +95,9 @@ export const useGamification = () => {
       setProfile(data.profile)
       setActiveQuest(data.activeQuest)
       setOffers(data.offers ?? [])
+      setStreak(data.streak ?? null)
+      setOnboarding(data.onboarding ?? null)
+      if (data.onboarding == null) setOnboardingDismissed(false)
     } catch (e) {
       setError(e instanceof Error ? e.message : 'gamification unavailable')
       // Fail soft — the review page must never break because Vex is down.
@@ -147,13 +165,15 @@ export const useGamification = () => {
           setActiveQuest((q) => (q ? { ...q, stepIndex: data.questState.stepIndex } : q))
           const xp = data.stepResult?.xpAwarded ?? 0
           if (xp > 0) setToast({ title: activeQuest.quest.title, xp })
+          // Phase 4 (F4.2): re-pull /me so the streak + onboarding reflect the ledger.
+          refresh()
         } else {
           setActiveQuest((q) => (q ? { ...q, stepIndex: data.questState.stepIndex } : q))
         }
       }
       return data.stepResult ?? null
     },
-    [playerKey, activeQuest],
+    [playerKey, activeQuest, refresh],
   )
 
   const dismissOffer = useCallback(() => {
@@ -172,9 +192,11 @@ export const useGamification = () => {
     profile,
     activeQuest,
     offers: offersDismissed ? [] : offers,
+    streak,
+    onboarding: onboardingDismissed ? null : onboarding,
     loading,
     error,
-    actions: { refresh, startQuest, submitEvidence, dismissOffer },
+    actions: { refresh, startQuest, submitEvidence, dismissOffer, dismissOnboarding: () => setOnboardingDismissed(true) },
     ui: { dockOpen, setDockOpen, toast },
   }
 }

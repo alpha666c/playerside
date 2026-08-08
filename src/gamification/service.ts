@@ -7,6 +7,9 @@ import { profileCreationAllowed } from './rateLimit'
 export const DAILY_XP_CAP =
   Number(process.env.GAMIFICATION_DAILY_XP_CAP) || 200
 
+/** Phase 4 (F4.1): the canon onboarding mission — license_hawk = "Paper Trail". */
+export const ONBOARDING_MISSION_ID = 'license_hawk'
+
 export const isValidPlayerKey = (key: unknown): key is string =>
   typeof key === 'string' && /^[a-zA-Z0-9-]{8,64}$/.test(key)
 
