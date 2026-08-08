@@ -36,9 +36,23 @@ export default buildConfig({
       // The `BeforeLogin` component renders a message that you see while logging into your admin panel.
       // Feel free to delete this at any time. Simply remove the line below.
       beforeLogin: ['@/components/BeforeLogin'],
-      // The `BeforeDashboard` component renders the 'welcome' block that you see after logging into your admin panel.
-      // Feel free to delete this at any time. Simply remove the line below.
+      // Phase 5: the dashboard home is now an operations summary (the template
+      // 'welcome + seed' block was Payload-template boilerplate).
       beforeDashboard: ['@/components/BeforeDashboard'],
+      views: {
+        // Phase 5: read-only Review Intelligence System pipeline board.
+        pipeline: {
+          Component: '@/components/admin/PipelineView',
+          exact: true,
+          path: '/pipeline',
+        },
+        // Phase 5: read-only mission roster / vex-ledger audit surface.
+        gamification: {
+          Component: '@/components/admin/GamificationView',
+          exact: true,
+          path: '/gamification',
+        },
+      },
     },
     importMap: {
       baseDir: path.resolve(dirname),
