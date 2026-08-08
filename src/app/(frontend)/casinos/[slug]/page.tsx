@@ -4,6 +4,7 @@ import configPromise from '@payload-config'
 import { draftMode } from 'next/headers'
 import { notFound } from 'next/navigation'
 import { getPayload } from 'payload'
+import Link from 'next/link'
 import React, { cache } from 'react'
 
 import { CategoryMarker } from '@/components/CategoryMarker/CategoryMarker'
@@ -21,6 +22,8 @@ import { StickyCtaBar } from '@/components/public/StickyCtaBar'
 import { VerdictBox } from '@/components/public/VerdictBox'
 import { MissionBoardCTA } from '@/components/vex/MissionBoardCTA'
 import { VexMissionLayer } from '@/components/vex/VexMissionLayer'
+import { RelatedBonuses } from '@/components/public/RelatedBonuses'
+import { marketBySlug } from '@/lib/marketArchives'
 
 export async function generateStaticParams() {
   const payload = await getPayload({ config: configPromise })
@@ -44,9 +47,11 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
 
   if (!review) return notFound()
 
-  // Phase 1 (F1.5): the operator's exact wagering terms, straight from the
-  // bonus collection (bonus.operator is a relationship to this review).
-  const bonus = await queryBonusForOperator(review.id)
+  // Phase 1 (F1.5) + Phase 2 (F2.3): one operator query feeds both the
+  // wagering calculator and the related-bonuses widget (F2.3 internal
+  // linking loop — bonus.operator is a relationship to this review).
+  const { wageringBonus, relatedBonuses } = await queryBonusesForOperator(review.id)
+  const bonus = wageringBonus
 
   return (
     <article className="pb-24 pt-16 sm:pt-20">
@@ -70,6 +75,24 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
           </div>
         ) : null}
         <p className="mt-4 text-base text-paper-dim sm:text-lg">{review.summary}</p>
+        {review.markets && review.markets.length > 0 ? (
+          <p className="mt-4 mb-0 flex flex-wrap items-center gap-2 font-mono text-[12px] text-paper-dim">
+            <span className="uppercase tracking-[1.5px]">Licensed in</span>
+            {review.markets.map((market) => {
+              const meta = marketBySlug(market)
+              if (!meta) return null
+              return (
+                <Link
+                  className="rounded-full border border-line px-3 py-2 text-paper transition-colors duration-200 hover:border-evidence hover:text-evidence"
+                  href={`/markets/${market}`}
+                  key={market}
+                >
+                  {meta.label}
+                </Link>
+              )
+            })}
+          </p>
+        ) : null}
       </div>
 
       <div className="container mb-8 max-w-[760px]">
@@ -78,6 +101,7 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
             { id: 'verdict', label: 'Verdict' },
             { id: 'breakdown', label: 'Breakdown' },
             ...(bonus ? [{ id: 'bonuses', label: 'Bonus terms' }] : []),
+            ...(relatedBonuses.length > 0 ? [{ id: 'bonus-pages', label: 'Bonus pages' }] : []),
             { id: 'compliance', label: 'Compliance' },
           ]}
         />
@@ -169,6 +193,8 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
 
       <QualitativeContext note={review.communitySentimentNote} />
 
+      <RelatedBonuses bonuses={relatedBonuses} />
+
       <MissionBoardCTA />
 
       <VexMissionLayer />
@@ -202,18 +228,51 @@ const queryReviewBySlug = cache(async (slug: string) => {
   return result.docs?.[0] || null
 })
 
-/** Phase 1 (F1.5): first published wagering bonus tied to this operator review. */
-const queryBonusForOperator = cache(async (operatorId: number | string) => {
+/**
+ * Phase 1 (F1.5) + Phase 2 (F2.3): all published bonus pages tied to this
+ * operator review — the first wagering bonus powers the calculator, and the
+ * full set feeds the related-bonuses widget (internal-linking loop).
+ */
+const queryBonusesForOperator = cache(async (operatorId: number | string) => {
   const payload = await getPayload({ config: configPromise })
-  const result = await payload.find({
-    collection: 'wagering-bonuses',
-    draft: false,
-    limit: 1,
-    overrideAccess: false,
-    pagination: false,
-    where: { operator: { equals: operatorId } },
-  })
-  return result.docs?.[0] ?? null
+  const [wagering, noWagering] = await Promise.all([
+    payload.find({
+      collection: 'wagering-bonuses',
+      draft: false,
+      limit: 20,
+      overrideAccess: false,
+      pagination: false,
+      where: { operator: { equals: operatorId } },
+    }),
+    payload.find({
+      collection: 'no-wagering-bonuses',
+      draft: false,
+      limit: 20,
+      overrideAccess: false,
+      pagination: false,
+      where: { operator: { equals: operatorId } },
+    }),
+  ])
+
+  const wageringBonus = wagering.docs[0] ?? null
+  // Reviewer pass (2026-08-08): the featured calculator bonus is already
+  // displayed above — don't repeat it in the related-bonuses widget.
+  const relatedBonuses = [
+    ...wagering.docs.slice(1).map((d) => ({
+      kind: 'wagering' as const,
+      slug: d.slug as string,
+      title: d.title,
+      amount: null as string | null,
+    })),
+    ...noWagering.docs.map((d) => ({
+      kind: 'no-wagering' as const,
+      slug: d.slug as string,
+      title: d.title,
+      amount: (d as { bonusAmount?: string | null }).bonusAmount ?? null,
+    })),
+  ]
+
+  return { wageringBonus, relatedBonuses }
 })
 
 

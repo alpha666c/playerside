@@ -18,7 +18,7 @@ export interface OperatorCardData {
 const SAMPLE_OPERATORS: OperatorCardData[] = [
   {
     name: 'Aurora Bay Casino [Sample]',
-    slug: 'aurora-bay',
+    slug: 'aurora-bay-casino',
     category: 'traditional',
     score: 8.6,
     payoutSpeed: 'Illustrative / Not Measured',
@@ -29,7 +29,7 @@ const SAMPLE_OPERATORS: OperatorCardData[] = [
   },
   {
     name: 'Northlight Casino [Sample]',
-    slug: 'northlight',
+    slug: 'northlight-casino',
     category: 'traditional',
     score: 8.4,
     payoutSpeed: 'Illustrative / Not Measured',
@@ -38,15 +38,19 @@ const SAMPLE_OPERATORS: OperatorCardData[] = [
     highlights: ['Sample Regulatory Record', 'Illustrative Score', 'Evidence Architecture'],
     evidenceHash: 'SAMPLE-REF-2026-S02',
   },
+  // Phase 2 drive-by (2026-08-08): the published corpus is currently three
+  // traditional reviews (ferrous is SE-licensed, not crypto — no crypto
+  // reviews are published yet), so the demo cards point at real routes
+  // instead of pre-rename slugs that 404'd.
   {
     name: 'Ferrous Casino [Sample]',
-    slug: 'ferrous',
-    category: 'crypto',
+    slug: 'ferrous-casino',
+    category: 'traditional',
     score: 8.8,
     payoutSpeed: 'Illustrative / Not Measured',
-    license: 'Curaçao eGaming (Sample)',
-    welcomeBonus: '1 BTC (Sample Offer)',
-    highlights: ['Sample Provably Fair', 'Illustrative Score', 'Offshore Category Spec'],
+    license: 'Spelinspektionen (Sample)',
+    welcomeBonus: '200 Free Spins (Sample Offer)',
+    highlights: ['Sample Regulatory Record', 'Illustrative Score', 'Evidence Architecture'],
     evidenceHash: 'SAMPLE-REF-2026-S03',
   },
 ]

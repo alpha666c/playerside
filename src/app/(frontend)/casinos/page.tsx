@@ -7,6 +7,7 @@ import React from 'react'
 
 import { CategoryMarker } from '@/components/CategoryMarker/CategoryMarker'
 import { ReviewListingCard } from '@/components/ReviewListingCard/ReviewListingCard'
+import { marketArchives } from '@/lib/marketArchives'
 
 export const revalidate = 600
 
@@ -39,6 +40,20 @@ export default async function CasinosPage() {
           </Link>
           .
         </p>
+      </div>
+
+      <div className="container mb-10">
+        <div className="flex flex-wrap gap-2">
+          {marketArchives.map((market) => (
+            <Link
+              className="rounded-full border border-line px-3.5 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+              href={`/markets/${market.slug}`}
+              key={market.slug}
+            >
+              {market.label} licensed
+            </Link>
+          ))}
+        </div>
       </div>
 
       <div className="container">

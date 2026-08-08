@@ -17,7 +17,8 @@ export const Header: GlobalConfig = {
           appearances: false,
         }),
       ],
-      maxRows: 6,
+      maxRows: 7,
+      // Phase 2 (F2.4): 7 items — added "Best of" -> /best-casinos (plan: <=7 top-level).
       admin: {
         initCollapsed: true,
         components: {

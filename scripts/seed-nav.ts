@@ -20,18 +20,25 @@ loadEnv({ path: path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../.
 const { getPayload } = await import('payload')
 const { default: configPromise } = await import('../src/payload.config')
 
+// Phase 2 (F2.1/F2.4): added "Best of" -> /best-casinos (7 items, within the
+// <=7 top-level limit; market categories stay under /casinos, not nav).
 const navItems = [
   { link: { type: 'custom' as const, label: 'How we grade', url: '/#method' } },
   { link: { type: 'custom' as const, label: 'The wall', url: '/#wall' } },
   { link: { type: 'custom' as const, label: 'Casino reviews', url: '/casinos' } },
   { link: { type: 'custom' as const, label: 'Crypto reviews', url: '/crypto-casinos' } },
   { link: { type: 'custom' as const, label: 'Bonuses', url: '/bonuses' } },
+  { link: { type: 'custom' as const, label: 'Best of', url: '/best-casinos' } },
   { link: { type: 'custom' as const, label: 'Missions', url: '/missions' } },
 ]
 
 const run = async () => {
   const payload = await getPayload({ config: configPromise })
 
+  // Revalidation stays disabled: in Next 16 both revalidateTag and
+  // revalidatePath are request-scoped and throw "static generation store
+  // missing" outside one. After seeding, bust the running server's cache by
+  // clearing .next/cache or touching the global in the admin panel.
   await payload.updateGlobal({
     slug: 'header',
     data: { navItems },

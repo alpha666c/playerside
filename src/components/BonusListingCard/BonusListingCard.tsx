@@ -7,12 +7,18 @@ export const BonusListingCard: React.FC<{
   operatorName?: string
   summary?: string | null
   terms: string
+  badge?: string
   isIllustrativeSample?: boolean | null
-}> = ({ href, title, operatorName, summary, terms, isIllustrativeSample }) => (
+}> = ({ href, title, operatorName, summary, terms, badge, isIllustrativeSample }) => (
   <Link
     className="block rounded-[var(--radius)] border border-line bg-dusk p-6 transition-colors duration-200 hover:border-gold/50 sm:p-[26px]"
     href={href}
   >
+    {badge ? (
+      <span className="mb-3 inline-block rounded-full border border-gold/40 bg-gold/10 px-2.5 py-1 font-mono text-[10.5px] uppercase tracking-[1px] text-gold">
+        {badge}
+      </span>
+    ) : null}
     {operatorName ? (
       <p className="mb-1.5 font-mono text-[10.5px] uppercase tracking-[1.5px] text-paper-dim">
         {operatorName}

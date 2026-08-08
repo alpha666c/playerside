@@ -28,6 +28,20 @@ export default async function NoWageringBonusesPage() {
           No wagering requirement doesn&rsquo;t mean no terms. Every card here states exact
           eligibility, expiry, and any conditions that still apply before you can withdraw.
         </p>
+        <div className="mt-6 grid gap-3 rounded-[var(--radius)] border border-line bg-dusk p-5 font-mono text-[12px] sm:grid-cols-3 sm:p-6">
+          <p className="mb-0">
+            <span className="block text-[10px] uppercase tracking-[1.5px] text-paper-dim/70">Wagering</span>
+            <span className="text-lg text-gold">0×</span>
+          </p>
+          <p className="mb-0">
+            <span className="block text-[10px] uppercase tracking-[1.5px] text-paper-dim/70">Max withdrawal</span>
+            <span className="text-paper">Stated on every card</span>
+          </p>
+          <p className="mb-0">
+            <span className="block text-[10px] uppercase tracking-[1.5px] text-paper-dim/70">Conditions</span>
+            <span className="text-paper">Eligibility &amp; expiry, exact</span>
+          </p>
+        </div>
       </div>
 
       <div className="container">
@@ -37,6 +51,7 @@ export default async function NoWageringBonusesPage() {
           <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
             {bonuses.docs.map((bonus) => (
               <BonusListingCard
+                badge="0× wagering requirement"
                 href={`/bonuses/no-wagering/${bonus.slug}`}
                 isIllustrativeSample={bonus.isIllustrativeSample}
                 key={bonus.id}

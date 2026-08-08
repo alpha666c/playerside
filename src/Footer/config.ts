@@ -17,7 +17,8 @@ export const Footer: GlobalConfig = {
           appearances: false,
         }),
       ],
-      maxRows: 6,
+      // Phase 2 (F2.4): mirrors Header — 7 items (plan: <=7 top-level).
+      maxRows: 7,
       admin: {
         initCollapsed: true,
         components: {
