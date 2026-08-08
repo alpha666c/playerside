@@ -33,11 +33,21 @@ export const StickyCtaBar: React.FC<{
     <>
       <div aria-hidden="true" ref={sentinelRef} />
       <div
-        aria-hidden={!visible}
-        className="fixed bottom-3 left-0 right-16 z-40 flex justify-center"
-        style={{ opacity: visible ? 1 : 0, pointerEvents: visible ? 'auto' : 'none', transform: visible ? 'translateY(0)' : 'translateY(10px)', transition: 'opacity 250ms ease, transform 250ms ease' }}
+        // Hidden state: `visibility:hidden` (not just opacity:0) removes the
+        // bar from the keyboard tab order, the a11y tree AND pointer events —
+        // otherwise its links stay focusable while invisible (a11y S2 found
+        // in review pass). Visibility is IN the transition list, and CSS
+        // discrete transitions keep it 'visible' until the 250ms fade-out
+        // finishes, then flip to hidden — so both directions animate.
+        className="fixed bottom-3 left-0 right-24 z-40 flex justify-center"
+        style={{
+          opacity: visible ? 1 : 0,
+          visibility: visible ? 'visible' : 'hidden',
+          transform: visible ? 'translateY(0)' : 'translateY(10px)',
+          transition: 'opacity 250ms ease, transform 250ms ease, visibility 250ms',
+        }}
       >
-        <div className="flex w-full max-w-md items-center justify-between gap-3 rounded-xl border border-line bg-ink-2/95 px-4 py-2.5 shadow-2xl backdrop-blur-xl">
+        <div className="flex w-full max-w-md items-center justify-between gap-3 rounded-xl border border-line bg-ink-2/95 px-4 py-2 shadow-2xl backdrop-blur-xl">
           <div className="min-w-0">
             <p className="truncate text-[13px] font-semibold text-paper">{operatorName}</p>
             {typeof overallScore === 'number' ? (
@@ -46,20 +56,20 @@ export const StickyCtaBar: React.FC<{
           </div>
           <div className="flex shrink-0 items-center gap-2">
             <a
-              className="rounded-lg border border-line px-3 py-1.5 text-[11.5px] font-semibold text-paper-dim transition-colors hover:border-evidence/50 hover:text-paper"
+              className="rounded-lg border border-line px-3 py-2 text-[11.5px] font-semibold text-paper-dim transition-colors hover:border-evidence/50 hover:text-paper"
               href="#verdict"
             >
               Verdict
             </a>
             <a
-              className="rounded-lg border border-line px-3 py-1.5 text-[11.5px] font-semibold text-paper-dim transition-colors hover:border-evidence/50 hover:text-paper"
+              className="rounded-lg border border-line px-3 py-2 text-[11.5px] font-semibold text-paper-dim transition-colors hover:border-evidence/50 hover:text-paper"
               href="#breakdown"
             >
               Breakdown
             </a>
             {bonusHref ? (
               <a
-                className="rounded-lg bg-amber-400 px-3 py-1.5 text-[11.5px] font-bold text-zinc-950 transition-colors hover:bg-amber-300"
+                className="rounded-lg bg-amber-400 px-3 py-2 text-[11.5px] font-bold text-zinc-950 transition-colors hover:bg-amber-300"
                 href={bonusHref}
               >
                 {bonusLabel ?? 'Bonus terms'}

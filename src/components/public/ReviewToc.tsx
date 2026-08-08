@@ -17,7 +17,7 @@ export const ReviewToc: React.FC<{ items: { id: string; label: string }[] }> = (
       <div className="flex gap-2">
         {items.map((item) => (
           <a
-            className="whitespace-nowrap rounded-full border border-line bg-dusk px-3 py-1.5 font-mono text-[11px] text-paper-dim transition-colors hover:border-evidence/50 hover:text-paper"
+            className="whitespace-nowrap rounded-full border border-line bg-dusk px-4 py-2 font-mono text-[11px] text-paper-dim transition-colors hover:border-evidence/50 hover:text-paper"
             href={`#${item.id}`}
             key={item.id}
           >
