@@ -1,4 +1,4 @@
-import React, { Fragment } from 'react'
+import React from 'react'
 
 import type { Page } from '@/payload-types'
 
@@ -23,29 +23,27 @@ export const RenderBlocks: React.FC<{
 
   const hasBlocks = blocks && Array.isArray(blocks) && blocks.length > 0
 
-  if (hasBlocks) {
-    return (
-      <Fragment>
-        {blocks.map((block, index) => {
-          const { blockType } = block
-
-          if (blockType && blockType in blockComponents) {
-            const Block = blockComponents[blockType]
-
-            if (Block) {
-              return (
-                <div className="my-16" key={index}>
-                  {/* @ts-expect-error there may be some mismatch between the expected types here */}
-                  <Block {...block} disableInnerContainer />
-                </div>
-              )
-            }
-          }
-          return null
-        })}
-      </Fragment>
-    )
+  if (!hasBlocks) {
+    return null
   }
 
-  return null
+  return (
+    <div className="flex flex-col gap-14">
+      {blocks.map((block, index) => {
+        const { blockType } = block
+
+        if (blockType && blockType in blockComponents) {
+          const Block = blockComponents[blockType as keyof typeof blockComponents]
+
+          if (Block) {
+            return (
+              // @ts-expect-error there may be some mismatch between the expected types here
+              <Block {...block} disableInnerContainer key={index} />
+            )
+          }
+        }
+        return null
+      })}
+    </div>
+  )
 }

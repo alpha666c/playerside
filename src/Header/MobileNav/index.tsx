@@ -44,7 +44,7 @@ export const MobileNav: React.FC<{ data: HeaderType }> = ({ data }) => {
             <nav className="flex flex-col gap-1 border-b border-line pb-4">
               {navItems.map(({ link }, i) => (
                 <CMSLink
-                  className="rounded-md px-2 py-3 text-[15px] text-paper-dim transition-colors hover:bg-dusk hover:text-paper"
+                  className="rounded-md px-2 py-3 font-mono text-[13px] uppercase tracking-[0.12em] text-paper-dim transition-colors hover:bg-dusk hover:text-paper"
                   key={i}
                   onClick={() => setOpen(false)}
                   {...link}
