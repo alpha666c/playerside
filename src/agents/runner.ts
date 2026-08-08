@@ -88,6 +88,60 @@ export async function completeAiRun(
   })
 }
 
+/**
+ * Record a user → assistant turn on an existing aiRun (blueprint §10 chat
+ * history continuity). The user's prompt lands in `input.message` (what was
+ * sent) and both turns append to the run's `messages` array so the panel can
+ * rebuild the thread across sessions. No-op if the run is gone (the agent
+ * output itself already succeeded — never fail the exchange over history).
+ *
+ * Single-writer assumption (documented, same as completeAiRun/startAiRun):
+ * the aiRuns read-modify-write is NOT atomic and does not use the version
+ * gate — a concurrent writer between completeAiRun and this write could
+ * clobber a run. Acceptable: the chat panel is a single-user admin surface
+ * and each exchange is sequential within its request. The version gate
+ * protects the APPLY write path, which is where concurrent human edits
+ * would actually collide.
+ */
+export async function recordChatTurn(
+  payload: Payload,
+  req: PayloadRequest,
+  caseId: number | string,
+  runId: string,
+  turn: { userMessage: string; assistantSummary: string },
+) {
+  const existing = await payload
+    .findByID({ collection: 'research-queue', id: caseId, req })
+    .catch(() => null)
+  const existingRuns: any[] = (existing && (existing as any).aiRuns) || []
+
+  let touched = false
+  const now = new Date().toISOString()
+  const updatedRuns = existingRuns.map((r: any) => {
+    if (r.runId !== runId) return r
+    touched = true
+    const messages = Array.isArray(r.messages) ? r.messages : []
+    return {
+      ...r,
+      input: { ...(r.input ?? {}), message: turn.userMessage },
+      messages: [
+        ...messages,
+        { role: 'user', content: turn.userMessage, timestamp: now },
+        { role: 'assistant', content: turn.assistantSummary, timestamp: now },
+      ],
+    }
+  })
+
+  if (!touched) return
+
+  await payload.update({
+    collection: 'research-queue',
+    id: caseId,
+    data: { aiRuns: updatedRuns },
+    req,
+  })
+}
+
 export async function applyDraft(
   payload: Payload,
   req: PayloadRequest,

@@ -279,6 +279,11 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
     update: authenticated,
   },
   admin: {
+    // The CaseFile AI chat panel (blueprint §10) is registered as a custom
+    // document view in payload.config.ts admin.components.views under
+    // /collections/research-queue/:id/chat — the collection-level
+    // admin.components.edit slots in this Payload version are slots-only
+    // (beforeDocumentControls etc.), not view routes.
     defaultColumns: ['caseNumber', 'operatorName', 'casinoType', 'status', 'updatedAt'],
     description: 'Review Intelligence System case files (MASTER-BLUEPRINT.md §3). Referred to as "Case File" in agent role docs.',
     useAsTitle: 'caseNumber',
@@ -559,7 +564,7 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
       type: 'array',
       admin: {
         description:
-          'Versioned AI agent run records for this case (§10 data-model foundation only — no chat route, provider integration, or frontend UI exists yet; nothing writes here).',
+          'Versioned AI agent run records for this case (§10 — written by /api/review-chat: startAiRun/completeAiRun record input/output, recordChatTurn appends the conversation turns). Read-only in the admin.',
         readOnly: true,
       },
       fields: [

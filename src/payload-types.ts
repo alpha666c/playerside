@@ -1699,7 +1699,7 @@ export interface ResearchQueue {
     notes?: string | null;
   };
   /**
-   * Versioned AI agent run records for this case (§10 data-model foundation only — no chat route, provider integration, or frontend UI exists yet; nothing writes here).
+   * Versioned AI agent run records for this case (§10 — written by /api/review-chat: startAiRun/completeAiRun record input/output, recordChatTurn appends the conversation turns). Read-only in the admin.
    */
   aiRuns?:
     | {

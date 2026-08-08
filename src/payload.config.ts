@@ -52,6 +52,16 @@ export default buildConfig({
           exact: true,
           path: '/gamification',
         },
+        // Blueprint §10: the CaseFile AI chat panel as a custom document
+        // view on the case edit page — tab at
+        // /admin/collections/research-queue/:id/chat. Read-only draft
+        // surface; the only write path is the human "Apply" action through
+        // the version-checked /api/review-chat route.
+        'case-chat': {
+          Component: '@/components/admin/CaseChatPanel',
+          exact: true,
+          path: '/collections/research-queue/:id/chat',
+        },
       },
     },
     importMap: {
