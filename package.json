@@ -5,7 +5,7 @@
   "license": "MIT",
   "type": "module",
   "scripts": {
-    "prebuild": "node scripts/wait-for-db.mjs && cross-env NODE_OPTIONS=--no-deprecation payload migrate",
+    "prebuild": "node scripts/wait-for-db.mjs && node scripts/ci-migrate.mjs && printf 'y\\n' | cross-env NODE_OPTIONS=--no-deprecation payload migrate",
     "build": "cross-env NODE_OPTIONS=--no-deprecation next build",
     "postbuild": "next-sitemap --config next-sitemap.config.cjs && rm -f public/sitemap.xml",
     "dev": "cross-env NODE_OPTIONS=--no-deprecation next dev",
