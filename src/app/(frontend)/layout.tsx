@@ -5,6 +5,7 @@ import { Fraunces, IBM_Plex_Mono, Instrument_Sans } from 'next/font/google'
 import React from 'react'
 
 import { AdminBar } from '@/components/AdminBar'
+import { CompareBar } from '@/components/compare/CompareBar'
 import { Footer } from '@/Footer/Component'
 import { Header } from '@/Header/Component'
 import { Providers } from '@/providers'
@@ -53,6 +54,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
           <Header />
           {children}
           <Footer />
+          <CompareBar />
         </Providers>
       </body>
     </html>

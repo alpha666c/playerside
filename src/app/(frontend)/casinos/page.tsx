@@ -6,8 +6,13 @@ import Link from 'next/link'
 import React from 'react'
 
 import { CategoryMarker } from '@/components/CategoryMarker/CategoryMarker'
-import { ReviewListingCard } from '@/components/ReviewListingCard/ReviewListingCard'
+import {
+  GridContent,
+  SortableReviewGrid,
+} from '@/components/archive/SortableReviewGrid'
+import { defaultArchiveControls } from '@/lib/archiveFilters'
 import { marketArchives } from '@/lib/marketArchives'
+import { Suspense } from 'react'
 
 export const revalidate = 600
 
@@ -42,37 +47,27 @@ export default async function CasinosPage() {
         </p>
       </div>
 
-      <div className="container mb-10">
-        <div className="flex flex-wrap gap-2">
-          {marketArchives.map((market) => (
-            <Link
-              className="rounded-full border border-line px-3.5 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
-              href={`/markets/${market.slug}`}
-              key={market.slug}
-            >
-              {market.label} licensed
-            </Link>
-          ))}
-        </div>
-      </div>
-
       <div className="container">
         {reviews.docs.length === 0 ? (
           <p className="text-paper-dim">First reviews are in progress — check back soon.</p>
         ) : (
-          <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-            {reviews.docs.map((review) => (
-              <ReviewListingCard
+          <Suspense
+            fallback={
+              <GridContent
                 category="traditional"
-                href={`/casinos/${review.slug}`}
-                isIllustrativeSample={review.isIllustrativeSample}
-                key={review.id}
-                name={review.name}
-                overallScore={review.overallScore}
-                summary={review.summary}
+                controls={defaultArchiveControls}
+                markets={marketArchives}
+                reviews={reviews.docs as never[]}
               />
-            ))}
-          </div>
+            }
+          >
+            <SortableReviewGrid
+              basePath="/casinos"
+              category="traditional"
+              markets={marketArchives}
+              reviews={reviews.docs as never[]}
+            />
+          </Suspense>
         )}
       </div>
     </div>

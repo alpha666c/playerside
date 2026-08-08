@@ -5,7 +5,12 @@ import { getPayload } from 'payload'
 import React from 'react'
 
 import { CategoryMarker } from '@/components/CategoryMarker/CategoryMarker'
-import { ReviewListingCard } from '@/components/ReviewListingCard/ReviewListingCard'
+import {
+  GridContent,
+  SortableReviewGrid,
+} from '@/components/archive/SortableReviewGrid'
+import { defaultArchiveControls } from '@/lib/archiveFilters'
+import { Suspense } from 'react'
 
 export const revalidate = 600
 
@@ -42,19 +47,21 @@ export default async function CryptoCasinosPage() {
             type). Check back soon.
           </p>
         ) : (
-          <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-            {reviews.docs.map((review) => (
-              <ReviewListingCard
+          <Suspense
+            fallback={
+              <GridContent
                 category="crypto"
-                href={`/crypto-casinos/${review.slug}`}
-                isIllustrativeSample={review.isIllustrativeSample}
-                key={review.id}
-                name={review.name}
-                overallScore={review.overallScore}
-                summary={review.summary}
+                controls={defaultArchiveControls}
+                reviews={reviews.docs as never[]}
               />
-            ))}
-          </div>
+            }
+          >
+            <SortableReviewGrid
+              basePath="/crypto-casinos"
+              category="crypto"
+              reviews={reviews.docs as never[]}
+            />
+          </Suspense>
         )}
       </div>
     </div>

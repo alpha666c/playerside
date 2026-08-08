@@ -6,8 +6,13 @@ import { getPayload } from 'payload'
 import Link from 'next/link'
 import React from 'react'
 
-import { ReviewListingCard } from '@/components/ReviewListingCard/ReviewListingCard'
+import {
+  GridContent,
+  SortableReviewGrid,
+} from '@/components/archive/SortableReviewGrid'
+import { defaultArchiveControls } from '@/lib/archiveFilters'
 import { isMarketSlug, marketArchives, marketBySlug } from '@/lib/marketArchives'
+import { Suspense } from 'react'
 
 export const revalidate = 600
 
@@ -85,19 +90,21 @@ export default async function MarketArchivePage({ params: paramsPromise }: Args)
             backlog.
           </p>
         ) : (
-          <div className="grid gap-[22px] sm:grid-cols-2 lg:grid-cols-3">
-            {reviews.docs.map((review) => (
-              <ReviewListingCard
+          <Suspense
+            fallback={
+              <GridContent
                 category="traditional"
-                href={`/casinos/${review.slug}`}
-                isIllustrativeSample={review.isIllustrativeSample}
-                key={review.id}
-                name={review.name}
-                overallScore={review.overallScore}
-                summary={review.summary}
+                controls={defaultArchiveControls}
+                reviews={reviews.docs as never[]}
               />
-            ))}
-          </div>
+            }
+          >
+            <SortableReviewGrid
+              basePath={`/markets/${meta.slug}`}
+              category="traditional"
+              reviews={reviews.docs as never[]}
+            />
+          </Suspense>
         )}
       </div>
 

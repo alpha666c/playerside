@@ -24,6 +24,26 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <HeaderNav data={data} />
 
         <div className="flex items-center gap-3">
+          <Link
+            aria-label="Search reviews and bonuses"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+            href="/search"
+            title="Search"
+          >
+            <svg
+              aria-hidden="true"
+              className="h-4 w-4"
+              fill="none"
+              stroke="currentColor"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth="2"
+              viewBox="0 0 24 24"
+            >
+              <circle cx="11" cy="11" r="7" />
+              <path d="m21 21-4.35-4.35" />
+            </svg>
+          </Link>
           <PillLink className="hidden sm:inline-flex" href="/reviews" variant="primary">
             Browse reviews
           </PillLink>
