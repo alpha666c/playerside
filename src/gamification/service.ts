@@ -1,6 +1,7 @@
 import type { Payload } from 'payload'
 
 import { levelFromXp, rankTitleForLevel } from './curve'
+import { profileCreationAllowed } from './rateLimit'
 
 /** Server-enforced daily XP cap per player (vex-containment: economy abuse). */
 export const DAILY_XP_CAP =
@@ -47,10 +48,18 @@ export const sanitizeQuestForClient = (quest: any) => ({
   })),
 })
 
-/** Ensures a profile row exists for a playerKey; returns it either way. */
+/**
+ * Ensures a profile row exists for a playerKey; returns it either way.
+ *
+ * `ip` is optional and only used to enforce the per-IP creation cap
+ * (FIX-04, audit 2026-08-07): it counts REAL creations only, so returning
+ * players with an existing profile never consume the cap. Direct calls from
+ * tests omit it and are unaffected.
+ */
 export const ensureProfile = async (
   payload: Payload,
   playerKey: string,
+  ip?: string,
 ): Promise<ProfileLike> => {
   const existing = await payload.find({
     collection: 'gamification-profiles',
@@ -59,6 +68,10 @@ export const ensureProfile = async (
     where: { playerKey: { equals: playerKey } },
   })
   if (existing.docs[0]) return existing.docs[0] as unknown as ProfileLike
+
+  if (ip && !profileCreationAllowed(ip)) {
+    throw new Error('profile creation capped')
+  }
 
   const created = await payload.create({
     collection: 'gamification-profiles',

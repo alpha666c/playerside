@@ -18,7 +18,8 @@ import { validateQuizStep, validateWageringMathStep } from './validators'
  * (repo convention: tests/int/*.int.spec.ts use getPayload directly).
  */
 
-export const meFlow = async (payload: Payload, player: string, path: string) => {  const profile = await ensureProfile(payload, player)
+export const meFlow = async (payload: Payload, player: string, path: string, ip?: string) => {
+  const profile = await ensureProfile(payload, player, ip)
 
   const active = await payload.find({
     collection: 'user-quests',
@@ -84,8 +85,8 @@ export const meFlow = async (payload: Payload, player: string, path: string) => 
  * plus the derived badge board. Sanitization laws are identical to meFlow:
  * correctKey / bonusSlug / rgExplain never leave the server.
  */
-export const missionsFlow = async (payload: Payload, player: string) => {
-  const profile = await ensureProfile(payload, player)
+export const missionsFlow = async (payload: Payload, player: string, ip?: string) => {
+  const profile = await ensureProfile(payload, player, ip)
 
   const quests = await payload.find({
     collection: 'quests',
@@ -131,8 +132,13 @@ export const missionsFlow = async (payload: Payload, player: string) => {
   }
 }
 
-export const startQuestFlow = async (payload: Payload, player: string, questId: number | string) => {
-  const profile = await ensureProfile(payload, player)
+export const startQuestFlow = async (
+  payload: Payload,
+  player: string,
+  questId: number | string,
+  ip?: string,
+) => {
+  const profile = await ensureProfile(payload, player, ip)
 
   const quest = await payload.findByID({ collection: 'quests', id: questId, overrideAccess: true })
   if (!quest || !quest.enabled || quest._status !== 'published') {
@@ -173,11 +179,13 @@ export type SubmitStepInput = {
   stepIndex: number
   answerKey: string
   evidenceId: string
+  /** Optional client IP for the per-IP profile-creation cap (FIX-04). */
+  ip?: string
 }
 
 export const submitStepFlow = async (payload: Payload, input: SubmitStepInput) => {
-  const { player, questId, stepIndex, answerKey, evidenceId } = input
-  const profile = await ensureProfile(payload, player)
+  const { player, questId, stepIndex, answerKey, evidenceId, ip } = input
+  const profile = await ensureProfile(payload, player, ip)
 
   const quest = await payload.findByID({ collection: 'quests', id: questId, overrideAccess: true })
   if (!quest || !quest.enabled || quest._status !== 'published') {
