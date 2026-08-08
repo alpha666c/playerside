@@ -301,3 +301,12 @@ You can also deploy your app manually, check out the [deployment documentation](
 ## Questions
 
 If you have any issues or questions, reach out to us on [Discord](https://discord.com/invite/payload) or start a [GitHub discussion](https://github.com/payloadcms/payload/discussions).
+
+## Local development & testing
+
+- **Package manager:** pnpm only (pnpm-lock.yaml is the single source of truth — do not add an npm lockfile).
+- **Database:** Postgres via Docker (`docker compose up -d` → container `playerside-pg`). `next build` inits Payload and needs the DB up; the `prebuild` guard (`scripts/wait-for-db.mjs`) fails with a clear message instead of a cryptic ECONNREFUSED.
+- **Secrets:** copy `.env.example` → `.env` and fill `DATABASE_URL`, `PAYLOAD_SECRET`, `CRON_SECRET`, `PREVIEW_SECRET`. `PAYLOAD_SECRET` is REQUIRED outside `NODE_ENV=development` (the build hard-fails without it).
+- **Tests:**
+  - `pnpm test:int` — unit + integration (needs the local Postgres up).
+  - `pnpm test:e2e` (playwright) — needs BOTH servers running: dev on :3000 and prod on :3001 (`npx next dev -p 3000` / `npx next start -p 3001`), plus a seeded DB. Run them before relying on e2e results.
