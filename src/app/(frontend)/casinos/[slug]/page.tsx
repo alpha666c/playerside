@@ -15,6 +15,10 @@ import { QualitativeContext } from '@/components/QualitativeContext/QualitativeC
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
 import { traditionalRubric } from '@/rubrics/traditional'
 import { Review3DStampReactor } from '@/components/public/Review3DStampReactor'
+import { BonusValueCalculator } from '@/components/public/BonusValueCalculator'
+import { ReviewToc } from '@/components/public/ReviewToc'
+import { StickyCtaBar } from '@/components/public/StickyCtaBar'
+import { VerdictBox } from '@/components/public/VerdictBox'
 import { MissionBoardCTA } from '@/components/vex/MissionBoardCTA'
 import { VexMissionLayer } from '@/components/vex/VexMissionLayer'
 
@@ -40,6 +44,10 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
 
   if (!review) return notFound()
 
+  // Phase 1 (F1.5): the operator's exact wagering terms, straight from the
+  // bonus collection (bonus.operator is a relationship to this review).
+  const bonus = await queryBonusForOperator(review.id)
+
   return (
     <article className="pb-24 pt-16 sm:pt-20">
       {draft && <LivePreviewListener />}
@@ -64,7 +72,38 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
         <p className="mt-4 text-base text-paper-dim sm:text-lg">{review.summary}</p>
       </div>
 
-      <div className="container mb-12 max-w-[760px] sm:mb-14">
+      <div className="container mb-8 max-w-[760px]">
+        <ReviewToc
+          items={[
+            { id: 'verdict', label: 'Verdict' },
+            { id: 'breakdown', label: 'Breakdown' },
+            ...(bonus ? [{ id: 'bonuses', label: 'Bonus terms' }] : []),
+            { id: 'compliance', label: 'Compliance' },
+          ]}
+        />
+      </div>
+
+      <div className="container mb-8 max-w-[760px]">
+        <VerdictBox
+          categoryLabel="Traditional casino"
+          licenseAuthority={review.compliance?.licenseAuthority}
+          licenseNumber={review.compliance?.licenseNumber}
+          operatorName={review.name}
+          overallScore={review.overallScore}
+          rubric={traditionalRubric}
+          scores={review.scores ?? {}}
+        />
+      </div>
+
+      {/* Appears once the verdict scrolls out of view (Phase 1 F1.4). */}
+      <StickyCtaBar
+        bonusHref={bonus ? `/bonuses/wagering/${bonus.slug}` : null}
+        bonusLabel={bonus ? bonus.title : null}
+        operatorName={review.name}
+        overallScore={review.overallScore}
+      />
+
+      <div className="container mb-12 max-w-[760px] sm:mb-14" id="compliance">
         <ComplianceBlock
           category="traditional"
           licenseAuthority={review.compliance.licenseAuthority}
@@ -111,10 +150,22 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
         </div>
       ) : null}
 
-      <div className="container mb-12 max-w-[760px] sm:mb-14">
+      <div className="container mb-12 max-w-[760px] sm:mb-14" id="breakdown">
         <h2 className="mb-6 text-[22px] sm:text-[26px]">Full breakdown — eight categories</h2>
         <ScoreBreakdown rubric={traditionalRubric} scores={review.scores ?? {}} />
       </div>
+
+      {bonus ? (
+        <div className="container mb-12 max-w-[760px] sm:mb-14">
+          <BonusValueCalculator
+            appliesTo={bonus.wageringAppliesTo}
+            bonusTitle={bonus.title}
+            contributingGames={bonus.contributingGames ?? []}
+            multiplier={bonus.wageringMultiplier}
+            timeLimit={bonus.wageringTimeLimit}
+          />
+        </div>
+      ) : null}
 
       <QualitativeContext note={review.communitySentimentNote} />
 
@@ -149,6 +200,20 @@ const queryReviewBySlug = cache(async (slug: string) => {
   })
 
   return result.docs?.[0] || null
+})
+
+/** Phase 1 (F1.5): first published wagering bonus tied to this operator review. */
+const queryBonusForOperator = cache(async (operatorId: number | string) => {
+  const payload = await getPayload({ config: configPromise })
+  const result = await payload.find({
+    collection: 'wagering-bonuses',
+    draft: false,
+    limit: 1,
+    overrideAccess: false,
+    pagination: false,
+    where: { operator: { equals: operatorId } },
+  })
+  return result.docs?.[0] ?? null
 })
 
 

@@ -15,6 +15,9 @@ import { QualitativeContext } from '@/components/QualitativeContext/QualitativeC
 import { ScoreBreakdown } from '@/components/ScoreBreakdown/ScoreBreakdown'
 import { cryptoRubric } from '@/rubrics/crypto'
 import { Review3DStampReactor } from '@/components/public/Review3DStampReactor'
+import { ReviewToc } from '@/components/public/ReviewToc'
+import { StickyCtaBar } from '@/components/public/StickyCtaBar'
+import { VerdictBox } from '@/components/public/VerdictBox'
 import { MissionBoardCTA } from '@/components/vex/MissionBoardCTA'
 import { VexMissionLayer } from '@/components/vex/VexMissionLayer'
 
@@ -62,7 +65,32 @@ export default async function CryptoCasinoReviewPage({ params: paramsPromise }: 
         <p className="mt-4 text-base text-paper-dim sm:text-lg">{review.summary}</p>
       </div>
 
-      <div className="container mb-12 max-w-[760px] sm:mb-14">
+      <div className="container mb-8 max-w-[760px]">
+        <ReviewToc
+          items={[
+            { id: 'verdict', label: 'Verdict' },
+            { id: 'breakdown', label: 'Breakdown' },
+            { id: 'compliance', label: 'Compliance' },
+          ]}
+        />
+      </div>
+
+      <div className="container mb-8 max-w-[760px]">
+        <VerdictBox
+          categoryLabel="Crypto casino"
+          licenseAuthority={review.compliance?.licenseAuthority}
+          licenseNumber={review.compliance?.licenseNumber}
+          operatorName={review.name}
+          overallScore={review.overallScore}
+          rubric={cryptoRubric}
+          scores={review.scores ?? {}}
+        />
+      </div>
+
+      {/* Appears once the verdict scrolls out of view (Phase 1 F1.4). */}
+      <StickyCtaBar operatorName={review.name} overallScore={review.overallScore} />
+
+      <div className="container mb-12 max-w-[760px] sm:mb-14" id="compliance">
         <ComplianceBlock
           category="crypto"
           licenseAuthority={review.compliance.licenseAuthority}
@@ -111,7 +139,7 @@ export default async function CryptoCasinoReviewPage({ params: paramsPromise }: 
         </div>
       ) : null}
 
-      <div className="container mb-12 max-w-[760px] sm:mb-14">
+      <div className="container mb-12 max-w-[760px] sm:mb-14" id="breakdown">
         <h2 className="mb-6 text-[22px] sm:text-[26px]">Full breakdown — nine categories</h2>
         <ScoreBreakdown rubric={cryptoRubric} scores={review.scores ?? {}} />
       </div>

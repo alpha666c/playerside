@@ -1,4 +1,6 @@
-import React from 'react'
+'use client'
+
+import React, { useState } from 'react'
 
 import type { RubricCategory } from '@/rubrics/traditional'
 
@@ -9,45 +11,88 @@ type CategoryScore = {
 }
 
 /**
- * Full per-category breakdown for a review page — the "9 categories, each
+ * Full per-category breakdown for a review page — the "8/9 categories, each
  * with its evidence citation, plus genuine narrative assessment" the brief
- * calls for. Reuses the same RubricCategory shape as the homepage
- * methodology bars, so the rubric itself has one definition (src/rubrics).
+ * calls for. Phase 1 (F1.3): upgraded to an accordion so a long review stays
+ * scannable — the first category opens by default and the rest collapse.
+ * Narrative + evidence stay in the DOM (hidden, not unmounted) so the full
+ * content remains crawlable for SEO.
+ *
+ * Reuses the same RubricCategory shape as the homepage methodology bars, so
+ * the rubric itself has one definition (src/rubrics).
  */
 export const ScoreBreakdown: React.FC<{
   rubric: RubricCategory[]
   scores: Record<string, CategoryScore | undefined>
-}> = ({ rubric, scores }) => (
-  <div className="space-y-5">
-    {rubric.map((category) => {
-      const entry = scores[category.key]
-      if (!entry) return null
-      return (
-        <div className="rounded-[var(--radius)] border border-line bg-dusk p-5 sm:p-6" key={category.key}>
-          <div className="mb-2.5 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-            <h3 className="text-[15px] font-semibold text-paper sm:text-base">{category.label}</h3>
-            <span className="font-mono text-lg text-gold sm:text-xl">
-              {entry.score?.toFixed(1) ?? '—'}
-              <span className="text-[11px] text-paper-dim"> / 10</span>
-            </span>
+}> = ({ rubric, scores }) => {
+  const [openKeys, setOpenKeys] = useState<Set<string>>(
+    () => new Set(rubric[0] ? [rubric[0].key] : []),
+  )
+
+  const toggle = (key: string) =>
+    setOpenKeys((prev) => {
+      const next = new Set(prev)
+      if (next.has(key)) next.delete(key)
+      else next.add(key)
+      return next
+    })
+
+  return (
+    <div className="space-y-3">
+      {rubric.map((category) => {
+        const entry = scores[category.key]
+        if (!entry) return null
+        const open = openKeys.has(category.key)
+        return (
+          <div
+            className="rounded-[var(--radius)] border border-line bg-dusk p-5 sm:p-6"
+            key={category.key}
+          >
+            <button
+              aria-expanded={open}
+              aria-controls={`score-${category.key}-body`}
+              className="flex w-full cursor-pointer flex-wrap items-center justify-between gap-x-4 gap-y-2 text-left"
+              onClick={() => toggle(category.key)}
+              type="button"
+            >
+              <span className="text-[15px] font-semibold text-paper sm:text-base">
+                {category.label}
+              </span>
+              <span className="flex items-center gap-3">
+                <span className="font-mono text-lg text-gold sm:text-xl">
+                  {entry.score?.toFixed(1) ?? '—'}
+                  <span className="text-[11px] text-paper-dim"> / 10</span>
+                </span>
+                <span
+                  aria-hidden="true"
+                  className={`font-mono text-[11px] text-paper-dim transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                >
+                  ▾
+                </span>
+              </span>
+            </button>
+            <div className="mb-3 mt-2 h-[5px] overflow-hidden rounded-full bg-dusk-2">
+              <div
+                className="h-full rounded-full bg-evidence"
+                style={{ width: `${((entry.score ?? 0) / 10) * 100}%` }}
+              />
+            </div>
+            <div hidden={!open} id={`score-${category.key}-body`}>
+              {entry.narrative ? (
+                <p className="mb-3 text-[13.5px] leading-relaxed text-paper-dim">{entry.narrative}</p>
+              ) : null}
+              {entry.evidence ? (
+                <p className="mb-0 font-mono text-[11.5px] text-evidence">
+                  EVIDENCE: {entry.evidence}
+                </p>
+              ) : null}
+              <p className="mb-0 mt-2 font-mono text-[10.5px] uppercase tracking-[1.5px] text-paper-dim/70">
+                Weight: {category.weight}%
+              </p>
+            </div>
           </div>
-          <div className="mb-3 h-[5px] overflow-hidden rounded-full bg-dusk-2">
-            <div
-              className="h-full rounded-full bg-evidence"
-              style={{ width: `${((entry.score ?? 0) / 10) * 100}%` }}
-            />
-          </div>
-          {entry.narrative ? (
-            <p className="mb-3 text-[13.5px] leading-relaxed text-paper-dim">{entry.narrative}</p>
-          ) : null}
-          {entry.evidence ? (
-            <p className="mb-0 font-mono text-[11.5px] text-evidence">EVIDENCE: {entry.evidence}</p>
-          ) : null}
-          <p className="mb-0 mt-2 font-mono text-[10.5px] uppercase tracking-[1.5px] text-paper-dim/70">
-            Weight: {category.weight}%
-          </p>
-        </div>
-      )
-    })}
-  </div>
-)
+        )
+      })}
+    </div>
+  )
+}
