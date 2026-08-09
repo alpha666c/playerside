@@ -436,3 +436,18 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
 - **Wiring:** default model updated in `llm.ts` + SystemSettings global + `.env.example`
   (`LLM_MODEL` and deprecated `DEEPSEEK_MODEL` aliases); tests + CREDENTIAL-LOG + Phase G build
   spec updated. Key stays an OpenRouter key (openrouter.ai/keys) in the admin System Settings.
+## 2026-08-09 — Model routing decision: keep `deepseek/deepseek-v4-flash` as the SOLE default
+
+- **Decision (Viktor, via ask_user):** quality first everywhere — do NOT split routing. The current
+  default `deepseek/deepseek-v4-flash` (paid, ~14c/M in, ~28c/M out on OpenRouter) stays as the
+  only default. No code change required (already wired in `045e222`).
+- **Context (live catalog scan + budget):** Viktor has ~$0.30 on OpenRouter. At ~15K tokens per
+  pipeline call, heavy usage (100 calls/day) ≈ $0.22/day — i.e. ~1.5 days of full pipeline work
+  before a top-up. Options evaluated and rejected for the default: `openai/gpt-oss-20b:free`
+  (good agentic free model, but free tiers rotate), `inclusionai/ling-3.0-flash` /
+  `ling-2.6-flash` (7-14x cheaper, ~$0.04-0.02/day, but weaker), `ling-3.0-tiny:free` (too weak
+  for rubric scoring).
+- **Zero-code escape hatches (available on demand, no rewiring):** the per-role override map
+  (`LLM_MODEL_<ROLE>`) lets Viktor route specific roles to cheaper/free models later — e.g.
+  `LLM_MODEL_DESK_RESEARCHER=inclusionai/ling-3.0-flash` or `openai/gpt-oss-20b:free` — while
+  quality roles (Cofounder chat, Integrity Checker) stay on DeepSeek. Doc'd in CREDENTIAL-LOG.

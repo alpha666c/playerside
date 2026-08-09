@@ -18,6 +18,13 @@
   Gemini 3 Flash free tier (Google AI Studio, 1,500 calls/day, no card) documented as the $0
   fallback. Gates: tsc + lint + 176/176 tests green.
 
+- **docs(ai): model routing decision — DeepSeek V4 Flash stays the sole default.** Viktor chose
+  quality-first everywhere over a cost-split (no code change; already wired in the previous
+  commit). Logged the OpenRouter budget reality (~$0.22/day at 100 calls/day, ~15K tokens/call)
+  and the zero-code per-role override escape hatches (`LLM_MODEL_<ROLE>` env → cheaper/free
+  models like `inclusionai/ling-3.0-flash` or `openai/gpt-oss-20b:free`) for when a top-up
+  isn't convenient. See DECISION-LOG 2026-08-09.
+
 ## 2026-08-09 — Phase G: admin-managed settings — keys live in the DB, one place for every host
 
 - **New `SystemSettings` global** (`/admin/globals/system-settings`, admin-only): DeepSeek API
