@@ -559,3 +559,50 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
   no longer a blocker: verification happens through the repo's own Playwright tooling.
 - **Scope note:** this also fixed the pipeline + gamification views (Phase 5) which had the same
   latent bug; no app-logic changes were needed.
+
+## 2026-08-09 — Phase G G.5: the five pipeline agents are wired onto the real model
+
+- **Scope:** spec §5 — replace the deterministic placeholder scaffolds in
+  `src/agents/*` with real `chatLlm` calls, making T7 delegation real. New
+  `src/agents/llmBridge.ts` is the shared mechanics; each agent keeps its own
+  task prompt + skeleton.
+- **Honesty architecture (three pins, all E2E-proven against a hostile mock):**
+  1. *No fabrication* — `guardClaimValue` keeps a model claim only when it
+     cites a plausible http(s) source URL (reviewer S3: shape-checked, not
+     reachability-checked) or the value already exists in the case context.
+     Bare invented values drop to null. Model-supplied evidence lists
+     (secondary licenses, complaints) are intentionally skeleton-only —
+     structured evidence belongs in the evidence register where every row
+     passes the same guard.
+  2. *No self-verification* (QA S1-2) — `forceUnverifiedDiscipline` deep-forces
+     `confidence`/`verificationStatus` to `unverified` after every merge; a
+     model claiming "verified" changes nothing.
+  3. *Deterministic authority stays in code* — scores come from the locked
+     rubric (the model only writes rationale), the integrity verdict is
+     recomputed (`deterministic failures OR model S0/S1 → BLOCK`; S3 advisory),
+     the editorial compliance block is pinned constants, and the monitor
+     reports `CHECK_SCHEDULED` (the old placeholder asserted "license standing
+     active at regulator database" — a fabricated status; G.5 removes it).
+- **Fallback transparency (reviewer S2):** a failed/unparseable model call
+  completes the run as `complete-with-warning` (new `aiRuns.status` enum value,
+  migration `20260809_203730`, down hardened with a `CASE` remap per the
+  `tool_call` migration pattern) + `_fallback: true`/`_fallbackReason` on the
+  output — a broken pipeline can no longer masquerade as a thin result.
+- **T7 `run_pipeline_agent`:** DRAFT-ONLY by construction (no apply path), the
+  case must exist, unknown roles rejected, and the tool refuses to start when
+  `ctx.budgetRemainingMs < 35s` (reviewer S2 — the route passes its remaining
+  190s wall-clock budget; a single agent run is another full LLM call).
+- **Latent bug fixed by E2E:** `scoreAnalyst`'s `grade_assigned` audit event
+  omitted the mandatory `evidenceRef` (AgentLogs `enforceGradeEvidence`) — a
+  score-analyst run could never complete through the review-chat route. Now
+  `evidenceRef: runId` (the aiRun is the one-hop evidence trace). This is the
+  kind of bug only real-run verification surfaces.
+- **G.6 coupling note (reviewer S3):** the future publish/approve gate must key
+  off `integrityResult.verdict === 'PASS'`, never `checksFailed.length` —
+  advisory S3 findings keep `checksFailed` non-empty while verdict stays PASS.
+  Commented at the source.
+- **Verification:** tsc + lint + 227/227 (31 new G.5 tests: bridge pure
+  functions, no-self-verification pin, no-invention guard, editorial compliance
+  pin, integrity verdict semantics, monitor honesty, T7 contract via hoisted
+  mock, fallback path via mocked chatLlm) + build + 19-check E2E (all five
+  agents vs hostile JSON mock + prose-mock fallback).

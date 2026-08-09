@@ -1718,7 +1718,7 @@ export interface ResearchQueue {
         runId: string;
         agentRole: 'desk-researcher' | 'score-analyst' | 'editorial-writer' | 'integrity-checker' | 'monitor' | 'chat';
         version: number;
-        status: 'pending' | 'complete' | 'failed';
+        status: 'pending' | 'complete' | 'complete-with-warning' | 'failed';
         startedAt?: string | null;
         completedAt?: string | null;
         /**

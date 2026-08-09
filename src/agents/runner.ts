@@ -62,12 +62,20 @@ export async function startAiRun(
   return runId
 }
 
+/**
+ * Mark a run complete. `complete-with-warning` (G.5): the model call failed
+ * or was not parseable and the agent fell back to its deterministic skeleton.
+ * Convention: the agents put `_fallback: true` + `_fallbackReason` on the
+ * output when that happens — consumers must check `_fallback === true` (the
+ * key is omitted when there is no fallback).
+ */
 export async function completeAiRun(
   payload: Payload,
   req: PayloadRequest,
   caseId: number | string,
   runId: string,
   output: Record<string, unknown>,
+  status: 'complete' | 'complete-with-warning' = 'complete',
 ) {
   const existing = await payload
     .findByID({ collection: 'research-queue', id: caseId, req })
@@ -75,7 +83,7 @@ export async function completeAiRun(
   const existingRuns = (existing && (existing as any).aiRuns) || []
   const updatedRuns = existingRuns.map((r: any) =>
     r.runId === runId
-      ? { ...r, status: 'complete' as const, completedAt: new Date().toISOString(), output }
+      ? { ...r, status, completedAt: new Date().toISOString(), output }
       : r,
   )
   await payload.update({

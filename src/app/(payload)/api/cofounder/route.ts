@@ -119,6 +119,10 @@ export async function POST(request: Request): Promise<Response> {
         }
         const toolRes = await executeCofounderTool(payload, req, tc.name, args, {
           ticketId: ticket.id,
+          // Reviewer S2 (G.5): pass the remaining wall-clock budget so the
+          // run_pipeline_agent tool can refuse to start an agent run it cannot
+          // finish inside the turn's 190s cap.
+          budgetRemainingMs: WALL_CLOCK_MS - (Date.now() - startedAt),
         })
         toolEvents.push({ name: tc.name, args, ok: toolRes.ok, output: toolRes.output })
         toolHistory.push({

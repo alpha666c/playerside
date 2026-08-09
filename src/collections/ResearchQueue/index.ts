@@ -590,6 +590,10 @@ export const ResearchQueue: CollectionConfig<'research-queue'> = {
           options: [
             { label: 'Pending', value: 'pending' },
             { label: 'Complete', value: 'complete' },
+            // G.5: the model call failed / was not parseable — the run completed
+            // with the deterministic skeleton and is marked, so a broken pipeline
+            // never looks like a legitimately thin result (spec §3.1).
+            { label: 'Complete (with warning)', value: 'complete-with-warning' },
             { label: 'Failed', value: 'failed' },
           ],
           required: true,

@@ -2,14 +2,22 @@ import type { Payload, PayloadRequest } from 'payload'
 
 import type { LlmToolDef } from '@/lib/reviewChat/llm'
 import type { CofounderSession } from '@/payload-types'
+import { runDeskResearch } from '@/agents/deskResearcher'
+import { runScoreAnalyst } from '@/agents/scoreAnalyst'
+import { runEditorialWriter } from '@/agents/editorialWriter'
+import { runIntegrityChecker } from '@/agents/integrityChecker'
+import { runMonitor } from '@/agents/monitor'
 
 /**
- * Phase G (G.3) — the Cofounder's tool surface (spec §4), ticket-scoped set
- * for now: T1 (get_today_plan / set_plan_item) + T2 (create_ticket /
- * resume_ticket / close_ticket). T3–T9 land in G.4.
+ * Phase G — the Cofounder's tool surface (spec §4). Shipped so far: T1
+ * (get_today_plan / set_plan_item), T2 (create_ticket / resume_ticket /
+ * close_ticket) in G.3, and T7 (run_pipeline_agent — G.5) which triggers the
+ * five real pipeline agents as DRAFT-ONLY runs. T3–T6/T8–T9 land in later
+ * phases.
  *
  * Guardrails (spec §4 / §7.4):
  * - No write tool touches research-queue case fields, XP, or publish.
+ * - run_pipeline_agent never passes `apply` — case drafts stay human-applied.
  * - set_plan_item writes go through the optimistic-version contract
  *   (expectedVersion + changedFields: ['plan']) — never a blind write.
  * - Every tool call is audited via `agent-logs` event `tool_call` (metadata).
@@ -62,6 +70,8 @@ const asSessionType = (v: unknown): TicketSessionType =>
 export interface ToolContext {
   /** the ticket the model is currently working in (may be null) */
   ticketId?: number | null
+  /** remaining wall-clock budget in ms for this turn (QA S1-3); undefined when unknown */
+  budgetRemainingMs?: number
 }
 
 interface ToolResult {
@@ -267,6 +277,99 @@ const closeTicket = async (
   return { ok: true, output: { ticketNumber: updated.ticketNumber, status: updated.status } }
 }
 
+/**
+ * T7 — run_pipeline_agent (spec §4 T7 / §5, G.5). Triggers an existing
+ * pipeline stage agent on a case. DRAFT ONLY: the Cofounder never passes
+ * `apply` (spec §7.4 — no autonomous writes to research-queue; the human
+ * applies in the case chat). Every call is audited via the dispatcher.
+ */
+const PIPELINE_AGENT_FNS: Record<
+  string,
+  (payload: Payload, req: PayloadRequest, caseId: string | number) => Promise<Record<string, unknown>>
+> = {
+  'desk-researcher': runDeskResearch,
+  'score-analyst': runScoreAnalyst,
+  'editorial-writer': runEditorialWriter,
+  'integrity-checker': runIntegrityChecker,
+  monitor: runMonitor,
+}
+
+export const PIPELINE_AGENT_ROLES = Object.keys(PIPELINE_AGENT_FNS)
+
+const pipelineAgentSummary = (role: string, result: Record<string, unknown>): string => {
+  switch (role) {
+    case 'desk-researcher': {
+      const rows = Array.isArray(result.evidenceRegister) ? result.evidenceRegister.length : 0
+      return `Desk research draft ready — ${rows} evidence row(s), all unverified. Apply it in the case to accept.`
+    }
+    case 'score-analyst': {
+      const cats = (result.computedScores as { categories?: unknown[] } | undefined)?.categories
+      return `Scores computed for ${cats?.length ?? 0} rubric categor${(cats?.length ?? 0) === 1 ? 'y' : 'ies'} (overall score computed by the rubric hook on apply). Apply to accept.`
+    }
+    case 'editorial-writer':
+      return 'Editorial draft written (commission-blind). Apply it in the case to accept.'
+    case 'integrity-checker': {
+      const verdict = (result.integrityResult as { verdict?: string } | undefined)?.verdict ?? 'UNKNOWN'
+      return `Integrity verdict: ${verdict} — sign-off is always human.`
+    }
+    case 'monitor':
+      return 'Monitoring brief prepared (CHECK_SCHEDULED — verify registry status manually before recording a status).'
+    default:
+      return 'Pipeline agent run complete (draft).'
+  }
+}
+
+/**
+ * Reviewer S2 — a pipeline agent run is a full second LLM call (10-60s+) that
+ * executes inside the Cofounder's tool loop. The route's wall-clock check only
+ * runs BETWEEN iterations, so the tool itself must refuse when the remaining
+ * turn budget can't safely fit an agent run.
+ */
+const MIN_AGENT_BUDGET_MS = 35_000
+
+const runPipelineAgent = async (
+  payload: Payload,
+  req: PayloadRequest,
+  args: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<ToolResult> => {
+  const role = String(args.role ?? '')
+  const fn = PIPELINE_AGENT_FNS[role]
+  if (!fn) {
+    return {
+      ok: false,
+      output: `run_pipeline_agent: unknown role '${role}' — one of ${PIPELINE_AGENT_ROLES.join(', ')}.`,
+    }
+  }
+  const caseId = Number(args.caseId)
+  if (!Number.isFinite(caseId) || caseId <= 0) {
+    return { ok: false, output: 'run_pipeline_agent requires a numeric caseId.' }
+  }
+  if (ctx.budgetRemainingMs !== undefined && ctx.budgetRemainingMs < MIN_AGENT_BUDGET_MS) {
+    return {
+      ok: false,
+      output: `Not enough wall-clock budget left this turn (${Math.max(0, Math.round(ctx.budgetRemainingMs / 1000))}s — a pipeline agent run needs ~35s+). Run it from the case chat instead.`,
+    }
+  }
+  const exists = await payload
+    .findByID({ collection: 'research-queue', id: caseId, req, depth: 0 })
+    .catch(() => null)
+  if (!exists) return { ok: false, output: `Case ${caseId} not found in the research queue.` }
+
+  // Draft only — NEVER apply (spec §7.4).
+  const result = await fn(payload, req, caseId)
+  return {
+    ok: true,
+    output: {
+      runId: result.runId,
+      role,
+      caseId,
+      status: 'draft',
+      summary: pipelineAgentSummary(role, result),
+    },
+  }
+}
+
 /** Tool definitions exposed to the model (OpenAI function-calling format). */
 export const cofounderTools: LlmToolDef[] = [
   {
@@ -339,6 +442,26 @@ export const cofounderTools: LlmToolDef[] = [
           ticketId: { type: 'number' },
           confirm: { type: 'boolean', default: false },
         },
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
+      name: 'run_pipeline_agent',
+      description:
+        'Trigger a pipeline stage agent on a research-queue case. Produces a DRAFT only — it is never applied; Viktor applies it in the case. EXPENSIVE: the agent run is a full second model call (10-60s) — use sparingly and only when the turn has budget. Roles: desk-researcher, score-analyst, editorial-writer, integrity-checker, monitor.',
+      parameters: {
+        type: 'object',
+        properties: {
+          caseId: { type: 'number', description: 'The research-queue case id.' },
+          role: {
+            type: 'string',
+            enum: ['desk-researcher', 'score-analyst', 'editorial-writer', 'integrity-checker', 'monitor'],
+          },
+        },
+        required: ['caseId', 'role'],
         additionalProperties: false,
       },
     },
@@ -439,6 +562,9 @@ export const executeCofounderTool = async (
         break
       case 'close_ticket':
         result = await closeTicket(payload, req, args, ctx)
+        break
+      case 'run_pipeline_agent':
+        result = await runPipelineAgent(payload, req, args, ctx)
         break
       default:
         result = { ok: false, output: `Unknown tool: ${toolName}` }
