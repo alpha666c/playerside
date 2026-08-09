@@ -1,0 +1,18 @@
+feat(ai): Phase G G.1 - shared LLM client (DeepSeek V4 Flash) + health check
+
+First Phase G build step: the single OpenAI-compatible LLM client used
+by the Cofounder and the five pipeline agents.
+
+- src/lib/reviewChat/llm.ts: env config (DEEPSEEK_API_KEY/BASE_URL/MODEL,
+  LLM_MAX_TOKENS), per-role model overrides (LLM_MODEL_<ROLE>), daily spend
+  cap via agent-logs llm_call rows (log IS the counter), chatLlm with
+  tool-call parsing, streamLlm SSE with stable delta/done contract, low
+  0.3 default temperature, healthCheck model-id self-check. No SDK dep.
+- GET /api/cofounder/health route (admin-only) for the G.6 status chip.
+- agent-logs gains the llm_call event option (operational class) +
+  logEvent union; payload-types regenerated. No migration needed.
+- .env.example + CREDENTIAL-LOG updated with the Phase G env contract.
+- tests/int/llm.int.spec.ts: 11 mocked tests. Gates: tsc, lint, 172/172.
+- Reviewer pass: no S0/S1; S2/S3 addressed (audit failures logged, cap
+  race documented, health pings uncounted by design, temp default pinned,
+  stream timeout leaves wall-clock headroom).

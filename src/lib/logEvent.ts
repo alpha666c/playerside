@@ -12,6 +12,7 @@ export type AgentLogEvent =
   | 'case_created'
   | 'status_transition'
   | 'case_updated'
+  | 'llm_call'
 
 export type LogEventInput = {
   agentId: string

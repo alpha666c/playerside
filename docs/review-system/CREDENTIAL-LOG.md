@@ -56,3 +56,17 @@ The private domain is managed by Viktor outside this repo. Do not use personal G
 3. If an operator suspends or flags the test account, log it immediately in the Notes column and in the CaseFile internal notes. Do not attempt to create a replacement account under a different name — that would cross an ethical line.
 4. The live chat account being a personal account (e.g. Platinum 2 on Stake) is acceptable and disclosed in the internal CaseFile. It is not disclosed publicly — the test question is genuine regardless of account tier.
 5. VIP status on a platform is not a negative for testing. A VIP player asking about self-exclusion is a completely realistic scenario.
+
+
+## API Credentials — Phase G (AI Cofounder, added 2026-08-09)
+
+| Env var | Purpose | Where to get it | Needed by |
+|---|---|---|---|
+| `DEEPSEEK_API_KEY` | LLM calls for the Cofounder + the five pipeline agents (spec G.1) | https://platform.deepseek.com -> API Keys | G.1 (build) |
+| `DEEPSEEK_BASE_URL` | Provider endpoint serving the model (default https://api.deepseek.com) | — (only set if using a different provider) | G.1 |
+| `DEEPSEEK_MODEL` | Candidate model id; **verified** at build by `GET /api/cofounder/health` (QA S0-1) | — | G.1 |
+| `EXA_API_KEY` | Trending research adapter T6 (Google/X/Reddit/AskGamblers/CasinoGuru) | https://dashboard.exa.ai -> API Keys | G.4 |
+| `LLM_SPEND_CAP_PER_DAY` | Daily call cap (default 1000, 0 = off) | — | G.1 |
+
+Rules: never commit real values; `.env.local` (local) + Vercel env (prod/preview) only;
+log key rotation in this file.

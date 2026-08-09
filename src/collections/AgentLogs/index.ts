@@ -92,6 +92,10 @@ export const AgentLogs: CollectionConfig<'agent-logs'> = {
         { label: 'Case created', value: 'case_created' },
         { label: 'Status transition', value: 'status_transition' },
         { label: 'Case updated', value: 'case_updated' },
+        // Phase G (G.1): every LLM invocation (Cofounder + pipeline agents)
+        // logs one row — doubles as the daily spend-cap counter (spec §1/§7.1).
+        // Operational class (not compliance); metadata only, never message content.
+        { label: 'LLM call', value: 'llm_call' },
       ],
       required: true,
     },

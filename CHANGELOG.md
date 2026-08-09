@@ -1,3 +1,20 @@
+## 2026-08-09 — Phase G G.1: shared LLM client (DeepSeek V4 Flash) + health self-check
+
+- **Implemented:** `src/lib/reviewChat/llm.ts` — one OpenAI-compatible LLM client for the
+  Cofounder + the five pipeline agents: env config (DEEPSEEK_API_KEY/BASE_URL/MODEL,
+  LLM_MAX_TOKENS), per-role model overrides (`LLM_MODEL_<ROLE>`), daily spend cap via
+  `agent-logs` (`llm_call` event, log IS the counter), non-streaming chat with tool-call
+  parsing, SSE streaming with a stable `{"delta":...}`/`{"done":true}` contract, and a
+  model-id self-check. Default temperature 0.3 for rubric-strict determinism.
+- **New route:** `GET /api/cofounder/health` (admin-only) — reports key-missing vs
+  model-id-verified state; the admin UI will render it as a status chip.
+- **Collection:** `llm_call` added to `agent-logs` event options (operational class) +
+  `logEvent` union; `payload-types.ts` regenerated. No migration required.
+- **Env contract:** `.env.example` + `CREDENTIAL-LOG.md` updated (DEEPSEEK_*, LLM_*, EXA_API_KEY).
+- **Tests:** `tests/int/llm.int.spec.ts` — 11 mocked tests (config, cap 429, no-key, tool
+  calls, provider errors, health, streaming). Gates: typecheck + lint + **172/172** green.
+- Live verification runs once `DEEPSEEK_API_KEY` is in the environment (health endpoint).
+
 ## 2026-08-09 — Phase G round 2 planned: orchestrator control room + approve-to-publish
 
 - **Planned (doc-only commit):** extended the Phase G Cofounder spec with the `/admin/cofounder`

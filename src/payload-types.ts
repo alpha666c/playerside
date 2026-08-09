@@ -1380,7 +1380,8 @@ export interface AgentLog {
     | 'license_recheck'
     | 'case_created'
     | 'status_transition'
-    | 'case_updated';
+    | 'case_updated'
+    | 'llm_call';
   timestamp: string;
   agentId: string;
   /**

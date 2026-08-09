@@ -336,3 +336,31 @@ scoring, and content land on the website automatically.
 - QA round 2: APPROVE_WITH_FIXES (3 S1, 3 S2, 3 S3) — all resolved in spec §12/§11/§13.
   Build order extended: G.6 control room + G.6b publish flow; tests #13–#20.
 
+
+## 2026-08-09 — Phase G G.1: shared LLM client implemented (DeepSeek V4 Flash)
+
+**Goal:** the first Phase G build step — `src/lib/reviewChat/llm.ts`, the single
+OpenAI-compatible LLM client the Cofounder AND the five pipeline agents will use, plus the
+model-id self-check endpoint. Shipped with mocked tests; live verification waits on the
+`DEEPSEEK_API_KEY`.
+
+- **No SDK dependency added** — plain `fetch` to the configured provider (default
+  `https://api.deepseek.com`, model `deepseek-v4-flash`), matching the repo's no-AI-dep stance.
+- **Daily spend cap (spec §7.1):** `checkDailyCap` counts today's `agent-logs` rows where
+  `event = 'llm_call'` — the log IS the counter (one audit row per call, metadata only, never
+  message content/PII). Cap env `LLM_SPEND_CAP_PER_DAY` (default 1000, 0 = off). Documented as
+  a best-effort soft cap (read-then-write race, reviewer S2) — fine for the single-admin surface.
+- **`llm_call` added to AgentLogs** event select + `logEvent` union; operational retention class
+  (NOT compliance). Config-only change — no migration; `payload generate:types` regenerated.
+- **Per-role model overrides:** `LLM_MODEL_<ROLE>` env wins over `DEEPSEEK_MODEL`
+  (e.g. `LLM_MODEL_DESK_RESEARCHER`). Default temperature 0.3 (reviewer S3 — rubric-strict).
+- **Streaming contract:** `streamLlm` re-emits provider deltas as `data: {"delta":...}\n\n` and
+  terminates with `data: {"done":true}\n\n` — stable for the G.6 chat UI regardless of provider.
+- **`GET /api/cofounder/health`** (admin-only): reports key-missing vs model-id-verified state
+  (QA S0-1). Health pings deliberately uncounted/unlogged (reviewer S3 note).
+- **Audit failures never fully silent** (reviewer S2): a dropped `llm_call` row logs
+  `payload.logger.error` — the call still succeeds, but the undercount is observable.
+- Gates: typecheck + lint + **172/172 tests** (11 new, all mocked — no key/network/DB).
+- Next: G.2 (`CofounderSessions` collection + migration). `DEEPSEEK_API_KEY` needed for G.3+
+  live runs; `.env.example` + `CREDENTIAL-LOG.md` updated with the full Phase G env contract.
+
