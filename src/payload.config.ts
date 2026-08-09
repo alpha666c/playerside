@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url'
 
 import { AgentLogs } from './collections/AgentLogs'
 import { Categories } from './collections/Categories'
+import { CofounderSessions } from './collections/CofounderSessions'
 import { CryptoCasinoReviews } from './collections/CryptoCasinoReviews'
 import { GamificationProfiles } from './collections/GamificationProfiles'
 import { Media } from './collections/Media'
@@ -118,6 +119,7 @@ export default buildConfig({
     AgentLogs,
     Operator,
     ResearchQueue,
+    CofounderSessions,
     Quests,
     GamificationProfiles,
     UserQuests,

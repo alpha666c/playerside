@@ -13,6 +13,10 @@ export type AgentLogEvent =
   | 'status_transition'
   | 'case_updated'
   | 'llm_call'
+  // Phase G (G.2): CofounderSessions audit (spec §7.2)
+  | 'ticket_created'
+  | 'ticket_updated'
+  | 'ticket_status_change'
 
 export type LogEventInput = {
   agentId: string

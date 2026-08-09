@@ -1,4 +1,4 @@
-import type { CollectionBeforeChangeHook } from 'payload'
+import type { CollectionBeforeChangeHook, CollectionSlug } from 'payload'
 
 import { APIError } from 'payload'
 
@@ -57,59 +57,91 @@ import { APIError } from 'payload'
  * declared `changedFields`, `data`'s value is trusted as-is, since
  * Payload's own merge never overwrites a field the caller explicitly
  * supplied.
+ *
+ * Phase G (G.2): generalized into a factory so `cofounder-sessions`
+ * reuses the exact same contract (spec §2: plan/thread writes go through
+ * the same optimistic-version contract). The default export keeps the
+ * research-queue behavior byte-for-byte identical.
  */
-export const enforceOptimisticVersion: CollectionBeforeChangeHook = async ({ data, operation, originalDoc, req }) => {
-  if (operation !== 'update') return data
 
-  const expectedVersion = req.context?.expectedVersion
-  if (expectedVersion === undefined || expectedVersion === null) return data
+type VersionHookContext = {
+  pool: { query: (sql: string, params: unknown[]) => Promise<{ rowCount: number; rows: Array<{ version: number }> }> }
+}
 
-  if (typeof expectedVersion !== 'number' || !Number.isInteger(expectedVersion)) {
-    throw new APIError('expectedVersion must be an integer.', 400)
-  }
+export const makeEnforceOptimisticVersion = (
+  table: string,
+  collection: string,
+): CollectionBeforeChangeHook => {
+  return async ({ data, operation, originalDoc, req }) => {
+    if (operation !== 'update') return data
 
-  const changedFields = req.context?.changedFields
-  if (!Array.isArray(changedFields) || changedFields.length === 0 || !changedFields.every((f) => typeof f === 'string')) {
-    throw new APIError('req.context.changedFields (a non-empty string array of the top-level fields you intend to change) is required alongside expectedVersion.', 400)
-  }
+    const expectedVersion = req.context?.expectedVersion
+    if (expectedVersion === undefined || expectedVersion === null) return data
 
-  const id = originalDoc?.id
-  if (!id) return data
+    if (typeof expectedVersion !== 'number' || !Number.isInteger(expectedVersion)) {
+      throw new APIError('expectedVersion must be an integer.', 400)
+    }
 
-  const pool = (req.payload.db as unknown as { pool: { query: (sql: string, params: unknown[]) => Promise<{ rowCount: number; rows: Array<{ version: number }> }> } }).pool
+    const changedFields = req.context?.changedFields
+    if (
+      !Array.isArray(changedFields) ||
+      changedFields.length === 0 ||
+      !changedFields.every((f) => typeof f === 'string')
+    ) {
+      throw new APIError(
+        'req.context.changedFields (a non-empty string array of the top-level fields you intend to change) is required alongside expectedVersion.',
+        400,
+      )
+    }
 
-  const result = await pool.query('UPDATE research_queue SET version = version + 1 WHERE id = $1 AND version = $2 RETURNING version', [
-    id,
-    expectedVersion,
-  ])
+    const id = originalDoc?.id
+    if (!id) return data
 
-  if (result.rowCount === 0) {
-    throw new APIError(
-      'This case file was changed by someone else since you loaded it. Reload the latest version and reapply your change.',
-      409,
+    const pool = (req.payload.db as unknown as VersionHookContext).pool
+
+    const result = await pool.query(
+      `UPDATE ${table} SET version = version + 1 WHERE id = $1 AND version = $2 RETURNING version`,
+      [id, expectedVersion],
     )
-  }
 
-  // Rebase every field the caller did NOT declare as changed onto a
-  // genuinely fresh read. Deliberately NOT passing `req` to findByID:
-  // Payload's Local API reuses `req.payloadDataLoader` when a `req` is
-  // forwarded (createLocalReq.js: `req.payloadDataLoader =
-  // req?.payloadDataLoader || getDataLoader(req)`), which would return
-  // the document already cached for this request by updateByID.js's own
-  // initial read — not a new query. Omitting `req` gets a brand-new
-  // local request with its own empty dataloader, forcing a real query
-  // against current committed state.
-  const freshDoc = (await req.payload.findByID({ id, collection: 'research-queue', depth: 0 })) as unknown as Record<string, unknown> | null
-  const typedData = data as Record<string, unknown>
-  const changedFieldSet = new Set(changedFields)
-  if (freshDoc) {
-    for (const [key, value] of Object.entries(freshDoc)) {
-      if (!changedFieldSet.has(key)) {
-        typedData[key] = value
+    if (result.rowCount === 0) {
+      throw new APIError(
+        'This document was changed by someone else since you loaded it. Reload the latest version and reapply your change.',
+        409,
+      )
+    }
+
+    // Rebase every field the caller did NOT declare as changed onto a
+    // genuinely fresh read. Deliberately NOT passing `req` to findByID:
+    // Payload's Local API reuses `req.payloadDataLoader` when a `req` is
+    // forwarded (createLocalReq.js: `req.payloadDataLoader =
+    // req?.payloadDataLoader || getDataLoader(req)`), which would return
+    // the document already cached for this request by updateByID.js's own
+    // initial read — not a new query. Omitting `req` gets a brand-new
+    // local request with its own empty dataloader, forcing a real query
+    // against current committed state.
+    const freshDoc = (await req.payload.findByID({
+      id,
+      collection: collection as CollectionSlug,
+      depth: 0,
+    })) as unknown as Record<string, unknown> | null
+    const typedData = data as Record<string, unknown>
+    const changedFieldSet = new Set(changedFields)
+    if (freshDoc) {
+      for (const [key, value] of Object.entries(freshDoc)) {
+        if (!changedFieldSet.has(key)) {
+          typedData[key] = value
+        }
       }
     }
-  }
-  typedData.version = result.rows[0]?.version
+    typedData.version = result.rows[0]?.version
 
-  return data
+    return data
+  }
 }
+
+/** research-queue default (unchanged behavior). */
+export const enforceOptimisticVersion = makeEnforceOptimisticVersion(
+  'research_queue',
+  'research-queue',
+)

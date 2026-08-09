@@ -35,6 +35,16 @@
   updateGlobal with keys → read back OK); migration down/up cycle verified. Gates: tsc + lint +
   176/176 tests.
 
+- **feat(ai): Phase G.2 — `CofounderSessions` ticket collection.** The Cofounder's resumable
+  session unit (`#CF-YYMMDD-NN`, auto-numbered per day via a field-level beforeValidate hook):
+  title, sessionType, status, plan array (linked to research-queue cases), pinnedCases, thread,
+  the delegation queue (spec §4.1 — the Cofounder proposes jobs, humans approve/execute), and
+  lastActiveAt. Reuses the research-queue optimistic-version contract (generalized into a
+  factory; stale `expectedVersion` → 409). Audit events `ticket_created` /
+  `ticket_status_change` / `ticket_updated` added to agent-logs. Migrations `20260809_183111`
+  (5 tables + enums) + `20260809_184012` (delegationQueue.source select→text — avoids the
+  single-value-enum footgun). 8 int tests; gates: tsc + lint + **184/184**.
+
 ## 2026-08-09 — Phase G: admin-managed settings — keys live in the DB, one place for every host
 
 - **New `SystemSettings` global** (`/admin/globals/system-settings`, admin-only): DeepSeek API

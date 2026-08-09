@@ -79,6 +79,7 @@ export interface Config {
     'agent-logs': AgentLog;
     operators: Operator;
     'research-queue': ResearchQueue;
+    'cofounder-sessions': CofounderSession;
     quests: Quest;
     'gamification-profiles': GamificationProfile;
     'user-quests': UserQuest;
@@ -112,6 +113,7 @@ export interface Config {
     'agent-logs': AgentLogsSelect<false> | AgentLogsSelect<true>;
     operators: OperatorsSelect<false> | OperatorsSelect<true>;
     'research-queue': ResearchQueueSelect<false> | ResearchQueueSelect<true>;
+    'cofounder-sessions': CofounderSessionsSelect<false> | CofounderSessionsSelect<true>;
     quests: QuestsSelect<false> | QuestsSelect<true>;
     'gamification-profiles': GamificationProfilesSelect<false> | GamificationProfilesSelect<true>;
     'user-quests': UserQuestsSelect<false> | UserQuestsSelect<true>;
@@ -1383,7 +1385,10 @@ export interface AgentLog {
     | 'case_created'
     | 'status_transition'
     | 'case_updated'
-    | 'llm_call';
+    | 'llm_call'
+    | 'ticket_created'
+    | 'ticket_updated'
+    | 'ticket_status_change';
   timestamp: string;
   agentId: string;
   /**
@@ -1757,6 +1762,110 @@ export interface ResearchQueue {
   createdAt: string;
 }
 /**
+ * The Cofounder's tickets (Phase G §2) — one ticket per work session, resumable by #CF-YYMMDD-NN. Plan items, thread, pinned cases and the delegation queue live here. Admin-only.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cofounder-sessions".
+ */
+export interface CofounderSession {
+  id: number;
+  /**
+   * Format #CF-YYMMDD-NN — assigned automatically on create (§2).
+   */
+  ticketNumber: string;
+  /**
+   * e.g. "Tuesday review run — 5 casinos + 4 no-deposit".
+   */
+  title: string;
+  sessionType?: ('review-run' | 'research-brief' | 'ops') | null;
+  status?: ('open' | 'active' | 'paused' | 'done') | null;
+  /**
+   * The structured to-do list for this session (§2).
+   */
+  plan?:
+    | {
+        kind: 'casino-review' | 'no-deposit-bonus' | 'research' | 'delegation' | 'ops';
+        /**
+         * Operator/bonus name, or free text.
+         */
+        target?: string | null;
+        /**
+         * Linked research-queue case when applicable.
+         */
+        caseId?: (number | null) | ResearchQueue;
+        status?: ('todo' | 'in-progress' | 'blocked' | 'done') | null;
+        /**
+         * Id of an enqueued delegation job (§5) if this item was delegated.
+         */
+        delegationRef?: string | null;
+        notes?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Cases this session touches — deep links into their pipeline stage.
+   */
+  pinnedCases?: (number | ResearchQueue)[] | null;
+  /**
+   * Turn-by-turn record — same shape as aiRuns.messages.
+   */
+  thread?:
+    | {
+        role: 'user' | 'assistant' | 'system';
+        content: string;
+        timestamp: string;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * Spec §4.1 — the Cofounder PROPOSES jobs (QUEUED); approval + execution is human/orchestrator-side.
+   */
+  delegationQueue?:
+    | {
+        jobId: string;
+        role:
+          | 'qa'
+          | 'reviewer'
+          | 'researcher'
+          | 'content-writer'
+          | 'desk-researcher'
+          | 'score-analyst'
+          | 'editorial-writer'
+          | 'integrity-checker'
+          | 'monitor';
+        /**
+         * Structured per agent-roster.md: context, deliverable, output contract.
+         */
+        brief: string;
+        source?: string | null;
+        status?: ('QUEUED' | 'APPROVED' | 'RUNNING' | 'DONE' | 'REJECTED') | null;
+        caseId?: (number | null) | ResearchQueue;
+        /**
+         * Where the completed work lands (case draft, file path, report id).
+         */
+        outputRef?: string | null;
+        createdAt?: string | null;
+        approvedAt?: string | null;
+        completedAt?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
+   * For the "resume" surface — bumped on every write.
+   */
+  lastActiveAt?: string | null;
+  /**
+   * The user who created this ticket (read-only).
+   */
+  createdBy?: (number | null) | User;
+  /**
+   * Optimistic-concurrency token (same contract as research-queue §3.1) — bumped atomically on expectedVersion-guarded writes. Not editorial data; never set this by hand.
+   */
+  version?: number | null;
+  updatedAt: string;
+  createdAt: string;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "quests".
  */
@@ -2112,6 +2221,10 @@ export interface PayloadLockedDocument {
     | ({
         relationTo: 'research-queue';
         value: number | ResearchQueue;
+      } | null)
+    | ({
+        relationTo: 'cofounder-sessions';
+        value: number | CofounderSession;
       } | null)
     | ({
         relationTo: 'quests';
@@ -2946,6 +3059,56 @@ export interface ResearchQueueSelect<T extends boolean = true> {
             };
         id?: T;
       };
+  updatedAt?: T;
+  createdAt?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "cofounder-sessions_select".
+ */
+export interface CofounderSessionsSelect<T extends boolean = true> {
+  ticketNumber?: T;
+  title?: T;
+  sessionType?: T;
+  status?: T;
+  plan?:
+    | T
+    | {
+        kind?: T;
+        target?: T;
+        caseId?: T;
+        status?: T;
+        delegationRef?: T;
+        notes?: T;
+        id?: T;
+      };
+  pinnedCases?: T;
+  thread?:
+    | T
+    | {
+        role?: T;
+        content?: T;
+        timestamp?: T;
+        id?: T;
+      };
+  delegationQueue?:
+    | T
+    | {
+        jobId?: T;
+        role?: T;
+        brief?: T;
+        source?: T;
+        status?: T;
+        caseId?: T;
+        outputRef?: T;
+        createdAt?: T;
+        approvedAt?: T;
+        completedAt?: T;
+        id?: T;
+      };
+  lastActiveAt?: T;
+  createdBy?: T;
+  version?: T;
   updatedAt?: T;
   createdAt?: T;
 }

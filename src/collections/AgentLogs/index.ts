@@ -96,6 +96,11 @@ export const AgentLogs: CollectionConfig<'agent-logs'> = {
         // logs one row — doubles as the daily spend-cap counter (spec §1/§7.1).
         // Operational class (not compliance); metadata only, never message content.
         { label: 'LLM call', value: 'llm_call' },
+        // Phase G (G.2): CofounderSessions audit (spec §7.2) — ticket lifecycle
+        // events. Operational class (not compliance), like llm_call.
+        { label: 'Ticket created', value: 'ticket_created' },
+        { label: 'Ticket updated', value: 'ticket_updated' },
+        { label: 'Ticket status change', value: 'ticket_status_change' },
       ],
       required: true,
     },

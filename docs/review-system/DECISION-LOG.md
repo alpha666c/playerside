@@ -471,3 +471,29 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
   `llmProvider=openrouter` + both keys, read back: `SAVE_OK` + `KEYS_PERSISTED true`. Migration
   down/up cycle verified locally (enum restored on down, varchar on up). Gates: tsc + lint +
   176/176 tests.
+## 2026-08-09 — Phase G.2 shipped: CofounderSessions ticket collection (spec §2, §4.1)
+
+- **Collection:** `cofounder-sessions` — the unit of resumability. `ticketNumber` auto-assigned
+  `#CF-YYMMDD-NN` via a FIELD-LEVEL beforeValidate hook (Payload validates fields in its
+  "beforeValidate - Fields" step, BEFORE collection-level beforeValidate hooks — verified in
+  payload@3.86.0 dist create.js; a collection hook assigns too late for `required`+`validate`).
+  Per-day increment (count today's prefix + 1), no shared counter (QA S2-4); collisions surface
+  as unique violations — G.3 route should retry once/friendly-message (reviewer note).
+- **Fields per spec:** title, sessionType, status (open/active/paused/done), plan array
+  (kind/target/caseId→research-queue/status/delegationRef/notes), pinnedCases (hasMany →
+  research-queue), thread (same shape as aiRuns.messages), delegationQueue (spec §4.1 jobs,
+  QUEUED→APPROVED→RUNNING→DONE/REJECTED; the Cofounder PROPOSES, humans dispose),
+  lastActiveAt, createdBy (users, readOnly, ALWAYS stamped from req.user on create — reviewer S3),
+  version (optimistic-concurrency contract).
+- **Concurrency:** `enforceOptimisticVersion` generalized into
+  `makeEnforceOptimisticVersion(table, collection)` factory; research-queue default export
+  unchanged (byte-identical behavior). CofounderSessions reuses the same expectedVersion +
+  changedFields contract (spec test #11 — stale → 409 verified).
+- **Audit:** ticket_created / ticket_status_change / ticket_updated (with a compact
+  changedFields diff — reviewer S3) via logEvent; AgentLogs event enum + logEvent union extended
+  (enum ALTERs in migration 20260809_183111). Migration 20260809_184012 converts
+  `delegationQueue.source` select→text (reviewer S2 — the same single-value-enum footgun that
+  broke System Settings saves earlier today; the enum is dropped).
+- **Tests:** 8 int tests (numbering + sequential, create defaults, resume cycle thread/plan
+  intact, 409 stale version, 400 missing changedFields, ticket_created audit, delegation enqueue
+  QUEUED, pinnedCases link). Gates: tsc + lint + **184/184** (was 176).
