@@ -158,3 +158,32 @@ A full-codebase audit (reviewer → QA → fix-planner pipeline) found **2 S1, 4
 ## 2026-08-08 — Phase A: noir-ops HUD language locked (Tactical 2.0 foundation)
 
 **Decision — the site speaks one design language.** `docs/review-system/DESIGN-SYSTEM.md` is now the working system for the Tactical 2.0 pass (Phases B-F consume it). Key decisions: (1) **gold discipline** — gold stays reserved for the Verification Seal; the pre-existing gold-tinted `--line` border token is a kept, opacity-capped exception (texture, not accent), and the ghost pill's `hover:border-gold` was corrected; (2) **type system** — Fraunces display + Instrument Sans body + IBM Plex Mono data, with `.t-*` classes (components layer; utilities override — documented); (3) **motion** — `--ease-out-expo/quart` + `--dur-*` tokens and a global reduced-motion kill-switch (rAF-driven hero/lenis unaffected); (4) **texture** — `.bg-blueprint` grid + one fixed `.noise` grain overlay, mounted once in the frontend layout; (5) **header** — 2px coral hairline + mono uppercase nav with expanding underline (CMSLink forwards className to the anchor, verified); (6) **template-era seam closed** — the Payload blocks (CTA/Content/Media/Archive) restyled or rhythm-normalized; `RenderBlocks` now owns block spacing with `gap-14`. Gates: typecheck + lint + 161/161 tests + build 40/40 + live-verified on local prod.
+## 2026-08-08 — Phase B: tactical homepage, white-strip root cause, palette sweep
+
+**The white strip at the top — root cause, deterministically found.** Rendered SSR HTML had no
+`data-theme` attribute, and `globals.css` gates page visibility behind `html { opacity: 0 }` until
+the theme script runs. With no background on `html`, the browser's default white canvas showed
+through: during load (theme-init flash) and above the viewport when scrolling up (overscroll /
+rubber-band). Fix is two-part and permanent: (1) `html { background-color: var(--ink);
+color-scheme: dark }` — the canvas is dark no matter what; (2) `data-theme="dark"` is now
+server-rendered on `<html>` in `layout.tsx`, so SSR output already satisfies the opacity rule and
+the no-JS case renders visible + dark. The `beforeInteractive` theme script still upgrades to a
+stored preference — both themes carry identical tokens, so nothing flickers.
+
+**Palette discipline decisions:**
+- Gold (amber) is gone from every public surface except the Vex Missions identity, where it is the
+  sanctioned product accent (rank, XP, badge readouts). The mission-board CTA is now coral like all
+  primary actions; only Vex *readouts* stay gold, plus the semantic `warning` token in the bonus
+  calculator's trap warning.
+- `text-emerald-400`/`text-rose-400` verdicts → brand `success`/`coral` across verdict boxes,
+  claims tables, stamp reactor, compare page, and form errors.
+- The homepage filter bar was a dead interaction (state set, nothing consumed). It is now wired
+  live to the verified-operator directory (search + category filter the corpus, honest empty
+  state). Currency/speed/jurisdiction facets are accepted for forward-compat with the real corpus.
+- The evidence drawer was bumped to `z-[60]` so the fixed `z-50` film-grain overlay can never sit
+  above an interactive modal; drawer gained `role="dialog"` + `aria-modal`.
+- The ProtocolScrub `SYNC` readout defaults to `—` (not `000`) so mobile/reduced-motion never
+  shows a frozen "0%" that reads as broken; the `hud-frame` was confined to the inner container so
+  corner brackets don't expand across the whole pinned section.
+- Admin surfaces (`/dashboard/*`) keep their own styling — out of scope for the public in-colour
+  pass; flagged for the admin-dashboard phase.

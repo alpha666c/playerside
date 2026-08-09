@@ -309,7 +309,7 @@ const LicenseRow: React.FC<{ group: CompareEntry[] }> = ({ group }) => (
       const verified = Boolean(entry.licenseAuthority && entry.licenseNumber)
       return (
         <td className="border-t border-line p-4 align-top" key={entry.slug}>
-          <span className={verified ? 'text-emerald-400' : 'text-coral'}>
+          <span className={verified ? 'text-success' : 'text-coral'}>
             {verified ? 'Verified' : 'Not verified'}
           </span>
           {entry.licenseAuthority ? (

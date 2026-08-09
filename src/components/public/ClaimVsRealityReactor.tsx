@@ -41,7 +41,6 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
     },
   ]
 
-
   const dataList = items || defaultItems
   const [stampedMap, setStampedMap] = useState<Record<number, boolean>>({})
   const [activeEvidence, setActiveEvidence] = useState<ClaimVsRealityItem | null>(null)
@@ -52,79 +51,76 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
   }
 
   return (
-    <div className="bg-zinc-900/90 border border-zinc-800/90 rounded-2xl p-6 backdrop-blur-xl shadow-2xl space-y-6">
+    <div className="panel space-y-6 p-6 backdrop-blur-xl">
       {/* Header */}
-      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-zinc-800">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-amber-400"></span>
-            <h3 className="text-lg font-bold text-white tracking-tight">
-              Operator Claim vs. Measured Reality Reactor
-            </h3>
+            <span className="h-2.5 w-2.5 rounded-full bg-evidence" />
+            <h3 className="t-h3 text-paper">Operator Claim vs. Measured Reality Reactor</h3>
           </div>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="t-caption mt-1">
             Comparing what the casino advertises against what Playerside actually measured in live test accounts.
           </p>
         </div>
 
-        <span className="px-3 py-1 bg-zinc-950 border border-zinc-800 text-zinc-400 text-xs font-mono font-semibold rounded-lg">
-          Evidence-Backed Audit
-        </span>
+        <span className="hud-chip">evidence_backed_audit</span>
       </div>
 
       {/* Comparison Items Grid */}
       <div className="space-y-4">
         {dataList.map((item, idx) => {
           const isStamped = stampedMap[idx]
+          const accent = item.isMatches ? 'border-success/40 hover:border-success/60' : 'border-coral/40 hover:border-coral/60'
           return (
             <div
               key={idx}
-              className={`p-5 rounded-xl border transition-all ${
-                item.isMatches
-                  ? 'bg-zinc-950/80 border-zinc-800/80 hover:border-emerald-500/40'
-                  : 'bg-zinc-950/80 border-zinc-800/80 hover:border-amber-500/40'
-              }`}
+              className={`hud-scan rounded-[10px] border bg-ink-2/80 p-5 transition-all duration-300 ${accent}`}
             >
-              <div className="flex items-center justify-between pb-3 mb-3 border-b border-zinc-800/60">
-                <span className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-400">
+              <div className="mb-3 flex items-center justify-between border-b border-line pb-3">
+                <span className="font-mono text-xs font-bold uppercase tracking-wider text-paper-dim">
                   Category: {item.category}
                 </span>
                 <span
-                  className={`px-2.5 py-0.5 rounded text-[11px] font-mono font-bold border ${
+                  className={`rounded border px-2.5 py-0.5 font-mono text-[11px] font-bold ${
                     item.isMatches
-                      ? 'bg-emerald-950 text-emerald-400 border-emerald-800'
-                      : 'bg-amber-950 text-amber-400 border-amber-800'
+                      ? 'border-success/50 bg-success/10 text-success'
+                      : 'border-coral/50 bg-coral/10 text-coral'
                   }`}
                 >
                   {item.isMatches ? 'CLAIM MATCHES REALITY' : 'DISCREPANCY DETECTED'}
                 </span>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-xs font-sans">
+              <div className="grid grid-cols-1 gap-4 text-xs font-sans md:grid-cols-2">
                 {/* Operator Claim Column */}
-                <div className="p-3.5 bg-zinc-900/60 border border-zinc-800/60 rounded-lg space-y-1">
-                  <div className="text-[10px] uppercase font-mono text-zinc-500 font-semibold">Operator Stated Claim</div>
-                  <div className="text-zinc-300 font-medium">{item.operatorClaim}</div>
+                <div className="space-y-1 rounded-[10px] border border-line bg-ink-2/60 p-3.5">
+                  <div className="font-mono text-[10px] font-semibold uppercase text-paper-dim">
+                    Operator Stated Claim
+                  </div>
+                  <div className="font-medium text-paper-dim">{item.operatorClaim}</div>
                 </div>
 
                 {/* Measured Reality Column */}
-                <div className="p-3.5 bg-zinc-900/60 border border-zinc-800/60 rounded-lg space-y-1">
-                  <div className="text-[10px] uppercase font-mono text-zinc-500 font-semibold">Playerside Tested Result</div>
-                  <div className="text-zinc-100 font-semibold">{item.measuredResult}</div>
+                <div className="space-y-1 rounded-[10px] border border-line bg-ink-2/60 p-3.5">
+                  <div className="font-mono text-[10px] font-semibold uppercase text-paper-dim">
+                    Playerside Tested Result
+                  </div>
+                  <div className="font-semibold text-paper">{item.measuredResult}</div>
                 </div>
               </div>
 
               {/* Action & Stamp Seal */}
-              <div className="mt-4 pt-3 border-t border-zinc-800/60 flex items-center justify-between gap-3">
-                <div className="text-[11px] font-mono text-zinc-500">
-                  Ref: <span className="text-zinc-300 font-bold">{item.evidenceRef}</span>
+              <div className="mt-4 flex items-center justify-between gap-3 border-t border-line pt-3">
+                <div className="font-mono text-[11px] text-paper-dim/70">
+                  Ref: <span className="font-bold text-paper-dim">{item.evidenceRef}</span>
                 </div>
 
                 <div className="flex items-center gap-3">
                   {isStamped ? (
-                    <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-emerald-950 border border-emerald-800 text-emerald-400 font-mono text-xs font-bold animate-in zoom-in-95 duration-150 shadow-md shadow-emerald-950/50">
-                      <svg className="w-4 h-4 text-emerald-400" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                        <circle cx="12" cy="12" r="10" strokeWidth="2" className="text-emerald-800" />
+                    <div className="flex items-center gap-2 rounded-[10px] border border-success/50 bg-success/10 px-3 py-1.5 font-mono text-xs font-bold text-success animate-in zoom-in-95 duration-150">
+                      <svg className="h-4 w-4 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                        <circle cx="12" cy="12" r="10" strokeWidth="2" />
                         <path d="M8 12l3 3 5-6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
                       </svg>
                       <span>CERTIFIED BY PLAYERSIDE</span>
@@ -132,12 +128,12 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
                   ) : (
                     <button
                       onClick={() => triggerStamp(idx, item)}
-                      className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold font-sans rounded-lg transition-all shadow-sm active:scale-95 flex items-center gap-1.5"
+                      className="flex items-center gap-1.5 rounded-[10px] bg-coral px-3.5 py-1.5 text-xs font-bold text-ink-2 shadow-sm transition-all duration-200 hover:bg-coral/90 hover:shadow-md active:scale-95"
                     >
-                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                       </svg>
-                      Verify & Stamp Finding
+                      Verify &amp; Stamp Finding
                     </button>
                   )}
                 </div>
@@ -147,19 +143,21 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
         })}
       </div>
 
-      {/* Modal / Drawer displaying Evidence Reference Details */}
+      {/* Evidence Reference Details */}
       {activeEvidence && (
-        <div className="p-4 bg-zinc-950 border border-zinc-800 rounded-xl space-y-2 text-xs font-mono">
-          <div className="flex items-center justify-between text-amber-400 font-bold">
+        <div className="space-y-2 rounded-[10px] border border-line bg-ink-2 p-4 font-mono text-xs animate-in fade-in duration-150">
+          <div className="flex items-center justify-between font-bold text-evidence">
             <span>EVIDENCE FILE DETAILS — {activeEvidence.evidenceRef}</span>
-            <button onClick={() => setActiveEvidence(null)} className="text-zinc-500 hover:text-white">✕</button>
+            <button onClick={() => setActiveEvidence(null)} aria-label="Dismiss evidence details" className="text-paper-dim transition-colors hover:text-paper">
+              ✕
+            </button>
           </div>
-          <div className="text-zinc-400 text-[11px] leading-relaxed">
+          <div className="text-[11px] leading-relaxed text-paper-dim">
             Logged Access Date: {activeEvidence.accessDate || '2026-07-22'}. Stored in Vercel Blob private storage adapter.
             {activeEvidence.regulatorUrl && (
               <div className="mt-1">
                 Regulator register link:{' '}
-                <a href={activeEvidence.regulatorUrl} target="_blank" rel="noreferrer" className="text-amber-400 hover:underline">
+                <a href={activeEvidence.regulatorUrl} target="_blank" rel="noreferrer" className="text-evidence hover:underline">
                   {activeEvidence.regulatorUrl}
                 </a>
               </div>

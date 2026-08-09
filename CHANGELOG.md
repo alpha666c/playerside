@@ -1,3 +1,29 @@
+## 2026-08-09 — Phase B: tactical homepage + HUD framing (Tactical 2.0, second cut)
+
+- **feat(homepage): the whole homepage now speaks the brand.** Hero rebuilt as a command deck
+  (mono coordinate readouts, evidence/coral glow, serif display headline, HUD metric panels);
+  all sections reframed with numbered `SEC 01–05` mono headers; the hero filter bar is now
+  LIVE-wired to the operator directory (search + category actually filter the grid, with an
+  honest empty state) — no more dead interaction.
+- **feat(protocol): The Protocol scrub is now a mono step readout** — `STEP 0n/04` per step,
+  a `SYNC` percentage readout driven by the scroll scrub, coral→evidence rail, corner-bracket
+  framing, brand palette throughout.
+- **feat(interactions): "alive" pass** — `.hud-frame` corner brackets (expand on hover),
+  `.hud-scan` scanline sweep, card lift + hover accents, coral primary actions everywhere
+  (stamp CTA, drawer close, sticky-CTA bonus button, mission-board CTA), focus + active
+  feedback on all controls.
+- **fix(ui): the white strip at the very top is dead.** Root cause: `html` had no background
+  and SSR carried no `data-theme`, so the `opacity:0` theme-init dance showed the browser's
+  white canvas during load and in the overscroll/rubber-band area. Fixed with a dark html
+  canvas (`background-color: var(--ink)` + `color-scheme: dark`) and server-rendered
+  `data-theme="dark"` on `<html>`; the no-JS case is now covered too.
+- **chore(palette): old Fable-era palette swept to zero on all public surfaces** (homepage,
+  review pages, archives, compare, missions, blocks) — zinc/amber/emerald →
+  ink/paper/coral/evidence/success; Vex Missions keeps its sanctioned restrained-gold
+  identity with surfaces aligned to brand ink/dusk.
+- **chore(a11y):** evidence drawer hardened (role=dialog, aria-modal, z-[60] above the noise
+  overlay), emoji icon removed from the bonus calculator (replaced with an SVG).
+
 # Changelog
 
 > Referenced by name in `docs/review-system/MASTER-BLUEPRINT.md`, `docs/review-system/SOURCE-OF-TRUTH.md`, and `docs/review-system/TEST-CASES.md` as the place changes to locked documents and locked behavior are logged. Did not exist until this entry — see `docs/review-handoffs/2026-07-22-platform-before-stake-reconciliation.md`. Entries below are a retrospective of commits already on `main`; nothing here is invented.

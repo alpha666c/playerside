@@ -3,6 +3,8 @@
 import React from 'react'
 import Link from 'next/link'
 
+import type { FilterState } from './InstantFilterBar'
+
 export interface OperatorCardData {
   name: string
   slug: string
@@ -55,90 +57,103 @@ const SAMPLE_OPERATORS: OperatorCardData[] = [
   },
 ]
 
+export function VerifiedOperatorGrid({
+  filters,
+}: {
+  filters?: FilterState
+}) {
+  // The hero filter bar drives this grid live: category pills + search query
+  // filter the demonstrated corpus; the other facets are accepted for
+  // forward-compat with the real corpus (currency/speed/jurisdiction).
+  const visible = SAMPLE_OPERATORS.filter((op) => {
+    if (!filters) return true
+    if (filters.category !== 'all' && op.category !== filters.category) return false
+    const q = filters.searchQuery.trim().toLowerCase()
+    if (q && !op.name.toLowerCase().includes(q) && !op.evidenceHash.toLowerCase().includes(q)) return false
+    return true
+  })
 
-export function VerifiedOperatorGrid({ onSelectEvidence }: { onSelectEvidence?: (hash: string) => void }) {
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
-        <div>
-          <h3 className="text-xl font-bold text-white tracking-tight">Illustrative Casino Intelligence Directory</h3>
-          <p className="text-xs text-zinc-400 mt-1">
-            System demonstration of 8–9 rubric category evaluations. Sample cases map to Master Blueprint §2 seed models.
-          </p>
-
-        </div>
-
-        <div className="flex gap-2">
-          <Link
-            href="/casinos"
-            className="px-3 py-1.5 bg-zinc-900 hover:bg-zinc-800 border border-zinc-800 text-zinc-300 text-xs font-semibold rounded-lg transition-colors"
-          >
-            Traditional (€/$)
-          </Link>
-          <Link
-            href="/crypto-casinos"
-            className="px-3 py-1.5 bg-amber-500/10 hover:bg-amber-500/20 border border-amber-500/30 text-amber-400 text-xs font-semibold rounded-lg transition-colors"
-          >
-            Crypto Casinos (BTC/USDT)
-          </Link>
-        </div>
+      {/* Slim action row — the section header carries the title. */}
+      <div className="flex items-center justify-end gap-2">
+        <Link
+          href="/casinos"
+          className="rounded-[10px] border border-line bg-ink-2 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors duration-200 hover:border-evidence/50 hover:text-paper"
+        >
+          Traditional (€/$)
+        </Link>
+        <Link
+          href="/crypto-casinos"
+          className="rounded-[10px] border border-coral/40 bg-coral/10 px-3 py-1.5 text-xs font-semibold text-coral transition-colors duration-200 hover:border-coral/70 hover:bg-coral/20"
+        >
+          Crypto Casinos (BTC/USDT)
+        </Link>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {SAMPLE_OPERATORS.map((op, idx) => (
+      {visible.length === 0 ? (
+        <div className="rounded-[10px] border border-line bg-ink-2/60 p-6 text-center font-mono text-xs text-paper-dim">
+          No operators match the current filter. Clear the search or switch the category.
+        </div>
+      ) : null}
+
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+        {visible.map((op, idx) => (
           <div
             key={idx}
-            className="bg-zinc-900/90 border border-zinc-800/90 hover:border-amber-500/50 rounded-2xl p-6 transition-all hover:shadow-xl space-y-4 flex flex-col justify-between group"
+            className="panel hud-frame hud-scan group flex flex-col justify-between space-y-4 p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-evidence/50"
           >
             <div>
               {/* Header */}
               <div className="flex items-center justify-between">
                 <div>
-                  <span className="px-2 py-0.5 rounded text-[10px] font-mono font-bold bg-zinc-950 text-zinc-400 border border-zinc-800 uppercase">
+                  <span className="rounded border border-line bg-ink-2 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-paper-dim">
                     {op.category === 'crypto' ? 'Crypto Casino' : 'Traditional Casino'}
                   </span>
-                  <h4 className="text-xl font-extrabold text-white mt-1 group-hover:text-amber-400 transition-colors">
+                  <h4 className="t-h4 mt-1 text-paper transition-colors duration-200 group-hover:text-coral">
                     {op.name}
                   </h4>
                 </div>
 
                 <div className="text-right font-mono">
-                  <div className="text-[10px] text-zinc-500 uppercase">Score</div>
-                  <div className="text-2xl font-extrabold text-amber-400">{op.score.toFixed(1)}</div>
+                  <div className="t-eyebrow">Score</div>
+                  <div className="t-data text-2xl font-semibold text-evidence">
+                    {op.score.toFixed(1)}
+                  </div>
                 </div>
               </div>
 
-              {/* Verified Tags */}
-              <div className="grid grid-cols-2 gap-3 my-4 text-xs font-mono">
-                <div className="p-2.5 bg-zinc-950 border border-zinc-800/80 rounded-xl">
-                  <span className="text-zinc-500 block text-[10px]">Tested Withdrawal</span>
-                  <span className="text-emerald-400 font-bold">{op.payoutSpeed}</span>
+              {/* Verified tags */}
+              <div className="my-4 grid grid-cols-2 gap-3 text-xs font-mono">
+                <div className="rounded-[10px] border border-line bg-ink-2/70 p-2.5">
+                  <span className="block text-[10px] text-paper-dim">Tested Withdrawal</span>
+                  <span className="font-semibold text-success">{op.payoutSpeed}</span>
                 </div>
-                <div className="p-2.5 bg-zinc-950 border border-zinc-800/80 rounded-xl">
-                  <span className="text-zinc-500 block text-[10px]">Regulator License</span>
-                  <span className="text-zinc-200 font-semibold">{op.license}</span>
+                <div className="rounded-[10px] border border-line bg-ink-2/70 p-2.5">
+                  <span className="block text-[10px] text-paper-dim">Regulator License</span>
+                  <span className="font-semibold text-paper">{op.license}</span>
                 </div>
               </div>
 
-              {/* Bonus Offer */}
-              <div className="p-3 bg-amber-950/20 border border-amber-800/40 rounded-xl text-xs font-mono">
-                <span className="text-amber-400/80 block text-[10px] uppercase">Verified Welcome Offer</span>
-                <span className="text-amber-300 font-bold">{op.welcomeBonus}</span>
+              {/* Bonus offer */}
+              <div className="rounded-[10px] border border-line bg-ink-2 p-3 text-xs font-mono">
+                <span className="block text-[10px] uppercase tracking-wider text-evidence">
+                  Verified Welcome Offer
+                </span>
+                <span className="font-semibold text-paper">{op.welcomeBonus}</span>
               </div>
             </div>
 
             {/* Actions */}
-            <div className="pt-3 border-t border-zinc-800 flex items-center justify-between gap-3">
-              <span className="text-[11px] font-mono text-zinc-500">{op.evidenceHash}</span>
+            <div className="flex items-center justify-between gap-3 border-t border-line pt-3">
+              <span className="font-mono text-[11px] text-paper-dim/60">{op.evidenceHash}</span>
 
-              <div className="flex items-center gap-2">
-                <Link
-                  href={op.category === 'crypto' ? `/crypto-casinos/${op.slug}` : `/casinos/${op.slug}`}
-                  className="px-3.5 py-1.5 bg-amber-500 hover:bg-amber-400 text-zinc-950 text-xs font-bold rounded-lg transition-colors shadow-sm"
-                >
-                  Read Review
-                </Link>
-              </div>
+              <Link
+                href={op.category === 'crypto' ? `/crypto-casinos/${op.slug}` : `/casinos/${op.slug}`}
+                className="rounded-[10px] bg-coral px-3.5 py-1.5 text-xs font-bold text-ink-2 shadow-sm transition-all duration-200 hover:bg-coral/90 hover:shadow-md active:scale-[0.97]"
+              >
+                Read Review
+              </Link>
             </div>
           </div>
         ))}

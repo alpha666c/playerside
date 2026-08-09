@@ -7,6 +7,7 @@ import { BonusCalculator } from './BonusCalculator'
 import { EvidenceDrawer } from './EvidenceDrawer'
 import { ClaimVsRealityReactor } from './ClaimVsRealityReactor'
 import { VerifiedOperatorGrid } from './VerifiedOperatorGrid'
+import { HudSectionHeader } from './HudSectionHeader'
 import { HeroFieldView } from '@/components/three/HeroFieldView'
 import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
 import { ProtocolScrub } from './ProtocolScrub'
@@ -23,71 +24,82 @@ export function PublicHomepageView() {
   })
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 font-sans">
-      {/* Dynamic State-of-the-Art Hero Section */}
-      <section className="relative isolate px-4 pt-16 pb-20 sm:px-6 sm:pt-24 sm:pb-28 lg:px-12 overflow-hidden border-b border-zinc-800/80">
+    <div className="min-h-screen bg-ink text-paper font-sans">
+      {/* Command deck — the hero, framed as a live intel readout. */}
+      <section className="relative isolate overflow-hidden border-b border-line bg-blueprint">
         {/* Living evidence field — WebGL atmosphere (gated, decorative). */}
         <HeroFieldView />
-        {/* Glow Ambient Lights */}
-        <div className="pointer-events-none absolute -top-40 left-1/2 -translate-x-1/2 w-[800px] h-[500px] bg-gradient-to-b from-amber-500/15 via-emerald-500/5 to-transparent blur-[120px] rounded-full"></div>
+        {/* Ambient brand glow — restrained evidence/coral wash, not neon. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute -top-44 left-1/2 h-[560px] w-[900px] -translate-x-1/2 rounded-full bg-[radial-gradient(closest-side,rgba(110,168,216,0.14),transparent_70%)] blur-[90px]"
+        />
 
-        <div className="max-w-6xl mx-auto space-y-10 relative z-10">
+        {/* Coordinate readout — the one tactical flourish that ties the hero
+            to the HUD language. Hidden on small screens. */}
+        <div
+          aria-hidden
+          className="pointer-events-none absolute right-6 top-6 hidden select-none font-mono text-[10px] uppercase tracking-[0.22em] text-paper-dim/40 lg:block"
+        >
+          SEC-01 // LIVE_INTEL
+        </div>
+        <div
+          aria-hidden
+          className="pointer-events-none absolute bottom-6 left-6 hidden select-none font-mono text-[10px] uppercase tracking-[0.22em] text-paper-dim/40 lg:block"
+        >
+          LAT 52.37 // LON 4.90 // EVIDENCE_LINK
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-6xl space-y-10 px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20 lg:px-8">
           {/* Signature machined seal — the one true 3D brand mark (code-split, graceful fallback). */}
           <div className="flex justify-center">
             <MachinedSealLazy size={72} title="Playerside verification seal" />
           </div>
-          {/* Top Badge */}
+
+          {/* Top badge */}
           <div className="flex justify-center">
-            <div className="inline-flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-zinc-900/90 border border-zinc-800/90 text-xs font-mono text-amber-400 backdrop-blur-xl shadow-lg">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-              The Only Evidence-Backed Casino & Bonus Database
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-line bg-ink/80 px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-evidence backdrop-blur-xl">
+              <span className="h-1.5 w-1.5 rounded-full bg-evidence animate-pulse" />
+              The Only Evidence-Backed Casino &amp; Bonus Database
             </div>
           </div>
 
-          {/* Headline & Subhead */}
-          <div className="text-center space-y-5 max-w-4xl mx-auto">
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-extrabold tracking-tight text-white leading-[1.05]">
+          {/* Headline & subhead */}
+          <div className="mx-auto max-w-4xl space-y-5 text-center">
+            <h1 className="t-display text-white">
               Evidence-Backed Protocol. <br />
-              <span className="bg-gradient-to-r from-amber-400 via-amber-200 to-emerald-400 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-coral via-[#ffb08a] to-evidence bg-clip-text text-transparent">
                 Zero Bonus Traps.
               </span>
             </h1>
-
-            <p className="text-base sm:text-lg text-zinc-400 max-w-2xl mx-auto leading-relaxed">
-              We test withdrawals with real cash, verify licenses directly at regulator databases, and decode bonus fine print so you never get trapped.
+            <p className="mx-auto max-w-2xl text-base leading-relaxed text-paper-dim sm:text-lg">
+              We test withdrawals with real cash, verify licenses directly at regulator databases,
+              and decode bonus fine print so you never get trapped.
             </p>
           </div>
 
-          {/* Instant Search & Filter Bar */}
-          <div className="max-w-5xl mx-auto pt-2">
+          {/* Instant search & filter bar */}
+          <div className="mx-auto max-w-5xl pt-2">
             <InstantFilterBar onFilterChange={(f) => setFilters(f)} />
           </div>
 
-          {/* Live Proof Metrics */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 max-w-4xl mx-auto text-center pt-4">
-            <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-4 backdrop-blur-md">
-              <div className="text-2xl font-extrabold font-mono text-amber-400">100%</div>
-              <div className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider mt-1">
-                Commission-Blind
-              </div>
+          {/* Live proof metrics — HUD readouts, not marketing boxes. */}
+          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-4 pt-4 text-center md:grid-cols-4">
+            <div className="panel p-4">
+              <div className="t-data text-2xl font-semibold text-coral">100%</div>
+              <div className="t-eyebrow mt-1">Commission-Blind</div>
             </div>
-            <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-4 backdrop-blur-md">
-              <div className="text-2xl font-extrabold font-mono text-emerald-400">&lt; 15m</div>
-              <div className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider mt-1">
-                Avg Tested Crypto Payout
-              </div>
+            <div className="panel p-4">
+              <div className="t-data text-2xl font-semibold text-evidence">&lt; 15m</div>
+              <div className="t-eyebrow mt-1">Avg Tested Crypto Payout</div>
             </div>
-            <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-4 backdrop-blur-md">
-              <div className="text-2xl font-extrabold font-mono text-sky-400">0</div>
-              <div className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider mt-1">
-                Hidden Wagering Clauses
-              </div>
+            <div className="panel p-4">
+              <div className="t-data text-2xl font-semibold text-paper">0</div>
+              <div className="t-eyebrow mt-1">Hidden Wagering Clauses</div>
             </div>
-            <div className="bg-zinc-900/50 border border-zinc-800/80 rounded-xl p-4 backdrop-blur-md">
-              <div className="text-2xl font-extrabold font-mono text-purple-400">Vercel Blob</div>
-              <div className="text-[11px] font-mono text-zinc-400 uppercase tracking-wider mt-1">
-                Private Evidence Store
-              </div>
+            <div className="panel p-4">
+              <div className="t-data text-2xl font-semibold text-evidence">PRIVATE</div>
+              <div className="t-eyebrow mt-1">Vercel Blob Evidence Store</div>
             </div>
           </div>
         </div>
@@ -96,23 +108,48 @@ export function PublicHomepageView() {
       {/* The Protocol — pinned scroll-scrubbed walkthrough (desktop) */}
       <ProtocolScrub />
 
-      {/* Feature 1: Verified Operator Grid */}
-      <section className="max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-6">
-        <VerifiedOperatorGrid />
+      {/* SEC 02 — verified operator directory */}
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+        <HudSectionHeader
+          chip="intel"
+          n="02"
+          sub="System demonstration of 8–9 rubric category evaluations. Sample cases map to Master Blueprint §2 seed models."
+          title="The verified operator directory."
+        />
+        {/* Live-wired to the hero filter bar: category + search filter the grid. */}
+        <VerifiedOperatorGrid filters={filters} />
       </section>
 
-      {/* Feature 2: Live Payout Speed Leaderboard */}
-      <section className="max-w-6xl mx-auto px-4 py-10 sm:px-6 lg:px-8 space-y-6">
+      {/* SEC 03 — payout measurement leaderboard */}
+      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        <HudSectionHeader
+          chip="live"
+          n="03"
+          sub="Illustrative testing protocol demonstration. Live operator reviews appear only when a CaseFile passes human publication."
+          title="Payout speed, measured."
+        />
         <LivePayoutLeaderboard onSelectEvidence={(entry) => setSelectedEvidence(entry)} />
       </section>
 
-      {/* Feature 3: Operator Claim vs. Measured Reality Reactor */}
-      <section className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8 space-y-6">
+      {/* SEC 04 — the proof section: claim vs measured reality */}
+      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+        <HudSectionHeader
+          chip="field-intel"
+          n="04"
+          sub="Comparing what operators advertise against what Playerside actually measured in live test accounts."
+          title="Claim vs. measured reality."
+        />
         <ClaimVsRealityReactor />
       </section>
 
-      {/* Feature 4: Interactive Bonus Wager Trap Calculator */}
-      <section className="max-w-6xl mx-auto px-4 py-12 sm:px-6 lg:px-8 space-y-6">
+      {/* SEC 05 — bonus wager trap detector */}
+      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+        <HudSectionHeader
+          chip="decoder"
+          n="05"
+          sub="Input any casino bonus offer to expose total turnover required, max bet traps, and expected cashout value."
+          title="Decode the bonus fine print."
+        />
         <BonusCalculator />
       </section>
 
@@ -124,4 +161,3 @@ export function PublicHomepageView() {
     </div>
   )
 }
-

@@ -110,7 +110,7 @@ const VerdictBadge: React.FC<{ verdict: ClaimVerdict }> = ({ verdict }) => {
   }
   const [symbol, label, className] =
     verdict === 'met'
-      ? ['✓', 'Met', 'text-emerald-400']
+      ? ['✓', 'Met', 'text-success']
       : verdict === 'partial'
         ? ['~', 'Partial', 'text-gold']
         : ['✗', 'Not met', 'text-coral']

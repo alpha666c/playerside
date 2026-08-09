@@ -26,19 +26,19 @@ export function InstantFilterBar({ onFilterChange }: { onFilterChange?: (filters
   }
 
   return (
-    <div className="w-full bg-zinc-900/90 border border-zinc-800/90 rounded-2xl p-4 sm:p-5 backdrop-blur-xl shadow-2xl space-y-4">
+    <div className="w-full space-y-4 rounded-2xl border border-line bg-ink/80 p-4 shadow-panel backdrop-blur-xl sm:p-5">
       {/* Top Search & Filter Bar */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
+      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-5">
         {/* Search Input */}
-        <div className="lg:col-span-2 relative">
+        <div className="relative lg:col-span-2">
           <input
             type="text"
             value={filters.searchQuery}
             onChange={(e) => updateFilter('searchQuery', e.target.value)}
             placeholder="Search operator, casino, or bonus terms..."
-            className="w-full bg-zinc-950 border border-zinc-800/90 focus:border-amber-500 rounded-xl px-4 py-2.5 text-xs text-zinc-100 placeholder-zinc-500 outline-hidden transition-colors pl-9 font-sans"
+            className="w-full rounded-[10px] border border-line bg-ink-2 px-4 py-2.5 pl-9 font-sans text-xs text-paper outline-hidden transition-colors placeholder:text-paper-dim/50 focus:border-evidence"
           />
-          <svg className="w-4 h-4 text-zinc-500 absolute left-3 top-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <svg className="absolute left-3 top-3 h-4 w-4 text-paper-dim/60" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
           </svg>
         </div>
@@ -48,7 +48,7 @@ export function InstantFilterBar({ onFilterChange }: { onFilterChange?: (filters
           <select
             value={filters.currency}
             onChange={(e) => updateFilter('currency', e.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-800/90 focus:border-amber-500 rounded-xl px-3 py-2.5 text-xs text-zinc-300 outline-hidden font-sans cursor-pointer"
+            className="w-full cursor-pointer rounded-[10px] border border-line bg-ink-2 px-3 py-2.5 font-sans text-xs text-paper-dim outline-hidden transition-colors focus:border-evidence"
           >
             <option value="all">All Currencies</option>
             <option value="USDT">Tether (USDT)</option>
@@ -64,7 +64,7 @@ export function InstantFilterBar({ onFilterChange }: { onFilterChange?: (filters
           <select
             value={filters.payoutSpeed}
             onChange={(e) => updateFilter('payoutSpeed', e.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-800/90 focus:border-amber-500 rounded-xl px-3 py-2.5 text-xs text-zinc-300 outline-hidden font-sans cursor-pointer"
+            className="w-full cursor-pointer rounded-[10px] border border-line bg-ink-2 px-3 py-2.5 font-sans text-xs text-paper-dim outline-hidden transition-colors focus:border-evidence"
           >
             <option value="all">Any Payout Speed</option>
             <option value="instant">Instant (&lt; 10 mins)</option>
@@ -78,7 +78,7 @@ export function InstantFilterBar({ onFilterChange }: { onFilterChange?: (filters
           <select
             value={filters.jurisdiction}
             onChange={(e) => updateFilter('jurisdiction', e.target.value)}
-            className="w-full bg-zinc-950 border border-zinc-800/90 focus:border-amber-500 rounded-xl px-3 py-2.5 text-xs text-zinc-300 outline-hidden font-sans cursor-pointer"
+            className="w-full cursor-pointer rounded-[10px] border border-line bg-ink-2 px-3 py-2.5 font-sans text-xs text-paper-dim outline-hidden transition-colors focus:border-evidence"
           >
             <option value="all">All Regulators</option>
             <option value="MGA">Malta (MGA)</option>
@@ -90,17 +90,17 @@ export function InstantFilterBar({ onFilterChange }: { onFilterChange?: (filters
       </div>
 
       {/* Category Pills */}
-      <div className="flex items-center justify-between pt-3 border-t border-zinc-800/60 text-xs">
+      <div className="flex items-center justify-between border-t border-line pt-3 text-xs">
         <div className="flex items-center gap-2">
-          <span className="text-zinc-500 font-mono text-[11px] uppercase tracking-wider font-semibold">Category:</span>
+          <span className="font-mono text-[11px] font-semibold uppercase tracking-wider text-paper-dim">Category:</span>
           {(['all', 'traditional', 'crypto'] as const).map((cat) => (
             <button
               key={cat}
               onClick={() => updateFilter('category', cat)}
-              className={`px-3 py-1 rounded-lg text-xs font-medium transition-all ${
+              className={`rounded-[10px] px-3 py-1 text-xs font-medium transition-all duration-200 ${
                 filters.category === cat
-                  ? 'bg-amber-500 text-zinc-950 font-bold shadow-sm'
-                  : 'bg-zinc-950 text-zinc-400 hover:text-zinc-200 border border-zinc-800/80'
+                  ? 'bg-coral text-ink-2 font-bold shadow-sm'
+                  : 'border border-line bg-ink-2 text-paper-dim hover:border-evidence/50 hover:text-paper'
               }`}
             >
               {cat === 'all' ? 'All Casinos' : cat === 'crypto' ? 'Crypto Casinos' : 'Traditional Casinos'}
@@ -108,11 +108,10 @@ export function InstantFilterBar({ onFilterChange }: { onFilterChange?: (filters
           ))}
         </div>
 
-        <div className="hidden sm:flex items-center gap-2 text-zinc-500 text-[11px] font-mono">
-          <span className="w-2 h-2 rounded-full bg-amber-400"></span>
+        <div className="hidden items-center gap-2 font-mono text-[11px] text-paper-dim sm:flex">
+          <span className="h-2 w-2 rounded-full bg-evidence" />
           Traceable Protocol Spec
         </div>
-
       </div>
     </div>
   )

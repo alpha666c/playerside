@@ -35,6 +35,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
   return (
     <html
       className={cn(fraunces.variable, instrumentSans.variable, ibmPlexMono.variable)}
+      data-theme="dark"
       lang="en"
       suppressHydrationWarning
     >

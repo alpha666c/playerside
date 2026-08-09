@@ -69,7 +69,7 @@ export const StickyCtaBar: React.FC<{
             </a>
             {bonusHref ? (
               <a
-                className="rounded-lg bg-amber-400 px-3 py-2 text-[11.5px] font-bold text-zinc-950 transition-colors hover:bg-amber-300"
+                className="rounded-lg bg-coral px-3 py-2 text-[11.5px] font-bold text-ink-2 transition-colors hover:bg-coral/90"
                 href={bonusHref}
               >
                 {bonusLabel ?? 'Bonus terms'}

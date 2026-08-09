@@ -97,7 +97,8 @@
  * a general accent when the actual UI/UX pass happens.
  */
 :root,
-[data-theme='dark'] {
+[data-theme='dark'],
+[data-theme='light'] { /* brand is dark by default; both themes carry the same tokens */
   --ink: #1a1420;
   --ink-2: #150f1a;
   --dusk: #2a2032;
@@ -227,6 +228,11 @@
 
 html {
   opacity: 0;
+  /* Dark canvas — the page never flashes white during theme init, and the
+     overscroll / rubber-band area above the viewport matches the brand
+     instead of showing the browser default white. */
+  background-color: var(--ink);
+  color-scheme: dark;
 }
 
 html[data-theme='dark'],
@@ -413,6 +419,61 @@ html[data-theme='light'] {
     linear-gradient(rgba(243, 238, 232, 0.04) 1px, transparent 1px),
     linear-gradient(90deg, rgba(243, 238, 232, 0.04) 1px, transparent 1px);
   background-size: 100% 100%, 44px 44px, 44px 44px;
+}
+
+/* ------------------------------------------------------------------ */
+/* HUD interaction primitives — Phase B ("alive" pass)                  */
+/* ------------------------------------------------------------------ */
+
+/* Tactical corner brackets — expand slightly on hover. Used on cards and
+   panels to give the noir-ops frame language an interactive pulse. */
+.hud-frame {
+  position: relative;
+}
+.hud-frame::before,
+.hud-frame::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  border: 0 solid rgba(110, 168, 216, 0.5); /* evidence */
+  pointer-events: none;
+  transition: width var(--dur-med) var(--ease-out-expo), height var(--dur-med) var(--ease-out-expo);
+}
+.hud-frame::before {
+  top: 8px;
+  left: 8px;
+  border-top-width: 1px;
+  border-left-width: 1px;
+}
+.hud-frame::after {
+  right: 8px;
+  bottom: 8px;
+  border-right-width: 1px;
+  border-bottom-width: 1px;
+}
+.hud-frame:hover::before,
+.hud-frame:hover::after {
+  width: 20px;
+  height: 20px;
+}
+
+/* Scanline sweep — a single light pass across interactive cards on hover. */
+.hud-scan {
+  position: relative;
+  overflow: hidden;
+}
+.hud-scan::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(105deg, transparent 42%, rgba(110, 168, 216, 0.09) 50%, transparent 58%);
+  transform: translateX(-115%);
+  transition: transform 0.8s var(--ease-out-expo);
+  pointer-events: none;
+}
+.hud-scan:hover::after {
+  transform: translateX(115%);
 }
 
 /* Film-grain overlay — fixed, pointer-transparent, sits above page content. */

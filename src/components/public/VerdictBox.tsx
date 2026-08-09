@@ -99,7 +99,7 @@ export const VerdictBox: React.FC<{
           </dt>
           <dd className="m-0 text-paper">
             {licenseVerified ? (
-              <span className="text-emerald-400">Verified — {licenseAuthority}</span>
+              <span className="text-success">Verified — {licenseAuthority}</span>
             ) : (
               <span className="text-coral">Not verified</span>
             )}
