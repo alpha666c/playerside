@@ -1,3 +1,14 @@
+## 2026-08-09 — Phase G planned: "The Cofounder" — AI operations partner in the admin
+
+- **Planned (doc-only commit):** approved build spec for a chat-first meta-agent in the
+  Payload admin (DeepSeek V4 Flash) that guides reviews against the locked algorithm, plans
+  daily workloads, researches trending operators/bonuses (Google/X/Reddit/AskGamblers/
+  CasinoGuru), runs on resumable tickets (#CF-YYMMDD-NN), and drafts roster delegations.
+- Includes the shared LLM client (`src/lib/reviewChat/llm.ts`) that will also make the five
+  placeholder pipeline agents real (G.5). No autonomous case writes; Apply contract unchanged.
+- Spec: `docs/review-handoffs/2026-08-09-ai-cofounder-phase-g-build-spec.md` (QA-approved,
+  findings resolved in §11). Implementation is Phase G, order G.1–G.7, pending Viktor's go.
+
 ## 2026-08-09 — Phase B: tactical homepage + HUD framing (Tactical 2.0, second cut)
 
 - **feat(motion): Phase E round 2 — section reveals land on the homepage, real reduced-motion story for the hero.**

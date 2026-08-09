@@ -277,3 +277,32 @@ portion of Phase E on top of the token system shipped in `500a8ac`.
 
 Gates: typecheck + lint + 161/161 tests + build 40/40 + browser-verified (fade+slide computed
 styles, hero field + radar present, zero console errors).
+
+## 2026-08-09 — Phase G: "The Cofounder" — AI operations partner in the admin (plan approved)
+
+**Goal:** a chat-first meta-agent in the Payload admin that guides Viktor through hands-on
+reviews against the locked algorithm, builds structured daily plans, researches trending
+operators/bonuses across public sources, runs on resumable tickets (#CF-YYMMDD-NN), and
+drafts delegations to the roster — model DeepSeek V4 Flash.
+
+- **Scope decision:** the Cofounder sits ABOVE the five per-case pipeline agents (Desk
+  Researcher, Score Analyst, Editorial Writer, Integrity Checker, Monitor). It never writes
+  case fields — the no-autonomous-write rule stays load-bearing; the Apply + optimistic
+  concurrency contract is unchanged. Delegation is honest: the Cofounder proposes structured
+  job briefs (QUEUED→APPROVED), humans/orchestrator execute.
+- **Real model wiring lands here.** The five agents are placeholders today; Phase G ships a
+  shared `src/lib/reviewChat/llm.ts` (OpenAI-compatible fetch, DeepSeek V4 Flash default,
+  daily call cap, streaming) and rewires them so delegation means something.
+- **Live-lobby scope limit:** v1 has NO visibility into an operator's live game lobby ("the
+  most popular slot right now" is out of scope). The Cofounder guides via checklist + public
+  sources + Viktor's own observations, and says so rather than fabricating.
+- **Governance carried over:** accountProfile/internalNotes never in context (loadCaseContext
+  allowlist), trending output = untrusted data (pinned <untrusted_data> wrapper), output
+  passes the banned-phrase gate, prompt-injection suite must prove no write tool can be
+  triggered, RG/commission-wall framing pinned in the system prompt.
+- **QA:** independent red-team pass returned APPROVE_WITH_FIXES (1 S0, 4 S1, 4 S2, 3 S3) —
+  all resolved in the spec §11 (model-id verification, wall-clock budget, no-self-verification,
+  executor contract, ticket reuse rule, version-conflict test, date-prefixed ticket numbers).
+- Plan: `docs/review-handoffs/2026-08-09-ai-cofounder-phase-g-build-spec.md`. Build order
+  G.1–G.7. Implementation starts on Viktor's go.
+
