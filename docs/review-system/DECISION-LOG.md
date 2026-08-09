@@ -392,3 +392,27 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
 - Gates: typecheck + lint + **174/174 tests** (13 in `llm.int.spec.ts` incl. DB-fallback,
   env-wins, keySource). Migration applied locally (34ms).
 
+## 2026-08-09 — LLM provider locked: OpenRouter hosting DeepSeek V4 Flash (`deepseek/deepseek-v4-flash:free`)
+
+- **Decision (Viktor's call):** the Cofounder + pipeline agents call **OpenRouter** with the
+  `deepseek/deepseek-v4-flash:free` model id — NOT DeepSeek direct. Viktor's own DeepSeek key
+  returned 402 Insufficient Balance on test; OpenRouter's paid `deepseek/deepseek-v4-flash` is
+  ~$0.00000014/token (effectively free) and the `:free` variant is the target.
+- **Live verification:** `deepseek/deepseek-v4-flash:free` was NOT in OpenRouter's catalog at
+  check time (free tiers rotate in/out); the paid `deepseek/deepseek-v4-flash` and 14 other
+  `:free` models were. So the `:free` id stays the default but is flagged as a rotation risk —
+  `GET /api/cofounder/health` is the canary, and the fallback chain is documented in
+  `CREDENTIAL-LOG.md` (paid variant, then DeepSeek direct `deepseek-chat`).
+- **Naming cleanup:** env vars became provider-agnostic `LLM_API_KEY` / `LLM_BASE_URL` /
+  `LLM_MODEL`; `DEEPSEEK_*` remain as deprecated aliases — **but with a caveat (QA S2-2):**
+  anything that set `DEEPSEEK_BASE_URL`/`DEEPSEEK_MODEL` BEFORE 2026-08-09 (per the old
+  `.env.example` pointing at `api.deepseek.com` / `deepseek-v4-flash`) still wins over the new
+  defaults and would 404 against the OpenRouter-only model id — those envs must be updated or
+  unset (noted in `CREDENTIAL-LOG.md`). SystemSettings admin field kept as `llmDeepSeekApiKey`
+  for DB compatibility, label updated to "LLM provider API key". Defaults flipped: base URL
+  `https://openrouter.ai/api/v1`, model `deepseek/deepseek-v4-flash:free`. `.env.example`,
+  `CREDENTIAL-LOG.md`, and the Phase G build spec updated to match. Tests updated to canonical
+  `LLM_*` names + OpenRouter defaults (the health-check default assertion was the one that
+  would have failed).
+- **Note for G.2+:** Viktor's key goes in the admin System Settings (or `LLM_API_KEY` env);
+  the key is an OpenRouter key, not a DeepSeek key.

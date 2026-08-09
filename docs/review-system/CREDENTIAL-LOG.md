@@ -62,9 +62,10 @@ The private domain is managed by Viktor outside this repo. Do not use personal G
 
 | Env var | Purpose | Where to get it | Needed by |
 |---|---|---|---|
-| `DEEPSEEK_API_KEY` | LLM calls for the Cofounder + the five pipeline agents (spec G.1) | https://platform.deepseek.com -> API Keys | G.1 (build) |
-| `DEEPSEEK_BASE_URL` | Provider endpoint serving the model (default https://api.deepseek.com) | — (only set if using a different provider) | G.1 |
-| `DEEPSEEK_MODEL` | Candidate model id; **verified** at build by `GET /api/cofounder/health` (QA S0-1) | — | G.1 |
+| `LLM_API_KEY` | LLM calls for the Cofounder + the five pipeline agents (spec G.1) — **OpenRouter key** (decision 2026-08-09: provider is OpenRouter hosting DeepSeek V4 Flash) | https://openrouter.ai/keys | G.1 (build) |
+| `LLM_BASE_URL` | Provider endpoint serving the model (default https://openrouter.ai/api/v1) | — (only set if using a different endpoint) | G.1 |
+| `LLM_MODEL` | Default model id `deepseek/deepseek-v4-flash:free`; **verified** at build by `GET /api/cofounder/health` (QA S0-1). Note: OpenRouter `:free` variants rotate out occasionally — if unavailable, fall back to `deepseek/deepseek-v4-flash` (paid, ~$0.00000014/token) or DeepSeek direct (`deepseek-chat`, api.deepseek.com) | — | G.1 |
+| `DEEPSEEK_API_KEY` / `DEEPSEEK_BASE_URL` / `DEEPSEEK_MODEL` | **Deprecated aliases** — still read if the `LLM_*` names are unset (back-compat only; prefer `LLM_*`). ⚠️ **If you set these before 2026-08-09** (they pointed at `api.deepseek.com` / `deepseek-v4-flash`), update them to the OpenRouter values above or unset them — stale values override the new defaults and will 404 | — | G.1 |
 | `EXA_API_KEY` | Trending research adapter T6 (Google/X/Reddit/AskGamblers/CasinoGuru) | https://dashboard.exa.ai -> API Keys | G.4 |
 | `LLM_SPEND_CAP_PER_DAY` | Daily call cap (default 1000, 0 = off) | — | G.1 |
 

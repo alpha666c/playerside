@@ -7,20 +7,21 @@ import { getSystemSettings } from '@/lib/reviewChat/settings'
  * Phase G (G.1) — the shared LLM client (spec §1, §7.1).
  *
  * One OpenAI-compatible chat client used by the Cofounder AND the five
- * pipeline agents. Plain `fetch` to the configured provider (DeepSeek by
- * default) — deliberately no SDK dependency, matching the repo's existing
- * no-AI-dependency stance until a real reason appears.
+ * pipeline agents. Plain `fetch` to the configured provider — OpenRouter
+ * hosting DeepSeek V4 Flash by default (decision 2026-08-09; the key is an
+ * OpenRouter key, not a DeepSeek key) — deliberately no SDK dependency.
  *
  * Guardrails (spec §7):
- * - `DEEPSEEK_API_KEY` required — a missing key throws a clear error, never
- *   silently falls back (a fake reply would poison the evidence discipline).
+ * - `LLM_API_KEY` required (canonical; `DEEPSEEK_API_KEY` still read as a
+ *   deprecated alias) — a missing key throws a clear error, never silently
+ *   falls back (a fake reply would poison the evidence discipline).
  * - Daily spend cap enforced before every call by counting today's
  *   `agent-logs` rows (event `llm_call`) — the log doubles as the counter,
  *   so the audit trail and the cap can't drift apart.
  * - Every call records one `agent-logs` row (metadata only — role, model,
  *   kind, usage — never message content, never PII).
- * - Per-role model override map: `LLM_MODEL_<ROLE>` env wins over
- *   `DEEPSEEK_MODEL` (spec §1 "per-role override map").
+ * - Per-role model override map: `LLM_MODEL_<ROLE>` env wins over the
+ *   effective model (spec §1 "per-role override map").
  */
 export type LlmRole = 'system' | 'user' | 'assistant' | 'tool'
 
@@ -113,19 +114,26 @@ export const getLlmConfig = async (
   req: PayloadRequest,
 ): Promise<LlmConfig> => {
   const db = await getSystemSettings(payload, req)
-  const envKey = process.env.DEEPSEEK_API_KEY?.trim()
+  // Canonical env names are provider-agnostic (LLM_*); DEEPSEEK_* remain as
+  // deprecated aliases so earlier envs keep working.
+  const envKey = process.env.LLM_API_KEY?.trim() || process.env.DEEPSEEK_API_KEY?.trim()
   const dbKey = typeof db.llmDeepSeekApiKey === 'string' ? db.llmDeepSeekApiKey.trim() : ''
   const apiKey = envKey || dbKey || null
   const baseUrl = (
+    process.env.LLM_BASE_URL?.trim() ||
     process.env.DEEPSEEK_BASE_URL?.trim() ||
     db.llmBaseUrl?.trim() ||
-    'https://api.deepseek.com'
+    'https://openrouter.ai/api/v1'
   ).replace(/\/+$/, '')
   return {
     apiKey,
     keySource: envKey ? 'env' : apiKey ? 'database' : 'none',
     baseUrl,
-    model: process.env.DEEPSEEK_MODEL?.trim() || db.llmModel?.trim() || 'deepseek-v4-flash',
+    model:
+      process.env.LLM_MODEL?.trim() ||
+      process.env.DEEPSEEK_MODEL?.trim() ||
+      db.llmModel?.trim() ||
+      'deepseek/deepseek-v4-flash:free',
     maxTokens: Number(process.env.LLM_MAX_TOKENS ?? db.llmMaxTokens ?? 4000),
     dailyCap: Number(process.env.LLM_SPEND_CAP_PER_DAY ?? db.llmSpendCapPerDay ?? 1000),
   }
@@ -255,6 +263,19 @@ const authHeaders = (config: LlmConfig): Record<string, string> => ({
 })
 
 /**
+ * 404/400 hint (reviewer S3-1): OpenRouter `:free` variants rotate out of the
+ * catalog periodically — a rotated-out model id 404s. Append the fallback chain
+ * so the operator sees the fix without a support round-trip.
+ */
+const providerErrorDetail = (status: number, text: string): string => {
+  const base = text.slice(0, 300)
+  if (status === 404 || status === 400) {
+    return `${base} — if this is a rotated-out OpenRouter :free model, try the paid deepseek/deepseek-v4-flash or DeepSeek direct deepseek-chat (see CREDENTIAL-LOG).`
+  }
+  return base
+}
+
+/**
  * Non-streaming chat completion. Returns content + parsed tool calls.
  * Records one llm_call audit row on success (runId links to it).
  */
@@ -267,7 +288,7 @@ export const chatLlm = async (
   const config = await getLlmConfig(payload, req)
   if (!config.apiKey) {
     throw new LlmConfigurationError(
-      'No LLM key configured — add DEEPSEEK_API_KEY (env) or the key in the admin System Settings (system-settings global) to use the Cofounder or pipeline agents.',
+      'No LLM key configured — add LLM_API_KEY (env, e.g. an OpenRouter key from openrouter.ai/keys) or the key in the admin System Settings (system-settings global).',
     )
   }
   await checkDailyCap(payload, req, config)
@@ -281,7 +302,7 @@ export const chatLlm = async (
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new LlmApiError(res.status, text.slice(0, 300))
+    throw new LlmApiError(res.status, providerErrorDetail(res.status, text))
   }
   const data = (await res.json()) as Record<string, unknown>
   const choices = data.choices as Array<{ message?: { content?: string | null; tool_calls?: unknown } }> | undefined
@@ -346,7 +367,7 @@ export const streamLlm = async (
   const config = await getLlmConfig(payload, req)
   if (!config.apiKey) {
     throw new LlmConfigurationError(
-      'No LLM key configured — add DEEPSEEK_API_KEY (env) or the key in the admin System Settings (system-settings global) to use the Cofounder or pipeline agents.',
+      'No LLM key configured — add LLM_API_KEY (env, e.g. an OpenRouter key from openrouter.ai/keys) or the key in the admin System Settings (system-settings global).',
     )
   }
   await checkDailyCap(payload, req, config)
@@ -360,7 +381,7 @@ export const streamLlm = async (
   })
   if (!res.ok) {
     const text = await res.text().catch(() => '')
-    throw new LlmApiError(res.status, text.slice(0, 300))
+    throw new LlmApiError(res.status, providerErrorDetail(res.status, text))
   }
   if (!res.body) throw new LlmApiError(500, 'LLM provider returned no stream body')
   // 170s provider timeout leaves headroom under the route's 190s wall-clock
@@ -448,7 +469,7 @@ export const healthCheck = async (
       resolvedModel: config.model,
       baseUrl: config.baseUrl,
       message:
-        'No LLM key configured — add it via the admin System Settings (works on every host) or the DEEPSEEK_API_KEY env var, then re-check to verify the model id.',
+        'No LLM key configured — add it via the admin System Settings (an OpenRouter API key works on every host) or the LLM_API_KEY env var, then re-check to verify the model id.',
     }
   }
   const startedAt = Date.now()

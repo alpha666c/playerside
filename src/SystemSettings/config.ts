@@ -39,17 +39,23 @@ export const SystemSettings: GlobalConfig = {
         {
           name: 'llmProvider',
           type: 'select',
-          defaultValue: 'deepseek',
-          options: [{ label: 'DeepSeek (OpenAI-compatible)', value: 'deepseek' }],
-          admin: { description: 'LLM provider.' },
+          defaultValue: 'openrouter',
+          options: [
+            { label: 'OpenRouter (default — hosts DeepSeek V4 Flash)', value: 'openrouter' },
+            { label: 'DeepSeek direct (OpenAI-compatible)', value: 'deepseek' },
+          ],
+          admin: {
+            description:
+              'LLM provider — informational (QA S2-1): routing is decided by the base URL + model fields below, not this select. If you switch provider, also update base URL + model to matching values.',
+          },
         },
         {
           name: 'llmModel',
           type: 'text',
-          defaultValue: 'deepseek-v4-flash',
+          defaultValue: 'deepseek/deepseek-v4-flash:free',
           admin: {
             description:
-              'Model id — this is a candidate default; GET /api/cofounder/health verifies the id the endpoint actually serves.',
+              'Model id — OpenRouter id by default (decision 2026-08-09: Viktor uses deepseek/deepseek-v4-flash:free). Note: OpenRouter :free variants rotate out occasionally; if the health check reports the model unavailable, pick the nearest paid variant (deepseek/deepseek-v4-flash ≈ $0.00000014/token) or switch to DeepSeek direct (deepseek-chat). GET /api/cofounder/health verifies the id the endpoint actually serves.',
           },
         },
       ],
@@ -57,15 +63,16 @@ export const SystemSettings: GlobalConfig = {
     {
       name: 'llmDeepSeekApiKey',
       type: 'text',
+      label: 'LLM provider API key',
       admin: {
         description:
-          'DeepSeek API key (https://platform.deepseek.com → API Keys). Saving replaces the old value — that is the rotation mechanism. Admin-only.',
+          'The key for the provider in use (OpenRouter by default — https://openrouter.ai/keys; a DeepSeek direct key also works if you switch the provider above). Saving replaces the old value — that is the rotation mechanism. Admin-only. Field name kept as llmDeepSeekApiKey for DB compatibility.',
       },
     },
     {
       name: 'llmBaseUrl',
       type: 'text',
-      defaultValue: 'https://api.deepseek.com',
+      defaultValue: 'https://openrouter.ai/api/v1',
       admin: { description: 'Provider base URL (set only if using a different endpoint).' },
     },
     {

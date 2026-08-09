@@ -1,3 +1,14 @@
+- **fix(ai): lock the LLM provider to OpenRouter (`deepseek/deepseek-v4-flash:free`).** The
+  Cofounder + pipeline agents now target OpenRouter by default — env names are provider-agnostic
+  (`LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL`, with `DEEPSEEK_*` kept as deprecated aliases),
+  the SystemSettings admin defaults flipped to OpenRouter (base URL `https://openrouter.ai/api/v1`,
+  model `deepseek/deepseek-v4-flash:free`), and the admin field is relabeled "LLM provider API key"
+  (field name unchanged for DB compatibility). `.env.example`, `CREDENTIAL-LOG.md`, and the Phase G
+  build spec document the `:free` rotation risk + fallback chain (paid `deepseek-v4-flash` →
+  DeepSeek direct `deepseek-chat`); tests updated to canonical names + OpenRouter defaults
+  (174 green). Viktor's DeepSeek key tested live: HTTP 402 Insufficient Balance — OpenRouter key
+  required (admin System Settings or `LLM_API_KEY` env).
+
 ## 2026-08-09 — Phase G: admin-managed settings — keys live in the DB, one place for every host
 
 - **New `SystemSettings` global** (`/admin/globals/system-settings`, admin-only): DeepSeek API
