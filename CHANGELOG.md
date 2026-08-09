@@ -45,6 +45,30 @@
   (5 tables + enums) + `20260809_184012` (delegationQueue.source select→text — avoids the
   single-value-enum footgun). 8 int tests; gates: tsc + lint + **184/184**.
 
+## 2026-08-09 — Phase G G.4: the Cofounder workspace (/admin/cofounder)
+
+- **feat(admin): three-pane Cofounder workspace (spec §11).** Registered as a custom admin view at
+  `/admin/cofounder` (`CofounderView.tsx`): **left** — today's plan rollup + the ticket list
+  (open/active/paused/done, #CF, sessionType, lastActive) + a "New ticket" form; **center** — the
+  ticket workspace (status/sessionType chips, pause/close actions, the STREAMING Cofounder thread
+  consuming the SSE delta/done contract, the plan board with per-item status + add form, and pinned
+  cases with Edit/Chat deep links); **right** — last-turn tool activity (ok/err chips + expandable
+  output) and the read-only delegation queue (approve/reject + approve-to-publish arrive with the
+  G.6 control room).
+- **feat(api): `GET /api/cofounder/tickets/:id`** — the full ticket at depth 1 (plan, thread,
+  pinnedCases resolved, delegationQueue, version) for the workspace panel. **`POST
+  /api/cofounder/tickets/:id/plan`** — add/update a plan item through the shared
+  `updateTicketPlanItem` (extracted from the `set_plan_item` tool so the panel and the Cofounder
+  mutate the plan through the exact same optimistic-version path; reviewer S3 — no drift). Plan
+  route preserves Payload statuses (404/409) on failure.
+- **feat(admin):** dashboard home gained a live "Cofounder workspace" block (ticket + plan-item
+  counts via the tickets endpoint).
+- **Hardening (reviewer S2/S3):** ticket-switch race guarded with a live-selection ref — stale GET
+  responses and mid-stream chat deltas from a previous ticket can never overwrite the current
+  workspace; `fetchJson` only sets Content-Type when a body exists.
+- **Tests:** gates tsc + lint + **196/196** + full build + 12/12 E2E smoke (ticket detail, plan
+  add/update, pinnedCases depth, chat SSE, /admin/cofounder 200).
+
 ## 2026-08-09 — Phase G G.3: Cofounder chat route + ticket lifecycle endpoints
 
 - **feat(ai): `POST /api/cofounder` — the Cofounder chat endpoint (SSE).** Admin-only. Resolves or

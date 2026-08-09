@@ -20,6 +20,8 @@ const BeforeDashboard: React.FC = () => {
   const [cases, setCases] = useState<PipelineCase[] | null>(null)
   const [roster, setRoster] = useState<GamificationSummary | null>(null)
   const [error, setError] = useState<string | null>(null)
+  // Phase G (G.4): a live Cofounder ticket count for the dashboard block.
+  const [tickets, setTickets] = useState<Array<{ plan?: unknown[] | null }> | null>(null)
 
   useEffect(() => {
     let cancelled = false
@@ -40,6 +42,19 @@ const BeforeDashboard: React.FC = () => {
     }
   }, [])
 
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/cofounder/tickets')
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (!cancelled && data) setTickets((data as { tickets: Array<{ plan?: unknown[] | null }> }).tickets)
+      })
+      .catch(() => {})
+    return () => {
+      cancelled = true
+    }
+  }, [])
+
   if (error) {
     return (
       <div style={{ padding: 24, color: '#ff6b6b' }}>
@@ -51,6 +66,12 @@ const BeforeDashboard: React.FC = () => {
   const pipeline = cases ? summarizePipeline(cases) : null
   const xpEvents = (roster?.xpEvents ?? []) as Array<{ amount?: number }>
   const totalXp = xpEvents.reduce((sum, e) => sum + (e.amount ?? 0), 0)
+
+  const ticketCount = tickets === null ? '…' : tickets.length
+  const planItemCount =
+    tickets === null
+      ? '…'
+      : tickets.reduce((sum, t) => sum + (Array.isArray(t.plan) ? t.plan.length : 0), 0)
 
   return (
     <div style={{ padding: '0 0 24px' }}>
@@ -89,6 +110,15 @@ const BeforeDashboard: React.FC = () => {
               { label: 'Missions', value: roster?.quests.length ?? '…' },
               { label: 'Players', value: roster?.profiles.length ?? '…' },
               { label: 'XP minted', value: totalXp },
+            ]}
+          />
+          <Block
+            title="Cofounder workspace"
+            href="/admin/cofounder"
+            stats={[
+              { label: 'Tickets', value: ticketCount },
+              { label: 'Plan items', value: planItemCount },
+              { label: 'Mode', value: 'AI ops' },
             ]}
           />
         </div>

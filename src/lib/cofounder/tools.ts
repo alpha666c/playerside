@@ -97,15 +97,25 @@ const getTodayPlan = async (payload: Payload, req: PayloadRequest): Promise<Tool
   return { ok: true, output: { tickets: tickets.docs.length, plan } }
 }
 
-const setPlanItem = async (
+export interface PlanItemArgs {
+  planItemId?: unknown
+  kind?: unknown
+  target?: unknown
+  status?: unknown
+  notes?: unknown
+}
+
+/**
+ * Shared plan-mutation path (reviewer S3 — the `set_plan_item` tool and the
+ * `POST /api/cofounder/tickets/:id/plan` route must not drift). Add-or-update
+ * a plan item through the optimistic-version contract (never a blind write).
+ */
+export const updateTicketPlanItem = async (
   payload: Payload,
   req: PayloadRequest,
-  args: Record<string, unknown>,
-  ctx: ToolContext,
-): Promise<ToolResult> => {
-  const ticketId = (args.ticketId as number | undefined) ?? ctx.ticketId
-  if (!ticketId) return { ok: false, output: 'No ticketId — create or resume a ticket first (create_ticket / resume_ticket).' }
-
+  ticketId: number,
+  args: PlanItemArgs,
+): Promise<{ ok: boolean; output: unknown }> => {
   const doc = await payload.findByID({ collection: 'cofounder-sessions', id: ticketId, req, depth: 0 })
   if (!doc) return { ok: false, output: 'Ticket not found.' }
 
@@ -137,6 +147,17 @@ const setPlanItem = async (
     data: { plan },
   })
   return { ok: true, output: { ticketNumber: updated.ticketNumber, plan: planSummary(updated.plan ?? []) } }
+}
+
+const setPlanItem = async (
+  payload: Payload,
+  req: PayloadRequest,
+  args: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<ToolResult> => {
+  const ticketId = (args.ticketId as number | undefined) ?? ctx.ticketId
+  if (!ticketId) return { ok: false, output: 'No ticketId — create or resume a ticket first (create_ticket / resume_ticket).' }
+  return updateTicketPlanItem(payload, req, ticketId, args)
 }
 
 const createTicket = async (

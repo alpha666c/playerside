@@ -519,3 +519,19 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
   sessionType value.
 - **Ticket reuse prefers the acting admin's own tickets** (`createdBy` match) before falling back
   to any matching today's ticket (reviewer S3 — never inherit another admin's session).
+
+## 2026-08-09 — Phase G G.4 decisions (Cofounder workspace panel)
+
+- **The panel mutates the plan through the model's own code path.** `set_plan_item` (tool) and
+  `POST /tickets/:id/plan` (panel) share `updateTicketPlanItem` — one optimistic-version
+  implementation, so a plan change made by the Cofounder and one made by clicking in the panel can
+  never drift apart.
+- **Tool activity is surfaced per-turn, not persisted on the ticket.** The thread schema is
+  user/assistant/system only; the durable record for tool calls is `agent-logs` (`tool_call`
+  events). The panel shows the last turn's `toolEvents` from the SSE `done` event and points to
+  agent-logs for history.
+- **Delegation approve/reject + approve-to-publish are explicitly deferred to G.6** (spec §11/§12
+  "round 2"). The G.4 right pane renders the delegation queue read-only; a UI note makes the
+  boundary visible rather than shipping half-baked approve controls.
+- **The workspace is desktop-first with wrapping panes** (no JS media queries — matches the other
+  admin panels' inline-style approach); on narrow windows the three cards stack.

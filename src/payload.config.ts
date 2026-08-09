@@ -64,6 +64,15 @@ export default buildConfig({
           exact: true,
           path: '/collections/research-queue/:id/chat',
         },
+        // Phase G (G.4): the Cofounder operations workspace (spec §11) —
+        // tickets + today's plan rollup, the streaming Cofounder thread,
+        // the ticket plan board, pinned cases, and last-turn tool activity.
+        // Delegation approve/publish join in G.6 (the control room round 2).
+        cofounder: {
+          Component: '@/components/admin/CofounderView',
+          exact: true,
+          path: '/cofounder',
+        },
       },
     },
     importMap: {

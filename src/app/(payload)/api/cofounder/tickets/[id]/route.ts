@@ -3,7 +3,11 @@ import config from '@payload-config'
 import { headers } from 'next/headers'
 
 /**
- * Phase G (G.3) — ticket status transitions (spec §3.2), admin-only.
+ * Phase G (G.3/G.4) — ticket detail + status transitions (spec §3.2, §11),
+ * admin-only.
+ *
+ * `GET  /api/cofounder/tickets/:id` — the full ticket (plan, thread,
+ * pinnedCases resolved at depth 1, version) for the workspace panel.
  *
  * `POST /api/cofounder/tickets/:id` — `{ action: 'pause' | 'close', confirm? }`
  *
@@ -13,6 +17,42 @@ import { headers } from 'next/headers'
  * with identical behavior. `close` refuses while plan items are still open
  * unless `confirm: true` (same rule as the `close_ticket` tool).
  */
+export async function GET(
+  _request: Request,
+  ctx: { params: Promise<{ id: string }> },
+): Promise<Response> {
+  const payload = await getPayload({ config })
+  const requestHeaders = await headers()
+
+  const { user } = await payload.auth({ headers: requestHeaders })
+  if (!user) return new Response('Action forbidden.', { status: 403 })
+  const req = await createLocalReq({ user }, payload)
+
+  const { id } = await ctx.params
+  const doc = await payload.findByID({
+    collection: 'cofounder-sessions',
+    id: Number(id),
+    req,
+    depth: 1,
+  })
+  if (!doc) return new Response('Ticket not found.', { status: 404 })
+
+  return Response.json({
+    id: doc.id,
+    ticketNumber: doc.ticketNumber,
+    title: doc.title,
+    sessionType: doc.sessionType,
+    status: doc.status,
+    plan: doc.plan ?? [],
+    thread: doc.thread ?? [],
+    pinnedCases: doc.pinnedCases ?? [],
+    delegationQueue: doc.delegationQueue ?? [],
+    lastActiveAt: doc.lastActiveAt,
+    createdAt: doc.createdAt,
+    version: doc.version,
+  })
+}
+
 export async function POST(
   request: Request,
   ctx: { params: Promise<{ id: string }> },
