@@ -187,3 +187,23 @@ stored preference — both themes carry identical tokens, so nothing flickers.
   corner brackets don't expand across the whole pinned section.
 - Admin surfaces (`/dashboard/*`) keep their own styling — out of scope for the public in-colour
   pass; flagged for the admin-dashboard phase.
+## 2026-08-08 — Phase C: review page as case file
+
+**Framing decision.** The review page is the money page, so it gets the strongest
+mission-console treatment: a `CASE FILE` header rule, the verdict box as `field_brief`
+(corner-bracket framed, the one hud-frame surface), the score accordion as a tactical
+readout (mono CAT indices, evidence scores, gradient bars, weight chips), and
+pros/cons as Intel cards. Everything remains DERIVED data — no hand-written lines.
+
+**Gold discipline, made explicit in code.** The overall score keeps gold because it is the
+verified mark rendered beside the Verification Seal (the locked brand doc's one exception).
+Per-category scores are measured data and now use evidence. A comment in both
+VerdictBox and ScoreBreakdown states this so a future pass doesn't "fix" it back.
+
+**Restraint call.** hud-frame corner brackets are confined to the verdict box (the primary
+surface) — the accordion and Intel cards keep plain borders with a hover accent, per the
+code reviewer's noise concern. The dead `transition-[width]` affordance on the verdict
+strength bars was removed (they mount at final width; no false animation).
+
+**DRY.** Intel card markup + inline SVGs were duplicated across the traditional and crypto
+review pages; extracted to a shared `IntelCard` component so the twins can't drift.

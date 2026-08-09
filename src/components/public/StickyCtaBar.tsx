@@ -49,6 +49,9 @@ export const StickyCtaBar: React.FC<{
       >
         <div className="flex w-full max-w-md items-center justify-between gap-3 rounded-xl border border-line bg-ink-2/95 px-4 py-2 shadow-2xl backdrop-blur-xl">
           <div className="min-w-0">
+            <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-evidence">
+              Case file //
+            </p>
             <p className="truncate text-[13px] font-semibold text-paper">{operatorName}</p>
             {typeof overallScore === 'number' ? (
               <p className="font-mono text-[10.5px] text-paper-dim">{overallScore.toFixed(1)} / 10 weighted</p>

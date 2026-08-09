@@ -18,8 +18,9 @@ type CategoryScore = {
  * Narrative + evidence stay in the DOM (hidden, not unmounted) so the full
  * content remains crawlable for SEO.
  *
- * Reuses the same RubricCategory shape as the homepage methodology bars, so
- * the rubric itself has one definition (src/rubrics).
+ * Phase C: the accordion now reads as a tactical readout — mono CAT indices
+ * (01/08…), evidence-colored scores, per-category bars, and the weight shown
+ * as a HUD chip.
  */
 export const ScoreBreakdown: React.FC<{
   rubric: RubricCategory[]
@@ -28,6 +29,7 @@ export const ScoreBreakdown: React.FC<{
   const [openKeys, setOpenKeys] = useState<Set<string>>(
     () => new Set(rubric[0] ? [rubric[0].key] : []),
   )
+  const total = rubric.length
 
   const toggle = (key: string) =>
     setOpenKeys((prev) => {
@@ -39,13 +41,13 @@ export const ScoreBreakdown: React.FC<{
 
   return (
     <div className="space-y-3">
-      {rubric.map((category) => {
+      {rubric.map((category, idx) => {
         const entry = scores[category.key]
         if (!entry) return null
         const open = openKeys.has(category.key)
         return (
           <div
-            className="rounded-[var(--radius)] border border-line bg-dusk p-5 sm:p-6"
+            className="rounded-[var(--radius)] border border-line bg-dusk p-5 transition-colors duration-200 hover:border-evidence/40 sm:p-6"
             key={category.key}
           >
             <button
@@ -55,11 +57,18 @@ export const ScoreBreakdown: React.FC<{
               onClick={() => toggle(category.key)}
               type="button"
             >
-              <span className="text-[15px] font-semibold text-paper sm:text-base">
-                {category.label}
-              </span>
               <span className="flex items-center gap-3">
-                <span className="font-mono text-lg text-gold sm:text-xl">
+                <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-paper-dim/60">
+                  cat {String(idx + 1).padStart(2, '0')}/{String(total).padStart(2, '0')}
+                </span>
+                <span className="text-[15px] font-semibold text-paper sm:text-base">
+                  {category.label}
+                </span>
+              </span>
+              {/* Category scores are measured data -> evidence; only the
+                  overall verified score uses gold (see VerdictBox). */}
+              <span className="flex items-center gap-3">
+                <span className="t-data text-lg text-evidence sm:text-xl">
                   {entry.score?.toFixed(1) ?? '—'}
                   <span className="text-[11px] text-paper-dim"> / 10</span>
                 </span>
@@ -73,7 +82,7 @@ export const ScoreBreakdown: React.FC<{
             </button>
             <div className="mb-3 mt-2 h-[5px] overflow-hidden rounded-full bg-dusk-2">
               <div
-                className="h-full rounded-full bg-evidence"
+                className="h-full rounded-full bg-gradient-to-r from-coral to-evidence transition-[width] duration-500"
                 style={{ width: `${((entry.score ?? 0) / 10) * 100}%` }}
               />
             </div>
@@ -86,8 +95,8 @@ export const ScoreBreakdown: React.FC<{
                   EVIDENCE: {entry.evidence}
                 </p>
               ) : null}
-              <p className="mb-0 mt-2 font-mono text-[10.5px] uppercase tracking-[1.5px] text-paper-dim/70">
-                Weight: {category.weight}%
+              <p className="mb-0 mt-3 inline-flex">
+                <span className="hud-chip">weight {category.weight}%</span>
               </p>
             </div>
           </div>

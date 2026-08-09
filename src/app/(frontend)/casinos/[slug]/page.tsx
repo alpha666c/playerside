@@ -18,6 +18,7 @@ import { traditionalRubric } from '@/rubrics/traditional'
 import { Review3DStampReactor } from '@/components/public/Review3DStampReactor'
 import { BonusValueCalculator } from '@/components/public/BonusValueCalculator'
 import { ClaimsVsReality } from '@/components/public/ClaimsVsReality'
+import { IntelCard } from '@/components/public/IntelCard'
 import { ReviewToc } from '@/components/public/ReviewToc'
 import { StickyCtaBar } from '@/components/public/StickyCtaBar'
 import { VerdictBox } from '@/components/public/VerdictBox'
@@ -63,7 +64,11 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
         {review.isIllustrativeSample ? (
           <IllustrativeBanner subject="operator" />
         ) : null}
-        <div className="mt-4 flex flex-wrap items-center gap-5">
+        <div className="hud-rule mb-4">
+          <span>Case File</span>
+          <span className="hud-chip">evidence_logged</span>
+        </div>
+        <div className="flex flex-wrap items-center gap-5">
           <h1 className="text-[30px] leading-[1.1] sm:text-[38px] lg:text-[46px]">
             {review.name}
           </h1>
@@ -156,25 +161,19 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
 
       {review.verdict ? (
         <div className="container mb-12 grid max-w-[760px] gap-6 sm:mb-14 sm:grid-cols-2">
-          <div className="rounded-[var(--radius)] border border-evidence/35 bg-dusk p-5 sm:p-6">
-            <h2 className="mb-3 text-[15px] font-normal uppercase tracking-[1.5px] text-evidence">
-              What&rsquo;s good
-            </h2>
-            <ul className="m-0 list-disc space-y-2 pl-[18px] text-[13.5px] leading-relaxed text-paper-dim">
-              {review.verdict.whatsGood?.map((item: any, i: number) => <li key={i}>{item.point}</li>)}
-            </ul>
-          </div>
-          <div className="rounded-[var(--radius)] border border-coral/35 bg-dusk p-5 sm:p-6">
-            <h2 className="mb-3 text-[15px] font-normal uppercase tracking-[1.5px] text-coral">
-              What&rsquo;s bad
-            </h2>
-            <ul className="m-0 list-disc space-y-2 pl-[18px] text-[13.5px] leading-relaxed text-paper-dim">
-              {review.verdict.whatsBad?.map((item: any, i: number) => <li key={i}>{item.point}</li>)}
-            </ul>
-          </div>
+          <IntelCard
+            eyebrow="Intel // Strengths"
+            items={review.verdict.whatsGood?.map((w: any) => w.point) ?? []}
+            variant="good"
+          />
+          <IntelCard
+            eyebrow="Intel // Weaknesses"
+            items={review.verdict.whatsBad?.map((w: any) => w.point) ?? []}
+            variant="bad"
+          />
 
           {review.verdict.narrative ? (
-            <p className="mb-0 text-[14.5px] leading-relaxed text-paper sm:col-span-2">
+            <p className="mb-0 border-t border-line pt-4 text-[14.5px] leading-relaxed text-paper sm:col-span-2">
               {review.verdict.narrative}
             </p>
           ) : null}
@@ -182,6 +181,9 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
       ) : null}
 
       <div className="container mb-12 max-w-[760px] sm:mb-14" id="breakdown">
+        <p className="mb-2 font-mono text-[10.5px] uppercase tracking-[1.5px] text-paper-dim/70">
+          field_readout // category breakdown
+        </p>
         <h2 className="mb-6 text-[22px] sm:text-[26px]">Full breakdown — eight categories</h2>
         <ScoreBreakdown rubric={traditionalRubric} scores={review.scores ?? {}} />
       </div>

@@ -1,5 +1,27 @@
 ## 2026-08-09 — Phase B: tactical homepage + HUD framing (Tactical 2.0, second cut)
 
+
+- **feat(review): the review page is now a case file.** Top header gains a mono
+  `CASE FILE // evidence_logged` rule; the verdict box is reframed as a `field_brief`
+  with corner-bracket framing, an "Intel // Excels at" list with per-strength score bars,
+  a coral `Warning // The catch` box (derived from the weakest rubric category), and a
+  status chip for the license (verified = success / not verified = coral).
+- **feat(review): score accordion is a tactical readout** — mono `CAT 01/08` indices,
+  evidence-colored scores, coral→evidence gradient bars, and the category weight as a HUD
+  chip; cards get a hover border accent instead of full corner-bracket framing.
+- **feat(review): pros/cons are now Intel cards** — shared `IntelCard` component
+  (good/bad variants with check/x icon rows) used by both the traditional and crypto review
+  pages, killing ~40 duplicated lines; narrative gets a hairline separator.
+- **feat(review): HUD chrome everywhere** — mobile ToC pills get mono index numbers
+  (`01 Verdict · 02 Claims · 03 Breakdown…`), the sticky CTA bar gets a mono
+  `CASE FILE //` label, and the breakdown section header carries a
+  `field_readout // category breakdown` eyebrow.
+- **chore(design-system): gold discipline documented in code** — overall score stays gold
+  (it is the verified mark beside the seal); per-category scores are measured data and use
+  evidence. Comments added to VerdictBox + ScoreBreakdown so the next pass doesn't
+  "fix" it back.
+
+
 - **feat(homepage): the whole homepage now speaks the brand.** Hero rebuilt as a command deck
   (mono coordinate readouts, evidence/coral glow, serif display headline, HUD metric panels);
   all sections reframed with numbered `SEC 01–05` mono headers; the hero filter bar is now

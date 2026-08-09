@@ -15,12 +15,13 @@ export const ReviewToc: React.FC<{ items: { id: string; label: string }[] }> = (
       className="sticky top-14 z-30 -mx-4 mb-6 overflow-x-auto px-4 pb-1 md:hidden"
     >
       <div className="flex gap-2">
-        {items.map((item) => (
+        {items.map((item, i) => (
           <a
-            className="whitespace-nowrap rounded-full border border-line bg-dusk px-4 py-2 font-mono text-[11px] text-paper-dim transition-colors hover:border-evidence/50 hover:text-paper"
+            className="flex items-center gap-1.5 whitespace-nowrap rounded-full border border-line bg-dusk px-4 py-2 font-mono text-[11px] text-paper-dim transition-colors hover:border-evidence/50 hover:text-paper"
             href={`#${item.id}`}
             key={item.id}
           >
+            <span className="text-[9.5px] text-evidence">{String(i + 1).padStart(2, '0')}</span>
             {item.label}
           </a>
         ))}
