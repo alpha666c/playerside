@@ -38,15 +38,15 @@ export const SystemSettings: GlobalConfig = {
       fields: [
         {
           name: 'llmProvider',
-          type: 'select',
+          // text, NOT select: a select becomes a Postgres enum — adding options
+          // later (e.g. openrouter) silently breaks saving until a migration
+          // alters the enum (bug 2026-08-09: "Something went wrong" on save).
+          // Text is future-proof; the value is informational anyway (QA S2-1).
+          type: 'text',
           defaultValue: 'openrouter',
-          options: [
-            { label: 'OpenRouter (default — hosts DeepSeek V4 Flash)', value: 'openrouter' },
-            { label: 'DeepSeek direct (OpenAI-compatible)', value: 'deepseek' },
-          ],
           admin: {
             description:
-              'LLM provider — informational (QA S2-1): routing is decided by the base URL + model fields below, not this select. If you switch provider, also update base URL + model to matching values.',
+              'LLM provider label — informational (QA S2-1): routing is decided by the base URL + model fields below, not this value. Expected values: openrouter (default) | deepseek. If you switch provider, also update base URL + model to matching values.',
           },
         },
         {

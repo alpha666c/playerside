@@ -3375,7 +3375,7 @@ export interface Homepage {
   createdAt?: string | null;
 }
 /**
- * Runtime settings for the AI Cofounder + pipeline agents. Stored in the shared database, so the same values apply on any host (Vercel, VPS, local). An environment variable with the same purpose overrides these when set. Keys are admin-only and never exposed to the public site.
+ * Runtime settings for the AI Cofounder + pipeline agents. Stored in the shared database, so the same values apply on any host (Vercel, VPS, local). An environment variable with the same purpose overrides these when set. Keys are admin-only and never exposed to the public site — but note (QA S2-2): any authenticated admin account can see them here and via the admin API, so keep the admin user list to people you trust.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "system-settings".
@@ -3383,15 +3383,15 @@ export interface Homepage {
 export interface SystemSetting {
   id: number;
   /**
-   * LLM provider.
+   * LLM provider label — informational (QA S2-1): routing is decided by the base URL + model fields below, not this value. Expected values: openrouter (default) | deepseek. If you switch provider, also update base URL + model to matching values.
    */
-  llmProvider?: 'deepseek' | null;
+  llmProvider?: string | null;
   /**
-   * Model id — this is a candidate default; GET /api/cofounder/health verifies the id the endpoint actually serves.
+   * Model id — decision 2026-08-09: Viktor chose DeepSeek V4 Flash; the paid variant (default, ~$0.00000014/token ≈ 14c per million tokens) is used because the :free variant rotates out of the catalog. Alternatives if ever needed: deepseek-chat (DeepSeek direct) or Gemini 3 Flash free (Google AI Studio). GET /api/cofounder/health verifies the id the endpoint actually serves.
    */
   llmModel?: string | null;
   /**
-   * DeepSeek API key (https://platform.deepseek.com → API Keys). Saving replaces the old value — that is the rotation mechanism. Admin-only.
+   * The key for the provider in use (OpenRouter by default — https://openrouter.ai/keys; a DeepSeek direct key also works if you switch the provider above). Saving replaces the old value — that is the rotation mechanism. Admin-only. Field name kept as llmDeepSeekApiKey for DB compatibility.
    */
   llmDeepSeekApiKey?: string | null;
   /**

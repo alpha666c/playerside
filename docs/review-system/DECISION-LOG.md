@@ -451,3 +451,23 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
   (`LLM_MODEL_<ROLE>`) lets Viktor route specific roles to cheaper/free models later — e.g.
   `LLM_MODEL_DESK_RESEARCHER=inclusionai/ling-3.0-flash` or `openai/gpt-oss-20b:free` — while
   quality roles (Cofounder chat, Integrity Checker) stay on DeepSeek. Doc'd in CREDENTIAL-LOG.
+## 2026-08-09 — BUGFIX: admin System Settings save failed ("Something went wrong")
+
+- **Symptom:** saving the Exa + OpenRouter keys in `/admin/globals/system-settings` failed with
+  Payload's generic "Something went wrong" toast.
+- **Root cause (verified in DB):** `llmProvider` was a `select` field → migration `20260809_162628`
+  created a Postgres enum `enum_system_settings_llm_provider` containing ONLY `'deepseek'`. A
+  later config change added the `'openrouter'` option + default WITHOUT a migration, so every save
+  rejected: `invalid input value for enum "enum_system_settings_llm_provider": "openrouter"`.
+- **Fix:** (1) `llmProvider` is now a **text** field in config — kills the whole enum-footgun class
+  (any future option change silently breaks saving again); it is informational anyway (QA S2-1,
+  routing is decided by baseUrl+model). (2) Migration `20260809_182227`: `ALTER llm_provider TYPE
+  varchar`, default `'openrouter'`, refreshed stale `llm_model` / `llm_base_url` DB defaults to
+  the current config, `DROP TYPE IF EXISTS` (prod was dev-pushed with a broken migrations chain —
+  the enum may not exist there). (3) Down migration maps `'openrouter' → 'deepseek'` so rollback
+  works even after a save (reviewer S2). (4) `payload-types` regenerated
+  (`llmProvider?: string | null`).
+- **Proof:** E2E via the Payload local API — created admin, logged in, `updateGlobal` with
+  `llmProvider=openrouter` + both keys, read back: `SAVE_OK` + `KEYS_PERSISTED true`. Migration
+  down/up cycle verified locally (enum restored on down, varchar on up). Gates: tsc + lint +
+  176/176 tests.

@@ -25,6 +25,16 @@
   models like `inclusionai/ling-3.0-flash` or `openai/gpt-oss-20b:free`) for when a top-up
   isn't convenient. See DECISION-LOG 2026-08-09.
 
+- **fix(admin): System Settings save failure — `llmProvider` enum footgun.** Saving keys in
+  `/admin/globals/system-settings` failed with "Something went wrong": `llmProvider` was a `select`
+  field whose Postgres enum only contained `deepseek`, so the newer `openrouter` value was rejected
+  (`invalid input value for enum`). `llmProvider` is now a `text` field (kills the bug class;
+  informational anyway — routing is by baseUrl+model) + migration `20260809_182227` converts the
+  column to varchar, refreshes stale DB defaults, and drops the enum (`DROP TYPE IF EXISTS` for
+  dev-pushed prod DBs; down maps `openrouter → deepseek`). E2E-proven save (admin login +
+  updateGlobal with keys → read back OK); migration down/up cycle verified. Gates: tsc + lint +
+  176/176 tests.
+
 ## 2026-08-09 — Phase G: admin-managed settings — keys live in the DB, one place for every host
 
 - **New `SystemSettings` global** (`/admin/globals/system-settings`, admin-only): DeepSeek API
