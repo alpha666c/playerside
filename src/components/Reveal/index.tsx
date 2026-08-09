@@ -20,6 +20,11 @@ type RevealProps = {
 /**
  * Scroll-triggered reveal, orchestrated per section rather than scattered
  * ambient motion (per design-tokens.md motion principles). Fires once.
+ *
+ * Robustness: the hidden state (opacity-0 / translate) is only applied after
+ * the client mounts (`mounted` gate), so SSR HTML and no-JS environments
+ * always render content fully visible — never invisible text.
+ *
  * `prefers-reduced-motion` collapses the translateY entrance to a plain,
  * short opacity fade — never a hard cut, never a transform.
  */
@@ -33,7 +38,26 @@ export const Reveal: React.FC<RevealProps> = ({
 }) => {
   const ref = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
+  const [mounted, setMounted] = useState(false)
   const reducedMotion = useReducedMotion()
+
+  // Must run before the observer attaches: once mounted, the hidden state
+  // may apply; before that (SSR / first paint) content stays visible.
+  // Elements already in the viewport at mount (e.g. above-the-fold use)
+  // reveal synchronously here, so there is never a visible->hidden flash.
+  useEffect(() => {
+    setMounted(true)
+    const node = ref.current
+    if (node) {
+      const rect = node.getBoundingClientRect()
+      const vh = window.innerHeight || document.documentElement.clientHeight
+      if (rect.top < vh && rect.bottom > 0) {
+        setVisible(true)
+        onReveal?.()
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   useEffect(() => {
     const node = ref.current
@@ -57,21 +81,30 @@ export const Reveal: React.FC<RevealProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [threshold])
 
+  const hidden = mounted && !visible
+
   return React.createElement(
     Tag,
     {
       className: cn(
         // Entrances use the slow+expo token pair (decelerating settle);
-        // interactions use fast+quart — see DESIGN-SYSTEM §5.
-        'transition-[opacity,transform] ease-expo',
+        // reduced motion keeps a fast plain fade — DESIGN-SYSTEM §5.
+        // NB: Tailwind v4 translate-* use the modern `translate` property,
+        // so the transition list must cover it (not just `transform`) or
+        // the slide snaps while only opacity animates.
+        'transition-[opacity,translate] ease-expo',
         reducedMotion
-          ? 'duration-med opacity-0 data-[visible=true]:opacity-100'
-          : 'duration-slow opacity-0 translate-y-7 data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0',
+          ? hidden
+            ? 'duration-med opacity-0'
+            : 'duration-med opacity-100'
+          : hidden
+            ? 'duration-slow opacity-0 translate-y-7'
+            : 'duration-slow opacity-100 translate-y-0',
         className,
       ),
       'data-visible': visible,
       ref,
-      style: !reducedMotion && delayMs ? { transitionDelay: `${delayMs}ms` } : undefined,
+      style: !reducedMotion && hidden && delayMs ? { transitionDelay: `${delayMs}ms` } : undefined,
     },
     children,
   )

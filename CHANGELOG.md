@@ -1,5 +1,22 @@
 ## 2026-08-09 — Phase B: tactical homepage + HUD framing (Tactical 2.0, second cut)
 
+- **feat(motion): Phase E round 2 — section reveals land on the homepage, real reduced-motion story for the hero.**
+  - Homepage sections now scroll-reveal: SEC 02 (operator directory), SEC 04 (claims), SEC 05
+    (bonus decoder) and the Missions band fade+slide in via the shared `Reveal` component
+    (slow+expo tokens). SEC 03 is deliberately unwrapped — its ScrollTrigger pin breaks under a
+    transformed ancestor.
+  - `Reveal` hardened and given its first real usage: a mounted-gate means SSR/no-JS renders
+    content fully visible (never baked `opacity-0`), and an in-view sync check at mount kills the
+    visible->hidden flash for above-the-fold use.
+  - **Bug caught in review:** Tailwind v4 `translate-*` use the modern `translate` property, not
+    `transform` — the arbitrary `transition-[opacity,transform]` list meant the reveal slide was
+    snapping while only opacity animated. Fixed to `transition-[opacity,translate]`; same fix to
+    the shared `ui/button` and `PillButton` transition lists so their hover lifts animate.
+  - Reduced-motion hero story: instead of the WebGL field vanishing, the hero now falls back to a
+    `StaticEvidenceField` — a zero-animation CSS dot-grid texture with the same amber/emerald
+    ledger grammar — for reduced-motion, no-WebGL, and weak devices. Users who asked for less
+    motion keep the atmosphere, still.
+
 - **feat(motion): Phase E — motion tokens standardized site-wide, radar accents, reduced-motion verified.**
   - Every public surface now speaks the Phase A motion tokens: `@utility duration-fast/med/slow`
     (150/260/520ms from `--dur-*`) and `ease-quart`/`ease-expo` (from `--ease-out-*`). ~30 files

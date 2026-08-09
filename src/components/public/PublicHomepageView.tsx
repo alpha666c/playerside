@@ -8,6 +8,7 @@ import { EvidenceDrawer } from './EvidenceDrawer'
 import { ClaimVsRealityReactor } from './ClaimVsRealityReactor'
 import { VerifiedOperatorGrid } from './VerifiedOperatorGrid'
 import { HudSectionHeader } from './HudSectionHeader'
+import { Reveal } from '@/components/Reveal'
 import { HeroFieldView } from '@/components/three/HeroFieldView'
 import { MachinedSealLazy } from '@/components/MachinedSeal/MachinedSealLazy'
 import { ProtocolScrub } from './ProtocolScrub'
@@ -114,7 +115,7 @@ export function PublicHomepageView() {
       <ProtocolScrub />
 
       {/* SEC 02 — verified operator directory */}
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+      <Reveal as="section" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
         <HudSectionHeader
           chip="intel"
           n="02"
@@ -123,9 +124,12 @@ export function PublicHomepageView() {
         />
         {/* Live-wired to the hero filter bar: category + search filter the grid. */}
         <VerifiedOperatorGrid filters={filters} />
-      </section>
+      </Reveal>
 
-      {/* SEC 03 — payout measurement leaderboard */}
+      {/* SEC 03 — payout measurement leaderboard.
+          Deliberately NOT wrapped in Reveal: LivePayoutLeaderboard pins its
+          panel with ScrollTrigger, and a transform on a pinned ancestor breaks
+          the fixed-position pinning. It has its own scroll story. */}
       <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
         <HudSectionHeader
           chip="live"
@@ -137,7 +141,7 @@ export function PublicHomepageView() {
       </section>
 
       {/* SEC 04 — the proof section: claim vs measured reality */}
-      <section className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
+      <Reveal as="section" className="mx-auto max-w-6xl px-4 py-14 sm:px-6 lg:px-8">
         <HudSectionHeader
           chip="field-intel"
           n="04"
@@ -145,10 +149,10 @@ export function PublicHomepageView() {
           title="Claim vs. measured reality."
         />
         <ClaimVsRealityReactor />
-      </section>
+      </Reveal>
 
       {/* SEC 05 — bonus wager trap detector */}
-      <section className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
+      <Reveal as="section" className="mx-auto max-w-6xl px-4 py-6 sm:px-6 lg:px-8">
         <HudSectionHeader
           chip="decoder"
           n="05"
@@ -156,10 +160,13 @@ export function PublicHomepageView() {
           title="Decode the bonus fine print."
         />
         <BonusCalculator />
-      </section>
+      </Reveal>
 
-      {/* Vex Missions — learn the terms, earn the rank */}
-      <MissionsPromo />
+      {/* Vex Missions — learn the terms, earn the rank.
+          Lower threshold: the band can be tall; 0.2 would delay the reveal. */}
+      <Reveal threshold={0.1}>
+        <MissionsPromo />
+      </Reveal>
 
       {/* Slide-over Evidence Drawer */}
       <EvidenceDrawer entry={selectedEvidence} onClose={() => setSelectedEvidence(null)} />

@@ -240,3 +240,40 @@ accents only where they earn attention; prove reduced-motion compliance.
   static); ping via `motion-reduce:animate-none`; the global kill-switch covers the rest; HeroField
   already gates on `useReducedMotion`. Verified in-browser with reduced-motion emulation — beam
   stops, WebGL field drops, page remains fully readable.
+## 2026-08-09 — Phase E round 2 (section reveals + reduced-motion hero story)
+
+**Goal:** finish the "consistent transitions / section reveal animations / reduced-motion hero"
+portion of Phase E on top of the token system shipped in `500a8ac`.
+
+- **Section reveals are now real.** The `Reveal` component existed but was used nowhere; the
+  homepage wrapped SEC 02 / 04 / 05 + the Missions band in it (slow+expo fade-up). SEC 03 is
+  deliberately NOT wrapped: `LivePayoutLeaderboard` pins its panel with ScrollTrigger, and any
+  transform (or `translate`) on a pinned ancestor breaks fixed-position pinning — the same reason
+  the Protocol scrub stays unwrapped. The pin-safety rule is now documented in the code.
+- **`Reveal` hardened before its first real use.** Two fixes:
+  1. **Mounted-gate** — hidden classes (opacity-0 / translate) only apply after client mount, so
+     SSR HTML and no-JS environments always show content. Previously the component baked
+     `opacity-0 translate-y-7` into the SSR markup (invisible text if JS fails).
+  2. **In-view sync check at mount** — if the element is already in the viewport when effects run
+     (above-the-fold usage), it reveals immediately, so there's never a visible→hidden→visible
+     flash. Below-fold sections are unaffected.
+- **The `translate` vs `transform` bug (reviewer-caught, S2-worth).** Tailwind v4's `translate-y-*`
+  utilities set the modern `translate` property, not `transform`. The Reveal's arbitrary
+  `transition-[opacity,transform]` therefore animated only opacity — the slide snapped. Fixed to
+  `transition-[opacity,translate]`. The same latent bug existed in `ui/button` and `PillButton`
+  (hover `-translate-y-px` / `-translate-y-0.5` lifts wouldn't transition) — their arbitrary lists
+  now include `translate`. Side benefit: because `translate` (unlike `transform`) does NOT create a
+  containing block for fixed/sticky descendants, the settled `translate-y-0` is not a
+  position-pinning trap — this is why wrapping sections in Reveal is safe for future sticky
+  children, and why the reviewer's containing-block concern was moot.
+- **The reduced-motion hero story.** Previously `prefers-reduced-motion` dropped the WebGL field
+  entirely — atmosphere lost. Now `HeroFieldView` falls back to a `StaticEvidenceField`: a
+  zero-animation CSS dot-grid texture (tiled radial gradients, amber ledger + rare emerald sealed
+  points, no grid lines because the hero section already paints `bg-blueprint`). This is also the
+  fallback for no-WebGL and weak devices. Zero JS/GPU cost, `aria-hidden`, SSR baseline is the
+  static field (`data-hero-field="static"`), swapped to the WebGL tier on hydration for capable
+  devices. Reduced-motion users keep the brand atmosphere — still.
+- **Missions band threshold 0.1** (band can be tall; the 0.2 default would delay its reveal).
+
+Gates: typecheck + lint + 161/161 tests + build 40/40 + browser-verified (fade+slide computed
+styles, hero field + radar present, zero console errors).

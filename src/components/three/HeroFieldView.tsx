@@ -5,6 +5,7 @@ import React, { useEffect, useState } from 'react'
 
 import { useReducedMotion } from '@/hooks/useReducedMotion'
 
+import { StaticEvidenceField } from './StaticEvidenceField'
 import { getQualityTier, QualityTier, webglSupported } from './HeroField/quality'
 
 // three.js stays out of the server bundle and out of the initial client
@@ -18,9 +19,11 @@ const HeroField = dynamic(() => import('./HeroField/HeroField'), {
  * The living evidence field — a decorative WebGL background for the hero.
  * aria-hidden (it is atmosphere, never content) and pointer-events-none.
  *
- * Gating (in order): reduced motion → nothing. No WebGL / weak device → the
- * existing ambient Glow layer already carries the atmosphere, so nothing.
- * Otherwise → render at the tier's capped pixel ratio.
+ * Gating (in order): reduced motion → the WebGL layer is NOT created; the
+ * hero falls back to the static evidence-field texture (same dot grammar,
+ * zero animation) so the atmosphere survives without motion. No WebGL /
+ * weak device → the same static field. Otherwise → render at the tier's
+ * capped pixel ratio.
  */
 export const HeroFieldView: React.FC = () => {
   const reducedMotion = useReducedMotion()
@@ -32,11 +35,17 @@ export const HeroFieldView: React.FC = () => {
     setTier(getQualityTier())
   }, [reducedMotion])
 
-  if (tier === 'off') return null
+  if (tier !== 'off') {
+    return (
+      <div aria-hidden className="pointer-events-none absolute inset-0 z-0" data-hero-field={tier}>
+        <HeroField tier={tier} />
+      </div>
+    )
+  }
 
   return (
-    <div aria-hidden className="pointer-events-none absolute inset-0 z-0" data-hero-field={tier}>
-      <HeroField tier={tier} />
+    <div aria-hidden className="pointer-events-none absolute inset-0 z-0" data-hero-field="static">
+      <StaticEvidenceField />
     </div>
   )
 }
