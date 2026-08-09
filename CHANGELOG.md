@@ -1,3 +1,14 @@
+## 2026-08-09 — Phase G: admin-managed settings — keys live in the DB, one place for every host
+
+- **New `SystemSettings` global** (`/admin/globals/system-settings`, admin-only): DeepSeek API
+  key, model, base URL, max tokens, daily cap, and the Exa key. Read from the shared database on
+  every host (Vercel + VPS + local) — paste once, used everywhere. Env vars still override.
+- **`llm.ts` config is now async** with precedence env > DB > defaults; `/api/cofounder/health`
+  reports where the key came from (`keySource`). Rotation invalidates the cache instantly.
+- **Migration `20260809_162628`** adds the `system_settings` table + the `llm_call` agent-logs
+  enum value (trimmed to only Phase G changes — see DECISION-LOG). Applied locally.
+- Tests: 174/174 green (DB-fallback, env-wins, keySource cases added).
+
 ## 2026-08-09 — Phase G G.1: shared LLM client (DeepSeek V4 Flash) + health self-check
 
 - **Implemented:** `src/lib/reviewChat/llm.ts` — one OpenAI-compatible LLM client for the

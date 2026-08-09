@@ -23,6 +23,7 @@ import { XpEvents } from './collections/XpEvents'
 import { Footer } from './Footer/config'
 import { Header } from './Header/config'
 import { Homepage } from './Homepage/config'
+import { SystemSettings } from './SystemSettings/config'
 import { plugins } from './plugins'
 import { defaultLexical } from '@/fields/defaultLexical'
 import { getServerSideURL } from './utilities/getURL'
@@ -123,7 +124,7 @@ export default buildConfig({
     XpEvents,
   ],
   cors: [getServerSideURL()].filter(Boolean),
-  globals: [Header, Footer, Homepage],
+  globals: [Header, Footer, Homepage, SystemSettings],
   plugins,
   // FIX-02 (audit 2026-08-07): a hardcoded fallback secret would let anyone
   // forge admin JWTs in any env that misses PAYLOAD_SECRET. Dev keeps a

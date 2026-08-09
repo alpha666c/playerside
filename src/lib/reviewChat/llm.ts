@@ -1,6 +1,7 @@
 import type { Payload, PayloadRequest } from 'payload'
 
 import { logEvent } from '@/lib/logEvent'
+import { getSystemSettings } from '@/lib/reviewChat/settings'
 
 /**
  * Phase G (G.1) — the shared LLM client (spec §1, §7.1).
@@ -94,30 +95,59 @@ export class LlmApiError extends Error {
 
 export interface LlmConfig {
   apiKey: string | null
+  /** where the effective key came from — surfaced by the health endpoint */
+  keySource: 'env' | 'database' | 'none'
   baseUrl: string
   model: string
   maxTokens: number
   dailyCap: number
 }
 
-export const getLlmConfig = (): LlmConfig => ({
-  apiKey: process.env.DEEPSEEK_API_KEY?.trim() || null,
-  baseUrl: (process.env.DEEPSEEK_BASE_URL?.trim() || 'https://api.deepseek.com').replace(/\/+$/, ''),
-  model: process.env.DEEPSEEK_MODEL?.trim() || 'deepseek-v4-flash',
-  maxTokens: Number(process.env.LLM_MAX_TOKENS ?? 4000),
-  dailyCap: Number(process.env.LLM_SPEND_CAP_PER_DAY ?? 1000),
-})
+/**
+ * Resolve effective config: environment variable > DB settings (admin) >
+ * defaults. Env wins so CI/bootstrap and local dev can override the admin
+ * without touching it (spec §1; src/lib/reviewChat/settings.ts).
+ */
+export const getLlmConfig = async (
+  payload: Payload,
+  req: PayloadRequest,
+): Promise<LlmConfig> => {
+  const db = await getSystemSettings(payload, req)
+  const envKey = process.env.DEEPSEEK_API_KEY?.trim()
+  const dbKey = typeof db.llmDeepSeekApiKey === 'string' ? db.llmDeepSeekApiKey.trim() : ''
+  const apiKey = envKey || dbKey || null
+  const baseUrl = (
+    process.env.DEEPSEEK_BASE_URL?.trim() ||
+    db.llmBaseUrl?.trim() ||
+    'https://api.deepseek.com'
+  ).replace(/\/+$/, '')
+  return {
+    apiKey,
+    keySource: envKey ? 'env' : apiKey ? 'database' : 'none',
+    baseUrl,
+    model: process.env.DEEPSEEK_MODEL?.trim() || db.llmModel?.trim() || 'deepseek-v4-flash',
+    maxTokens: Number(process.env.LLM_MAX_TOKENS ?? db.llmMaxTokens ?? 4000),
+    dailyCap: Number(process.env.LLM_SPEND_CAP_PER_DAY ?? db.llmSpendCapPerDay ?? 1000),
+  }
+}
 
-export const isLlmConfigured = (): boolean => getLlmConfig().apiKey !== null
+export const isLlmConfigured = async (
+  payload: Payload,
+  req: PayloadRequest,
+): Promise<boolean> => (await getLlmConfig(payload, req)).apiKey !== null
 
-/** Per-role override map: LLM_MODEL_<ROLE_UPPER_SNAKE> env wins over DEEPSEEK_MODEL. */
-export const resolveModel = (role?: string): string => {
+/** Per-role override map: LLM_MODEL_<ROLE_UPPER_SNAKE> env wins, else the effective model. */
+export const resolveModel = async (
+  payload: Payload,
+  req: PayloadRequest,
+  role?: string,
+): Promise<string> => {
   if (role) {
     const key = `LLM_MODEL_${role.toUpperCase().replace(/-/g, '_')}`
     const override = process.env[key]?.trim()
     if (override) return override
   }
-  return getLlmConfig().model
+  return (await getLlmConfig(payload, req)).model
 }
 
 /**
@@ -153,7 +183,7 @@ export interface CapStatus {
 export const checkDailyCap = async (
   payload: Payload,
   req: PayloadRequest,
-  config: LlmConfig = getLlmConfig(),
+  config: LlmConfig,
 ): Promise<CapStatus> => {
   if (config.dailyCap <= 0) return { used: 0, limit: 0, remaining: Number.POSITIVE_INFINITY }
   const result = await payload.count({
@@ -206,7 +236,7 @@ const buildBody = (
   stream: boolean,
 ): Record<string, unknown> => {
   const body: Record<string, unknown> = {
-    model: opts.model ?? resolveModel(opts.agentRole),
+    model: opts.model ?? config.model,
     messages,
     max_tokens: opts.maxTokens ?? config.maxTokens,
     temperature: typeof opts.temperature === 'number' ? opts.temperature : DEFAULT_TEMPERATURE,
@@ -234,15 +264,15 @@ export const chatLlm = async (
   messages: LlmMessage[],
   opts: LlmOptions = {},
 ): Promise<LlmResult> => {
-  const config = getLlmConfig()
+  const config = await getLlmConfig(payload, req)
   if (!config.apiKey) {
     throw new LlmConfigurationError(
-      'DEEPSEEK_API_KEY is not configured — add it to the environment to use the Cofounder or pipeline agents.',
+      'No LLM key configured — add DEEPSEEK_API_KEY (env) or the key in the admin System Settings (system-settings global) to use the Cofounder or pipeline agents.',
     )
   }
   await checkDailyCap(payload, req, config)
 
-  const model = opts.model ?? resolveModel(opts.agentRole)
+  const model = opts.model ?? (await resolveModel(payload, req, opts.agentRole))
   const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: authHeaders(config),
@@ -313,15 +343,15 @@ export const streamLlm = async (
   messages: LlmMessage[],
   opts: LlmOptions = {},
 ): Promise<ReadableStream<Uint8Array>> => {
-  const config = getLlmConfig()
+  const config = await getLlmConfig(payload, req)
   if (!config.apiKey) {
     throw new LlmConfigurationError(
-      'DEEPSEEK_API_KEY is not configured — add it to the environment to use the Cofounder or pipeline agents.',
+      'No LLM key configured — add DEEPSEEK_API_KEY (env) or the key in the admin System Settings (system-settings global) to use the Cofounder or pipeline agents.',
     )
   }
   await checkDailyCap(payload, req, config)
 
-  const model = opts.model ?? resolveModel(opts.agentRole)
+  const model = opts.model ?? (await resolveModel(payload, req, opts.agentRole))
   const res = await fetch(`${config.baseUrl}/chat/completions`, {
     method: 'POST',
     headers: authHeaders(config),
@@ -389,6 +419,7 @@ export const streamLlm = async (
 export interface HealthResult {
   ok: boolean
   keyConfigured: boolean
+  keySource: 'env' | 'database' | 'none'
   resolvedModel: string
   baseUrl: string
   message: string
@@ -408,15 +439,16 @@ export const healthCheck = async (
   payload: Payload,
   req: PayloadRequest,
 ): Promise<HealthResult> => {
-  const config = getLlmConfig()
+  const config = await getLlmConfig(payload, req)
   if (!config.apiKey) {
     return {
       ok: false,
       keyConfigured: false,
+      keySource: config.keySource,
       resolvedModel: config.model,
       baseUrl: config.baseUrl,
       message:
-        'DEEPSEEK_API_KEY is not set — add it (Vercel env or .env.local) to verify the model id.',
+        'No LLM key configured — add it via the admin System Settings (works on every host) or the DEEPSEEK_API_KEY env var, then re-check to verify the model id.',
     }
   }
   const startedAt = Date.now()
@@ -436,6 +468,7 @@ export const healthCheck = async (
       return {
         ok: false,
         keyConfigured: true,
+        keySource: config.keySource,
         resolvedModel: config.model,
         baseUrl: config.baseUrl,
         message: `Provider rejected the check (${res.status}): ${text.slice(0, 200)}`,
@@ -445,6 +478,7 @@ export const healthCheck = async (
     return {
       ok: true,
       keyConfigured: true,
+      keySource: config.keySource,
       resolvedModel: data?.model ?? config.model,
       baseUrl: config.baseUrl,
       message: 'LLM client reachable — model id resolved.',
@@ -454,6 +488,7 @@ export const healthCheck = async (
     return {
       ok: false,
       keyConfigured: true,
+      keySource: config.keySource,
       resolvedModel: config.model,
       baseUrl: config.baseUrl,
       message: err instanceof Error ? err.message : 'Unknown health-check failure',

@@ -11,6 +11,7 @@ import {
   resolveModel,
   streamLlm,
 } from '@/lib/reviewChat/llm'
+import { resetSystemSettingsCache } from '@/lib/reviewChat/settings'
 
 /**
  * Phase G (G.1) — shared LLM client tests (spec §8, tests 2/3/12).
@@ -35,6 +36,8 @@ const stubPayload = (overrides: Record<string, unknown> = {}) => {
   const p: Record<string, unknown> = {
     count: vi.fn().mockResolvedValue({ totalDocs: 0 }),
     create: vi.fn().mockResolvedValue({ id: 'log-1' }),
+    // no admin System Settings saved by default -> env vars + defaults apply
+    findGlobal: vi.fn().mockResolvedValue(null),
     ...overrides,
   }
   return p
@@ -55,33 +58,69 @@ const sseBody = (lines: string[]): ReadableStream<Uint8Array> => {
 afterEach(() => {
   vi.unstubAllGlobals()
   vi.unstubAllEnvs()
+  // the settings getter caches for 15s — drop it so findGlobal stubs are fresh
+  resetSystemSettingsCache()
 })
 
 describe('llm config', () => {
-  it('reads env with documented defaults', () => {
+  it('reads env with documented defaults', async () => {
     vi.stubEnv('DEEPSEEK_API_KEY', 'sk-test')
     vi.stubEnv('DEEPSEEK_BASE_URL', 'https://api.deepseek.com/')
     vi.stubEnv('DEEPSEEK_MODEL', 'deepseek-v4-flash')
-    const c = getLlmConfig()
+    const c = await getLlmConfig(stubPayload() as never, stubReq() as never)
     expect(c.apiKey).toBe('sk-test')
+    expect(c.keySource).toBe('env')
     expect(c.baseUrl).toBe('https://api.deepseek.com') // trailing slash stripped
     expect(c.model).toBe('deepseek-v4-flash')
     expect(c.maxTokens).toBe(4000)
     expect(c.dailyCap).toBe(1000)
-    expect(isLlmConfigured()).toBe(true)
+    expect(await isLlmConfigured(stubPayload() as never, stubReq() as never)).toBe(true)
   })
 
-  it('is not configured without a key', () => {
+  it('falls back to the admin System Settings when no env key exists', async () => {
     vi.stubEnv('DEEPSEEK_API_KEY', '')
-    expect(isLlmConfigured()).toBe(false)
+    vi.stubEnv('DEEPSEEK_MODEL', '')
+    const payload = stubPayload({
+      findGlobal: vi.fn().mockResolvedValue({
+        llmDeepSeekApiKey: 'db-key',
+        llmModel: 'db-model',
+        llmSpendCapPerDay: 25,
+      }),
+    })
+    const c = await getLlmConfig(payload as never, stubReq() as never)
+    expect(c.apiKey).toBe('db-key')
+    expect(c.keySource).toBe('database')
+    expect(c.model).toBe('db-model')
+    expect(c.dailyCap).toBe(25)
   })
 
-  it('resolves per-role model overrides before the default', () => {
+  it('env wins over the admin System Settings', async () => {
+    vi.stubEnv('DEEPSEEK_API_KEY', 'env-key')
+    vi.stubEnv('DEEPSEEK_MODEL', 'env-model')
+    const payload = stubPayload({
+      findGlobal: vi.fn().mockResolvedValue({
+        llmDeepSeekApiKey: 'db-key',
+        llmModel: 'db-model',
+      }),
+    })
+    const c = await getLlmConfig(payload as never, stubReq() as never)
+    expect(c.apiKey).toBe('env-key')
+    expect(c.keySource).toBe('env')
+    expect(c.model).toBe('env-model')
+  })
+
+  it('is not configured without a key', async () => {
+    vi.stubEnv('DEEPSEEK_API_KEY', '')
+    expect(await isLlmConfigured(stubPayload() as never, stubReq() as never)).toBe(false)
+  })
+
+  it('resolves per-role model overrides before the default', async () => {
     vi.stubEnv('DEEPSEEK_MODEL', 'deepseek-v4-flash')
     vi.stubEnv('LLM_MODEL_DESK_RESEARCHER', 'deepseek-chat')
-    expect(resolveModel('desk-researcher')).toBe('deepseek-chat')
-    expect(resolveModel('cofounder')).toBe('deepseek-v4-flash')
-    expect(resolveModel()).toBe('deepseek-v4-flash')
+    const req = stubReq() as never
+    expect(await resolveModel(stubPayload() as never, req, 'desk-researcher')).toBe('deepseek-chat')
+    expect(await resolveModel(stubPayload() as never, req, 'cofounder')).toBe('deepseek-v4-flash')
+    expect(await resolveModel(stubPayload() as never, req)).toBe('deepseek-v4-flash')
   })
 })
 
@@ -170,6 +209,7 @@ describe('healthCheck', () => {
     const r = await healthCheck(stubPayload() as never, stubReq() as never)
     expect(r.ok).toBe(false)
     expect(r.keyConfigured).toBe(false)
+    expect(r.keySource).toBe('none')
     expect(r.resolvedModel).toBe('deepseek-v4-flash')
   })
 

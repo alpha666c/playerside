@@ -135,11 +135,13 @@ export interface Config {
     header: Header;
     footer: Footer;
     homepage: Homepage;
+    'system-settings': SystemSetting;
   };
   globalsSelect: {
     header: HeaderSelect<false> | HeaderSelect<true>;
     footer: FooterSelect<false> | FooterSelect<true>;
     homepage: HomepageSelect<false> | HomepageSelect<true>;
+    'system-settings': SystemSettingsSelect<false> | SystemSettingsSelect<true>;
   };
   locale: null;
   widgets: {
@@ -3373,6 +3375,45 @@ export interface Homepage {
   createdAt?: string | null;
 }
 /**
+ * Runtime settings for the AI Cofounder + pipeline agents. Stored in the shared database, so the same values apply on any host (Vercel, VPS, local). An environment variable with the same purpose overrides these when set. Keys are admin-only and never exposed to the public site.
+ *
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "system-settings".
+ */
+export interface SystemSetting {
+  id: number;
+  /**
+   * LLM provider.
+   */
+  llmProvider?: 'deepseek' | null;
+  /**
+   * Model id — this is a candidate default; GET /api/cofounder/health verifies the id the endpoint actually serves.
+   */
+  llmModel?: string | null;
+  /**
+   * DeepSeek API key (https://platform.deepseek.com → API Keys). Saving replaces the old value — that is the rotation mechanism. Admin-only.
+   */
+  llmDeepSeekApiKey?: string | null;
+  /**
+   * Provider base URL (set only if using a different endpoint).
+   */
+  llmBaseUrl?: string | null;
+  /**
+   * Max tokens per LLM call.
+   */
+  llmMaxTokens?: number | null;
+  /**
+   * Daily LLM call cap across all agents (counted via agent-logs). 0 disables the cap.
+   */
+  llmSpendCapPerDay?: number | null;
+  /**
+   * Exa API key (https://dashboard.exa.ai → API Keys) for the trending-research tool (Phase G G.4).
+   */
+  exaApiKey?: string | null;
+  updatedAt?: string | null;
+  createdAt?: string | null;
+}
+/**
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "header_select".
  */
@@ -3450,6 +3491,22 @@ export interface HomepageSelect<T extends boolean = true> {
   ctaSubtext?: T;
   ctaButtonLabel?: T;
   ctaButtonHref?: T;
+  updatedAt?: T;
+  createdAt?: T;
+  globalType?: T;
+}
+/**
+ * This interface was referenced by `Config`'s JSON-Schema
+ * via the `definition` "system-settings_select".
+ */
+export interface SystemSettingsSelect<T extends boolean = true> {
+  llmProvider?: T;
+  llmModel?: T;
+  llmDeepSeekApiKey?: T;
+  llmBaseUrl?: T;
+  llmMaxTokens?: T;
+  llmSpendCapPerDay?: T;
+  exaApiKey?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

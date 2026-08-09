@@ -11,6 +11,7 @@ import * as migration_20260722_033154_protect_evidence_media from './20260722_03
 import * as migration_20260723_002255_add_research_queue_version from './20260723_002255_add_research_queue_version';
 import * as migration_20260806_225622 from './20260806_225622';
 import * as migration_20260808_add_claims_vs_reality from './20260808_add_claims_vs_reality';
+import * as migration_20260809_162628 from './20260809_162628';
 
 export const migrations = [
   {
@@ -71,11 +72,16 @@ export const migrations = [
   {
     up: migration_20260806_225622.up,
     down: migration_20260806_225622.down,
-    name: '20260806_225622'
+    name: '20260806_225622',
   },
   {
     up: migration_20260808_add_claims_vs_reality.up,
     down: migration_20260808_add_claims_vs_reality.down,
-    name: '20260808_add_claims_vs_reality'
+    name: '20260808_add_claims_vs_reality',
+  },
+  {
+    up: migration_20260809_162628.up,
+    down: migration_20260809_162628.down,
+    name: '20260809_162628'
   },
 ];

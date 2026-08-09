@@ -364,3 +364,31 @@ model-id self-check endpoint. Shipped with mocked tests; live verification waits
 - Next: G.2 (`CofounderSessions` collection + migration). `DEEPSEEK_API_KEY` needed for G.3+
   live runs; `.env.example` + `CREDENTIAL-LOG.md` updated with the full Phase G env contract.
 
+
+## 2026-08-09 — Phase G: admin-managed settings (SystemSettings global) — keys live in the DB, not per-host env
+
+**Goal:** answer Viktor's VPS question. Env vars cannot cross hosts (Vercel env is only readable
+by Vercel), so the site's runtime keys now live in a Payload global that every host reads from
+the shared database: paste once in `/admin/globals/system-settings`, works on Vercel + VPS + local.
+
+- **Precedence: env var > DB settings > defaults** (predictable, documented). `keySource`
+  (`env` / `database` / `none`) is surfaced by `/api/cofounder/health` so a stale env override
+  is diagnosable.
+- **Security boundary (QA S2-2):** the global is admin-only read/update; the health endpoint and
+  every public route return metadata only — the key never leaves the server. Caveat documented
+  in the global description: any authenticated admin account can see the keys (single-owner tool
+  today; role-gated field access would be the fix if multi-admin ever arrives). Trust boundary
+  is now the Postgres credentials — the intended trade-off of DB-managed secrets.
+- **Rotation is immediate (QA S2-1):** `afterChange` on the global drops the settings TTL cache,
+  so a long-lived VPS picks up a new key on the next call instead of after the 15s TTL.
+- **Settings read failures are logged, not silent (QA S3):** a real DB outage falls back to
+  env/defaults but logs `system-settings read failed` — a broken deploy is observable.
+- **Migration trim (2026-08-09):** `payload migrate:create` also emitted `claims_vs_reality`
+  ALTERs because the local dev DB / snapshot chain is behind migration `20260808`. Those were
+  removed from `20260809_162628` on purpose — `20260808` already owns those columns on clean
+  environments, and duplicating them would fail fresh deploys with "column already exists".
+  Pre-existing drift remains (a future `migrate:create` may re-emit them as noise) — documented
+  in the migration header comment.
+- Gates: typecheck + lint + **174/174 tests** (13 in `llm.int.spec.ts` incl. DB-fallback,
+  env-wins, keySource). Migration applied locally (34ms).
+
