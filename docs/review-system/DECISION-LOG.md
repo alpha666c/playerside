@@ -497,3 +497,25 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
 - **Tests:** 8 int tests (numbering + sequential, create defaults, resume cycle thread/plan
   intact, 409 stale version, 400 missing changedFields, ticket_created audit, delegation enqueue
   QUEUED, pinnedCases link). Gates: tsc + lint + **184/184** (was 176).
+
+## 2026-08-09 — Phase G G.3 decisions (Cofounder chat + tickets)
+
+- **The tool loop runs non-streaming; the final answer is streamed by chunked SSE, never
+  re-generated.** `streamLlm`'s SSE parser cannot relay tool-call deltas, and re-generating the
+  final answer from the provider would double the spend on every turn. The route computes
+  (`chatLlm`, max 4 iterations, 190s wall clock) and then emits `{"delta"}` … `{"done"}` — the same
+  wire contract the G.4 panel consumes, so the streaming UX is preserved at zero extra LLM cost.
+- **`#CF` numbering collisions are resolved by walking UP from a once-counted base.** A re-count
+  retry loops forever because a rolled-back insert is invisible to the count. `createTicketWithRetry`
+  passes an explicit number per attempt (base+1, base+2, …), bypassing the hook's re-count — numbers
+  may gap under concurrency, never reuse.
+- **Tool activity stays in agent-logs, not the ticket thread.** The thread schema is
+  user/assistant/system only (adding `tool` would need another enum migration); every tool call is
+  audited via `agent-logs` `tool_call` events and surfaced in the SSE `done` metadata
+  (`toolEvents`).
+- **Status transitions live on one `/tickets/:id` route with `{action}`** instead of the spec's
+  `/tickets/:id/pause|close` URLs — identical behavior, one thin handler (documented on the route).
+- **Bonus intent maps to `review-run` sessionType** — `no-deposit-bonus` is a plan-item KIND, not a
+  sessionType value.
+- **Ticket reuse prefers the acting admin's own tickets** (`createdBy` match) before falling back
+  to any matching today's ticket (reviewer S3 — never inherit another admin's session).

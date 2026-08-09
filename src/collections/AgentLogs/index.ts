@@ -101,6 +101,9 @@ export const AgentLogs: CollectionConfig<'agent-logs'> = {
         { label: 'Ticket created', value: 'ticket_created' },
         { label: 'Ticket updated', value: 'ticket_updated' },
         { label: 'Ticket status change', value: 'ticket_status_change' },
+        // Phase G (G.3): every Cofounder tool invocation (spec §7.2) —
+        // metadata only (tool name + args + ok), never message content.
+        { label: 'Tool call', value: 'tool_call' },
       ],
       required: true,
     },

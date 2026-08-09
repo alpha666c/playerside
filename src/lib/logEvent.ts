@@ -17,6 +17,8 @@ export type AgentLogEvent =
   | 'ticket_created'
   | 'ticket_updated'
   | 'ticket_status_change'
+  // Phase G (G.3): Cofounder tool invocations (spec §7.2)
+  | 'tool_call'
 
 export type LogEventInput = {
   agentId: string

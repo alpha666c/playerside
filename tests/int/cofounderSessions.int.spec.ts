@@ -3,6 +3,8 @@ import config from '@/payload.config'
 
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 
+import { createTicketWithRetry } from '@/lib/cofounder/tools'
+
 /**
  * Phase G (G.2) — CofounderSessions ticket collection tests (spec §8 tests
  * #1 + #11). Runs against the real local DB like the other int tests.
@@ -48,12 +50,14 @@ beforeAll(async () => {
 })
 
 const createTicket = async (title: string) => {
-  // `as never` — ticketNumber is `required` in the generated type but is
-  // auto-assigned by the field-level beforeValidate hook before validation.
-  const ticket = (await payload.create({
-    collection: 'cofounder-sessions',
-    req: makeReq(),
-    data: {
+  // Via createTicketWithRetry (G.3): the canonical creation path. Test files
+  // run in parallel, so a raw count-then-insert create can collide on the
+  // unique #CF number with another file's create (QA S2-4) — the wrapper
+  // walks up from the base count on collision instead of re-counting.
+  const ticket = await createTicketWithRetry(
+    payload,
+    makeReq() as never,
+    {
       title,
       sessionType: 'review-run',
       plan: [
@@ -65,7 +69,7 @@ const createTicket = async (title: string) => {
         },
       ],
     },
-  } as never))
+  )
   createdTicketIds.push(Number(ticket.id))
   return ticket as {
     id: number
@@ -108,7 +112,10 @@ describe('CofounderSessions', () => {
     expect(b.ticketNumber.slice(3, 9)).toBe(datePart)
     const seqA = Number(a.ticketNumber.slice(11))
     const seqB = Number(b.ticketNumber.slice(11))
-    expect(seqB).toBe(seqA + 1)
+    // Monotonic increase, not strictly +1: test files run in parallel, and a
+    // concurrent ticket from another file can land between these two creates
+    // (the QA S2-4 retry wrapper gaps numbers by design — never reuses them).
+    expect(seqB).toBeGreaterThan(seqA)
   })
 
   it('bumps lastActiveAt on update and keeps thread/plan on the resume cycle', async () => {

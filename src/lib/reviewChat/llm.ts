@@ -28,8 +28,10 @@ export type LlmRole = 'system' | 'user' | 'assistant' | 'tool'
 export interface LlmMessage {
   role: LlmRole
   content: string | null
-  /** tool results carry the calling tool's id */
+  /** tool results carry the calling tool's id (serialized as tool_call_id) */
   toolCallId?: string
+  /** assistant messages that made tool calls — serialized as provider `tool_calls` */
+  toolCalls?: LlmToolCall[]
 }
 
 export interface LlmToolCall {
@@ -246,9 +248,25 @@ const buildBody = (
   config: LlmConfig,
   stream: boolean,
 ): Record<string, unknown> => {
+  // Serialize tool-loop messages: assistant messages that made tool calls
+  // carry `tool_calls`; role 'tool' results carry `tool_call_id` (Phase G
+  // G.3 — the Cofounder's function-calling loop). Plain messages serialize
+  // byte-for-byte as before.
+  const serialized = messages.map((m) => {
+    const out: Record<string, unknown> = { role: m.role, content: m.content }
+    if (m.toolCalls && m.toolCalls.length > 0) {
+      out.tool_calls = m.toolCalls.map((tc) => ({
+        id: tc.id,
+        type: 'function',
+        function: { name: tc.name, arguments: tc.arguments },
+      }))
+    }
+    if (m.toolCallId) out.tool_call_id = m.toolCallId
+    return out
+  })
   const body: Record<string, unknown> = {
     model: opts.model ?? config.model,
-    messages,
+    messages: serialized,
     max_tokens: opts.maxTokens ?? config.maxTokens,
     temperature: typeof opts.temperature === 'number' ? opts.temperature : DEFAULT_TEMPERATURE,
     stream,

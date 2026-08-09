@@ -1388,7 +1388,8 @@ export interface AgentLog {
     | 'llm_call'
     | 'ticket_created'
     | 'ticket_updated'
-    | 'ticket_status_change';
+    | 'ticket_status_change'
+    | 'tool_call';
   timestamp: string;
   agentId: string;
   /**

@@ -45,6 +45,37 @@
   (5 tables + enums) + `20260809_184012` (delegationQueue.source select→text — avoids the
   single-value-enum footgun). 8 int tests; gates: tsc + lint + **184/184**.
 
+## 2026-08-09 — Phase G G.3: Cofounder chat route + ticket lifecycle endpoints
+
+- **feat(ai): `POST /api/cofounder` — the Cofounder chat endpoint (SSE).** Admin-only. Resolves or
+  creates the work-session ticket (§3.1 #2: reuse today's open/active ticket only when its
+  sessionType matches the detected intent and it is owned by the acting admin; otherwise a fresh
+  `#CF-YYMMDD-NN` ticket is created), builds the system-prompt bundle (identity + locked rules +
+  session state + budget-trimmed thread, 12k tokens), runs the model with the 5 ticket-scoped tools
+  (max 4 iterations, 190s wall-clock budget — QA S1-3), records user-then-assistant turns on the
+  ticket `thread` via the optimistic-version contract (one 409 retry; a failed assistant call still
+  leaves the user turn + a `system` failure note — reviewer S3), runs the banned-phrase output gate
+  (RG aside appended, flagged in the `done` event), and streams the reply as chunked SSE
+  (`{"delta"}` … `{"done":true,…}` — the same wire contract `streamLlm` uses; the loop itself runs
+  non-streaming because `streamLlm`'s parser can't relay tool-call deltas, and re-generating the
+  final answer would double spend).
+- **feat(ai): ticket endpoints.** `POST /api/cofounder/tickets` (create + today's plan rollup),
+  `POST /api/cofounder/tickets/resume` (full ticket + mark active — shares `findTicketAndResume`
+  with the `resume_ticket` tool), `POST /api/cofounder/tickets/:id` (`{action:'pause'|'close'}`;
+  close refuses open plan items unless `confirm:true`).
+- **fix(ai): `#CF` numbering race closed (QA S2-4).** The count-then-insert field hook collides
+  under concurrent creation (tool + REST + route + parallel test files). `createTicketWithRetry`
+  counts once and walks UP from the base on unique collision (Payload re-wraps Postgres 23505 into
+  a ValidationError whose path survives in `data.errors[0].path` — `isUniqueViolation` matches that
+  plus the raw code/message forms).
+- **feat(ai): `llm.ts` tool-loop support.** `LlmMessage` gains `toolCalls`; `buildBody` serializes
+  `tool_calls` / `tool_call_id` (backward compatible — plain messages serialize byte-identical).
+- **Migration `20260809_185901`:** adds `tool_call` to the agent_logs event enum; down migration
+  hardened with `DROP TYPE IF EXISTS` + CASE remap of `tool_call` rows (reviewer S2).
+- **Tests:** 12 new (tools: create/resume/close/plan/audit; prompt bundle shape + thread trim;
+  output gate) + G.2 tests re-pointed at `createTicketWithRetry`. Gates: tsc + lint + **196/196**
+  + full build + 14-check E2E smoke (mock LLM, incl. the failure-trace path).
+
 ## 2026-08-09 — Phase G: admin-managed settings — keys live in the DB, one place for every host
 
 - **New `SystemSettings` global** (`/admin/globals/system-settings`, admin-only): DeepSeek API
