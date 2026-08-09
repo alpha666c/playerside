@@ -61,10 +61,12 @@ export const Reveal: React.FC<RevealProps> = ({
     Tag,
     {
       className: cn(
-        'transition-[opacity,transform] ease-out',
+        // Entrances use the slow+expo token pair (decelerating settle);
+        // interactions use fast+quart — see DESIGN-SYSTEM §5.
+        'transition-[opacity,transform] ease-expo',
         reducedMotion
-          ? 'duration-300 opacity-0 data-[visible=true]:opacity-100'
-          : 'duration-700 opacity-0 translate-y-7 data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0',
+          ? 'duration-med opacity-0 data-[visible=true]:opacity-100'
+          : 'duration-slow opacity-0 translate-y-7 data-[visible=true]:opacity-100 data-[visible=true]:translate-y-0',
         className,
       ),
       'data-visible': visible,

@@ -79,7 +79,7 @@ export default async function ReviewsHubPage() {
 
       <div className="container mb-16 grid gap-6 sm:grid-cols-2">
         <Link
-          className="group block rounded-[var(--radius)] border border-evidence/35 bg-dusk p-7 transition-colors duration-200 hover:border-evidence sm:p-8"
+          className="group block rounded-[var(--radius)] border border-evidence/35 bg-dusk p-7 transition-colors duration-fast hover:border-evidence sm:p-8"
           href="/casinos"
         >
           <CategoryMarker className="mb-4" kind="traditional" />
@@ -91,7 +91,7 @@ export default async function ReviewsHubPage() {
         </Link>
 
         <Link
-          className="group block rounded-[var(--radius)] border border-coral-dim/45 bg-dusk p-7 transition-colors duration-200 hover:border-coral-dim sm:p-8"
+          className="group block rounded-[var(--radius)] border border-coral-dim/45 bg-dusk p-7 transition-colors duration-fast hover:border-coral-dim sm:p-8"
           href="/crypto-casinos"
         >
           <CategoryMarker className="mb-4" kind="crypto" />

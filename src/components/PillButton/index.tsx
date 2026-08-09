@@ -15,7 +15,7 @@ const variantClasses: Record<NonNullable<PillButtonBaseProps['variant']>, string
 }
 
 const baseClasses =
-  'inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-sans text-[14.5px] font-semibold transition-[transform,box-shadow,border-color] duration-200 ease-out'
+  'inline-flex items-center justify-center gap-2 rounded-full px-6 py-3 font-sans text-[14.5px] font-semibold transition-[transform,box-shadow,border-color] duration-fast ease-quart'
 
 type PillLinkProps = PillButtonBaseProps &
   Omit<React.ComponentProps<typeof Link>, 'className' | 'children'>

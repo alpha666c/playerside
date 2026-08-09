@@ -110,7 +110,7 @@ export default async function TopListPage({ params: paramsPromise }: Args) {
               ) : null}
             </div>
             <Link
-              className="group block rounded-[var(--radius)] border border-gold/40 bg-dusk p-6 transition-colors duration-200 hover:border-gold sm:p-8"
+              className="group block rounded-[var(--radius)] border border-gold/40 bg-dusk p-6 transition-colors duration-fast hover:border-gold sm:p-8"
               href={first.href}
             >
               <div className="flex items-baseline justify-between gap-4">
@@ -131,7 +131,7 @@ export default async function TopListPage({ params: paramsPromise }: Args) {
           <div className="mt-4 divide-y divide-line overflow-hidden rounded-[var(--radius)] border border-line bg-dusk">
             {rest.map((entry, index) => (
               <Link
-                className="group flex items-center gap-4 px-5 py-4 transition-colors duration-200 hover:bg-ink-2/60 sm:px-6"
+                className="group flex items-center gap-4 px-5 py-4 transition-colors duration-fast hover:bg-ink-2/60 sm:px-6"
                 href={entry.href}
                 key={entry.id}
               >

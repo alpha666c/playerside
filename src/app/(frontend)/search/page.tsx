@@ -170,19 +170,19 @@ export default async function SearchPage({ searchParams: searchParamsPromise }: 
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link
-                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-fast hover:border-evidence hover:text-paper"
                 href="/casinos"
               >
                 Traditional casino reviews
               </Link>
               <Link
-                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-fast hover:border-evidence hover:text-paper"
                 href="/crypto-casinos"
               >
                 Crypto casino reviews
               </Link>
               <Link
-                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-fast hover:border-evidence hover:text-paper"
                 href="/bonuses/no-wagering"
               >
                 No-wagering bonuses
@@ -208,7 +208,7 @@ export default async function SearchPage({ searchParams: searchParamsPromise }: 
 
 const SearchResultRow: React.FC<{ item: SearchResultItem }> = ({ item }) => (
   <Link
-    className="group flex items-center gap-4 px-5 py-4 transition-colors duration-200 hover:bg-ink-2/60 sm:px-6"
+    className="group flex items-center gap-4 px-5 py-4 transition-colors duration-fast hover:bg-ink-2/60 sm:px-6"
     href={item.href}
   >
     <span className="min-w-0 flex-1">

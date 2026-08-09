@@ -1,5 +1,21 @@
 ## 2026-08-09 — Phase B: tactical homepage + HUD framing (Tactical 2.0, second cut)
 
+- **feat(motion): Phase E — motion tokens standardized site-wide, radar accents, reduced-motion verified.**
+  - Every public surface now speaks the Phase A motion tokens: `@utility duration-fast/med/slow`
+    (150/260/520ms from `--dur-*`) and `ease-quart`/`ease-expo` (from `--ease-out-*`). ~30 files
+    swept from hardcoded `duration-200/300/500/700` and `ease-[cubic-bezier(0.25,1,0.5,1)]` to the
+    token utilities (Header, compare, archive, cards, homepage widgets, Vex missions, review page).
+  - Bare `transition-*` now resolves to `--dur-fast` + `--ease-out-quart` by default
+    (`--default-transition-duration` / `--default-transition-timing-function` in `@theme inline`).
+  - Entrances use slow+expo (Reveal), interactions use fast+quart (buttons, links) — the
+    interaction/entrance split documented in DESIGN-SYSTEM §5.
+  - Radar accent: a `.radar` conic sweep primitive (rings + rotating beam) placed behind the hero's
+    `SEC-01 // LIVE_INTEL` readout — the one spot on the homepage that earns it; the leaderboard's
+    evidence dot now pings (motion-reduce:animate-none).
+  - Reduced motion: radar beam killed via scoped `prefers-reduced-motion` rule; all animate-in
+    toasts/drawers retain fast timing because the duration utilities mirror Tailwind v4's
+    `--tw-duration` coupling (fixes animate-in falling back to the 1s default — reviewer S2).
+
 
 - **feat(review): the review page is now a case file.** Top header gains a mono
   `CASE FILE // evidence_logged` rule; the verdict box is reframed as a `field_brief`

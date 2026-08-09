@@ -205,6 +205,13 @@
   --color-success: var(--success);
   --color-warning: var(--warning);
   --color-error: var(--error);
+
+  /* Phase E — every bare `transition-*` (no explicit duration/ease) now
+     resolves to the motion tokens: fast (150ms) quart for interactions.
+     Named token utilities below let components be explicit where they
+     need entrance (slow+expo) or medium card-lift timing. */
+  --default-transition-duration: var(--dur-fast);
+  --default-transition-timing-function: var(--ease-out-quart);
 }
 
 @layer base {
@@ -310,6 +317,43 @@ html[data-theme='light'] {
   --dur-fast: 150ms;
   --dur-med: 260ms;
   --dur-slow: 520ms;
+}
+
+/* ------------------------------------------------------------------ */
+/* Motion token utilities — Phase E (standardize on the tokens)        */
+/* ------------------------------------------------------------------ */
+
+@utility duration-fast {
+  /* Mirror Tailwind v4's built-in duration-*: it drives BOTH transitions
+     and CSS animations (tw-animate-css reads --tw-duration). Setting only
+     transition-duration would leave animate-in/zoom-in toasts at the 1s
+     default. */
+  --tw-duration: var(--dur-fast);
+  transition-duration: var(--tw-duration);
+  animation-duration: var(--tw-duration);
+}
+
+@utility duration-med {
+  --tw-duration: var(--dur-med);
+  transition-duration: var(--tw-duration);
+  animation-duration: var(--tw-duration);
+}
+
+@utility duration-slow {
+  --tw-duration: var(--dur-slow);
+  transition-duration: var(--tw-duration);
+  animation-duration: var(--tw-duration);
+}
+
+@utility ease-quart {
+  transition-timing-function: var(--ease-out-quart);
+}
+
+@utility ease-expo {
+  transition-timing-function: var(--ease-out-expo);
+}
+
+:root {
   --shadow-panel: inset 0 1px 0 rgba(243, 238, 232, 0.04), 0 14px 36px -16px rgba(0, 0, 0, 0.55);
   --shadow-float: 0 26px 64px -22px rgba(0, 0, 0, 0.7), 0 4px 14px rgba(0, 0, 0, 0.35);
 }
@@ -469,11 +513,57 @@ html[data-theme='light'] {
   inset: 0;
   background: linear-gradient(105deg, transparent 42%, rgba(110, 168, 216, 0.09) 50%, transparent 58%);
   transform: translateX(-115%);
-  transition: transform 0.8s var(--ease-out-expo);
+  transition: transform var(--dur-slow) var(--ease-out-expo);
   pointer-events: none;
 }
 .hud-scan:hover::after {
   transform: translateX(115%);
+}
+
+/* Radar sweep — sonar rings + a rotating beam. Decorative, never content.
+   Phase E: used only where it earns attention (hero intel corner, live
+   leaderboard dot). Transform-only animation (GPU-cheap, no layout), and
+   the beam is fully disabled under prefers-reduced-motion. */
+.radar {
+  position: relative;
+  border-radius: 9999px;
+  overflow: hidden;
+  pointer-events: none;
+}
+.radar::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 9999px;
+  background:
+    radial-gradient(circle, transparent 27%, rgba(110, 168, 216, 0.12) 28%, transparent 30%),
+    radial-gradient(circle, transparent 53%, rgba(110, 168, 216, 0.09) 54%, transparent 56%),
+    radial-gradient(circle, transparent 79%, rgba(110, 168, 216, 0.07) 80%, transparent 82%);
+}
+.radar::after {
+  content: '';
+  position: absolute;
+  inset: -25%;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    rgba(110, 168, 216, 0) 0deg,
+    rgba(110, 168, 216, 0.22) 30deg,
+    rgba(110, 168, 216, 0) 62deg
+  );
+  animation: radar-spin 4.5s linear infinite;
+}
+@keyframes radar-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .radar::after {
+    animation: none;
+    opacity: 0;
+  }
 }
 
 /* Film-grain overlay — fixed, pointer-transparent, sits above page content. */

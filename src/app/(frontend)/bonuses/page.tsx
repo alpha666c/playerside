@@ -19,7 +19,7 @@ export default function BonusesHubPage() {
 
       <div className="container grid gap-6 sm:grid-cols-2">
         <Link
-          className="block rounded-[var(--radius)] border border-line bg-dusk p-7 transition-colors duration-200 hover:border-gold/50 sm:p-8"
+          className="block rounded-[var(--radius)] border border-line bg-dusk p-7 transition-colors duration-fast hover:border-gold/50 sm:p-8"
           href="/bonuses/wagering"
         >
           <h2 className="mb-2 text-xl sm:text-2xl">Wagering bonuses</h2>
@@ -30,7 +30,7 @@ export default function BonusesHubPage() {
         </Link>
 
         <Link
-          className="block rounded-[var(--radius)] border border-line bg-dusk p-7 transition-colors duration-200 hover:border-gold/50 sm:p-8"
+          className="block rounded-[var(--radius)] border border-line bg-dusk p-7 transition-colors duration-fast hover:border-gold/50 sm:p-8"
           href="/bonuses/no-wagering"
         >
           <h2 className="mb-2 text-xl sm:text-2xl">No-wagering bonuses</h2>

@@ -43,7 +43,7 @@ export function Review3DStampReactor({
       <div className="mb-6 flex justify-center">
         <button
           onClick={handleReveal}
-          className="flex cursor-pointer items-center gap-2.5 rounded-[10px] bg-coral px-6 py-3.5 text-sm font-bold text-ink-2 shadow-xl shadow-coral/20 transition-all duration-200 hover:bg-coral/90 hover:shadow-lg active:scale-95"
+          className="flex cursor-pointer items-center gap-2.5 rounded-[10px] bg-coral px-6 py-3.5 text-sm font-bold text-ink-2 shadow-xl shadow-coral/20 transition-all duration-fast hover:bg-coral/90 hover:shadow-lg active:scale-95"
         >
           <svg className="h-5 w-5 animate-bounce" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M15 13l-3 3m0 0l-3-3m3 3V8m0 13a9 9 0 110-18 9 9 0 010 18z" />
@@ -55,7 +55,7 @@ export function Review3DStampReactor({
       {/* 3D Perspective Card Container */}
       <div className="perspective-1000 relative min-h-[460px]">
         <div
-          className={`transform-style-3d relative h-full w-full transition-transform duration-700 ${
+          className={`transform-style-3d relative h-full w-full transition-transform duration-slow ${
             isFlipped ? 'rotate-y-180' : ''
           }`}
         >
@@ -115,7 +115,7 @@ export function Review3DStampReactor({
           <div className="backface-hidden rotate-y-180 absolute inset-0 flex h-full w-full flex-col justify-between overflow-hidden rounded-2xl border border-line bg-ink p-6 shadow-panel sm:p-8">
             {/* Background Glow */}
             <div
-              className={`pointer-events-none absolute inset-0 transition-opacity duration-500 ${
+              className={`pointer-events-none absolute inset-0 transition-opacity duration-slow ${
                 isCertified ? 'bg-success/10' : 'bg-coral/10'
               }`}
             ></div>
@@ -124,10 +124,10 @@ export function Review3DStampReactor({
             {stampAnimationDone && (
               <div className="pointer-events-none absolute inset-0 z-30 flex items-center justify-center p-4">
                 <div
-                  className={`rounded-2xl border-4 px-6 py-4 font-mono text-xl font-black uppercase tracking-widest shadow-2xl transition-all duration-300 sm:px-8 sm:text-3xl ${
+                  className={`rounded-2xl border-4 px-6 py-4 font-mono text-xl font-black uppercase tracking-widest shadow-2xl transition-all duration-med sm:px-8 sm:text-3xl ${
                     isCertified
-                      ? 'border-success bg-ink/95 text-success shadow-success/50 animate-in zoom-in-150 duration-200 rotate-[-4deg]'
-                      : 'border-coral bg-ink/95 text-coral shadow-coral/50 animate-in zoom-in-150 duration-200 rotate-[4deg]'
+                      ? 'border-success bg-ink/95 text-success shadow-success/50 animate-in zoom-in-150 duration-fast rotate-[-4deg]'
+                      : 'border-coral bg-ink/95 text-coral shadow-coral/50 animate-in zoom-in-150 duration-fast rotate-[4deg]'
                   }`}
                 >
                   <div className="flex items-center justify-center gap-3">
@@ -170,7 +170,7 @@ export function Review3DStampReactor({
               <span className="text-paper-dim/70">Playerside Audit Record #2026</span>
               <button
                 onClick={handleReveal}
-                className="cursor-pointer rounded-[10px] border border-line bg-ink-2 px-4 py-2 text-xs font-semibold text-paper-dim transition-colors duration-200 hover:border-evidence/50 hover:text-paper"
+                className="cursor-pointer rounded-[10px] border border-line bg-ink-2 px-4 py-2 text-xs font-semibold text-paper-dim transition-colors duration-fast hover:border-evidence/50 hover:text-paper"
               >
                 Flip Back
               </button>

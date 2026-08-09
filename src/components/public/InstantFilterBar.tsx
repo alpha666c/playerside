@@ -97,7 +97,7 @@ export function InstantFilterBar({ onFilterChange }: { onFilterChange?: (filters
             <button
               key={cat}
               onClick={() => updateFilter('category', cat)}
-              className={`rounded-[10px] px-3 py-1 text-xs font-medium transition-all duration-200 ${
+              className={`rounded-[10px] px-3 py-1 text-xs font-medium transition-all duration-fast ${
                 filters.category === cat
                   ? 'bg-coral text-ink-2 font-bold shadow-sm'
                   : 'border border-line bg-ink-2 text-paper-dim hover:border-evidence/50 hover:text-paper'

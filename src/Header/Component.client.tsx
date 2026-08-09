@@ -26,7 +26,7 @@ export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
         <div className="flex items-center gap-3">
           <Link
             aria-label="Search reviews and bonuses"
-            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+            className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-line text-paper-dim transition-colors duration-fast hover:border-evidence hover:text-paper"
             href="/search"
             title="Search"
           >

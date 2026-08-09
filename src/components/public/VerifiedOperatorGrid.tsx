@@ -79,13 +79,13 @@ export function VerifiedOperatorGrid({
       <div className="flex items-center justify-end gap-2">
         <Link
           href="/casinos"
-          className="rounded-[10px] border border-line bg-ink-2 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors duration-200 hover:border-evidence/50 hover:text-paper"
+          className="rounded-[10px] border border-line bg-ink-2 px-3 py-1.5 text-xs font-semibold text-paper-dim transition-colors duration-fast hover:border-evidence/50 hover:text-paper"
         >
           Traditional (€/$)
         </Link>
         <Link
           href="/crypto-casinos"
-          className="rounded-[10px] border border-coral/40 bg-coral/10 px-3 py-1.5 text-xs font-semibold text-coral transition-colors duration-200 hover:border-coral/70 hover:bg-coral/20"
+          className="rounded-[10px] border border-coral/40 bg-coral/10 px-3 py-1.5 text-xs font-semibold text-coral transition-colors duration-fast hover:border-coral/70 hover:bg-coral/20"
         >
           Crypto Casinos (BTC/USDT)
         </Link>
@@ -101,7 +101,7 @@ export function VerifiedOperatorGrid({
         {visible.map((op, idx) => (
           <div
             key={idx}
-            className="panel hud-frame hud-scan group flex flex-col justify-between space-y-4 p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-evidence/50"
+            className="panel hud-frame hud-scan group flex flex-col justify-between space-y-4 p-6 transition-all duration-med hover:-translate-y-0.5 hover:border-evidence/50"
           >
             <div>
               {/* Header */}
@@ -110,7 +110,7 @@ export function VerifiedOperatorGrid({
                   <span className="rounded border border-line bg-ink-2 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-paper-dim">
                     {op.category === 'crypto' ? 'Crypto Casino' : 'Traditional Casino'}
                   </span>
-                  <h4 className="t-h4 mt-1 text-paper transition-colors duration-200 group-hover:text-coral">
+                  <h4 className="t-h4 mt-1 text-paper transition-colors duration-fast group-hover:text-coral">
                     {op.name}
                   </h4>
                 </div>
@@ -150,7 +150,7 @@ export function VerifiedOperatorGrid({
 
               <Link
                 href={op.category === 'crypto' ? `/crypto-casinos/${op.slug}` : `/casinos/${op.slug}`}
-                className="rounded-[10px] bg-coral px-3.5 py-1.5 text-xs font-bold text-ink-2 shadow-sm transition-all duration-200 hover:bg-coral/90 hover:shadow-md active:scale-[0.97]"
+                className="rounded-[10px] bg-coral px-3.5 py-1.5 text-xs font-bold text-ink-2 shadow-sm transition-all duration-fast hover:bg-coral/90 hover:shadow-md active:scale-[0.97]"
               >
                 Read Review
               </Link>

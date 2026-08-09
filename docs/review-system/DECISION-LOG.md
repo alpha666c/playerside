@@ -207,3 +207,36 @@ strength bars was removed (they mount at final width; no false animation).
 
 **DRY.** Intel card markup + inline SVGs were duplicated across the traditional and crypto
 review pages; extracted to a shared `IntelCard` component so the twins can't drift.
+## 2026-08-09 — Phase E (motion / micro-interactions)
+
+**Goal:** standardize every public-surface transition on the Phase A motion tokens; add radar/scanline
+accents only where they earn attention; prove reduced-motion compliance.
+
+- **Tokens are now first-class Tailwind utilities.** `@utility duration-fast/med/slow` and
+  `ease-quart/ease-expo` (backed by `--dur-*` / `--ease-out-*`) replaced ~60 hardcoded
+  `duration-200/300/500/700` + `ease-[cubic-bezier(0.25,1,0.5,1)]` classes across ~30 files.
+  The `ease-[cubic-bezier(0.25,1,0.5,1)]` arbitrary value *was* `--ease-out-quart` — no behavior
+  change, just a name.
+- **Default timing override:** `--default-transition-duration: var(--dur-fast)` +
+  `--default-transition-timing-function: var(--ease-out-quart)` in `@theme inline` means every bare
+  `transition-*` resolves to the interaction tokens. This is a **site-wide** behavior change
+  (timing function goes from Tailwind's `cubic-bezier(0.4,0,0.2,1)` to quart) — includes the admin
+  dashboard's hovers, which were deliberately left out of the class sweep (internal tooling, same
+  call as the Phase B palette pass). Accepted; documented here so the next pass doesn't "fix" it.
+- **Interaction vs entrance split:** interactions = fast + quart (buttons, links, card lifts);
+  entrances = slow + expo (Reveal scroll-triggers, hero HUD). Reduced-motion branch of Reveal keeps
+  a fast plain fade — never a hard cut.
+- **Reviewer S2 caught a real coupling bug:** Tailwind v4's `duration-*` drives BOTH
+  `transition-duration` and `animation-duration` via `--tw-duration` (tw-animate-css reads it). The
+  first version of `@utility duration-fast` set only `transition-duration`, so the swept
+  `animate-in` toasts (EvidenceDrawer slide, stamp zoom, claim chip) would have fallen back to the
+  ~1s default. Fixed by mirroring the built-in utility: set `--tw-duration`, then both properties.
+- **Radar restraint:** the `.radar` primitive (rings + 4.5s rotating beam) appears exactly once on
+  the homepage (behind `SEC-01 // LIVE_INTEL`), plus a `animate-ping` (motion-reduce-safe) on the
+  leaderboard's evidence dot. Everything else stays CSS-hover territory. The ping sits beside
+  explicitly "Sample/Illustrative" content — accepted tension because the section's `chip="live"`
+  already frames it as the live leaderboard demonstration.
+- **Reduced motion:** radar beam disabled via a scoped `prefers-reduced-motion` rule (rings stay,
+  static); ping via `motion-reduce:animate-none`; the global kill-switch covers the rest; HeroField
+  already gates on `useReducedMotion`. Verified in-browser with reduced-motion emulation — beam
+  stops, WebGL field drops, page remains fully readable.

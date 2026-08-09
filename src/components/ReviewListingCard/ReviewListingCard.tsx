@@ -15,7 +15,7 @@ export const ReviewListingCard: React.FC<{
   /** When set, renders the add-to-compare toggle (Phase 3 F3.2). */
   compare?: CompareItem | null
 }> = ({ href, name, overallScore, summary, category, isIllustrativeSample, compare }) => (
-  <div className="group relative rounded-[var(--radius)] border border-line bg-dusk transition-colors duration-200 hover:border-gold/50">
+  <div className="group relative rounded-[var(--radius)] border border-line bg-dusk transition-colors duration-fast hover:border-gold/50">
     <Link className="block p-6 sm:p-[26px]" href={href}>
       <VerificationSeal
         active

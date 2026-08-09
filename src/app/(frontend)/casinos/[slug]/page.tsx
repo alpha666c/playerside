@@ -89,7 +89,7 @@ export default async function CasinoReviewPage({ params: paramsPromise }: Args) 
               if (!meta) return null
               return (
                 <Link
-                  className="rounded-full border border-line px-3 py-2 text-paper transition-colors duration-200 hover:border-evidence hover:text-evidence"
+                  className="rounded-full border border-line px-3 py-2 text-paper transition-colors duration-fast hover:border-evidence hover:text-evidence"
                   href={`/markets/${market}`}
                   key={market}
                 >

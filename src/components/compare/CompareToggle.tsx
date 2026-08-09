@@ -73,7 +73,7 @@ export const CompareToggle: React.FC<{
   return (
     <button
       aria-pressed={active}
-      className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[1px] transition-colors duration-200 ${
+      className={`rounded-full border px-2.5 py-1 font-mono text-[10px] uppercase tracking-[1px] transition-colors duration-fast ${
         active
           ? 'border-gold bg-gold/15 text-gold'
           : 'border-line bg-ink/40 text-paper-dim hover:border-evidence hover:text-paper'

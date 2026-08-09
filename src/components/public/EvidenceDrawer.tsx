@@ -10,12 +10,12 @@ export function EvidenceDrawer({ entry, onClose }: { entry: PayoutEntry | null; 
 
   return (
     <div
-      className="fixed inset-0 z-[60] flex justify-end bg-ink-2/80 backdrop-blur-xs animate-in fade-in duration-150"
+      className="fixed inset-0 z-[60] flex justify-end bg-ink-2/80 backdrop-blur-xs animate-in fade-in duration-fast"
       role="dialog"
       aria-modal="true"
       aria-label={`Evidence file for ${entry.operatorName}`}
     >
-      <div className="flex h-full w-full max-w-xl flex-col space-y-6 overflow-y-auto border-l border-line bg-ink p-6 shadow-2xl animate-in slide-in-from-right duration-200">
+      <div className="flex h-full w-full max-w-xl flex-col space-y-6 overflow-y-auto border-l border-line bg-ink p-6 shadow-2xl animate-in slide-in-from-right duration-fast">
         {/* Drawer Header */}
         <div className="flex items-center justify-between border-b border-line pb-4">
           <div>
@@ -37,7 +37,7 @@ export function EvidenceDrawer({ entry, onClose }: { entry: PayoutEntry | null; 
           <button
             onClick={onClose}
             aria-label="Close evidence drawer"
-            className="rounded-[10px] p-2 text-paper-dim transition-colors duration-200 hover:bg-dusk hover:text-paper"
+            className="rounded-[10px] p-2 text-paper-dim transition-colors duration-fast hover:bg-dusk hover:text-paper"
           >
             <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
@@ -85,7 +85,7 @@ export function EvidenceDrawer({ entry, onClose }: { entry: PayoutEntry | null; 
         <div className="border-t border-line pt-4">
           <button
             onClick={onClose}
-            className="w-full rounded-[10px] bg-coral py-2.5 text-xs font-bold text-ink-2 shadow-md transition-all duration-200 hover:bg-coral/90 hover:shadow-lg active:scale-[0.98]"
+            className="w-full rounded-[10px] bg-coral py-2.5 text-xs font-bold text-ink-2 shadow-md transition-all duration-fast hover:bg-coral/90 hover:shadow-lg active:scale-[0.98]"
           >
             Close Evidence Inspector
           </button>

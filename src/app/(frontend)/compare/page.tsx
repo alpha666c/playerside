@@ -151,13 +151,13 @@ export default async function ComparePage({ searchParams: searchParamsPromise }:
             </p>
             <div className="flex flex-wrap justify-center gap-2">
               <Link
-                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-fast hover:border-evidence hover:text-paper"
                 href="/casinos"
               >
                 Traditional casino reviews
               </Link>
               <Link
-                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+                className="rounded-full border border-line px-4 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-fast hover:border-evidence hover:text-paper"
                 href="/crypto-casinos"
               >
                 Crypto casino reviews
@@ -198,7 +198,7 @@ const CompareTable: React.FC<{ group: CompareEntry[] }> = ({ group }) => {
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <Link
-                        className="block truncate text-[14.5px] font-medium text-paper transition-colors duration-200 hover:text-gold"
+                        className="block truncate text-[14.5px] font-medium text-paper transition-colors duration-fast hover:text-gold"
                         href={entry.href}
                       >
                         {entry.name}
@@ -211,7 +211,7 @@ const CompareTable: React.FC<{ group: CompareEntry[] }> = ({ group }) => {
                     </div>
                     <Link
                       aria-label={`Remove ${entry.name} from comparison`}
-                      className="mt-0.5 font-mono text-[13px] text-paper-dim transition-colors duration-200 hover:text-coral"
+                      className="mt-0.5 font-mono text-[13px] text-paper-dim transition-colors duration-fast hover:text-coral"
                       href={buildCompareUrl(group.filter((g) => g.slug !== entry.slug).map((g) => g.slug))}
                       title="Remove from comparison"
                     >
@@ -335,7 +335,7 @@ const MarketsRow: React.FC<{ group: CompareEntry[] }> = ({ group }) => (
           {(entry.markets ?? []).length > 0 ? (
             entry.markets!.map((market) => (
               <Link
-                className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-[1px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+                className="rounded-full border border-line px-2 py-0.5 font-mono text-[10px] uppercase tracking-[1px] text-paper-dim transition-colors duration-fast hover:border-evidence hover:text-paper"
                 href={`/markets/${market}`}
                 key={market}
               >

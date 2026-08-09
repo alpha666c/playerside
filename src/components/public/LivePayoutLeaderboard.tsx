@@ -124,7 +124,11 @@ export function LivePayoutLeaderboard({ onSelectEvidence }: { onSelectEvidence?:
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line pb-4">
         <div>
           <div className="flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-evidence" />
+            {/* Live measurement dot — a slow ping, killed under reduced motion. */}
+            <span className="relative flex h-2.5 w-2.5">
+              <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-evidence opacity-60 motion-reduce:animate-none" />
+              <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-evidence" />
+            </span>
             <h3 className="t-h3 text-paper">Sample Payout Measurement Protocol</h3>
           </div>
           <p className="t-caption mt-1">
@@ -139,10 +143,10 @@ export function LivePayoutLeaderboard({ onSelectEvidence }: { onSelectEvidence?:
         {SAMPLE_PAYOUTS.map((entry, idx) => (
           <div
             key={idx}
-            className="hud-scan group flex flex-col space-y-3 rounded-[10px] border border-line bg-ink-2/90 p-4 transition-all duration-300 hover:border-evidence/60 hover:shadow-md lg:min-w-[300px]"
+            className="hud-scan group flex flex-col space-y-3 rounded-[10px] border border-line bg-ink-2/90 p-4 transition-all duration-med hover:border-evidence/60 hover:shadow-md lg:min-w-[300px]"
           >
             <div className="flex items-center justify-between">
-              <span className="text-xs font-semibold text-paper transition-colors duration-200 group-hover:text-coral">
+              <span className="text-xs font-semibold text-paper transition-colors duration-fast group-hover:text-coral">
                 {entry.operatorName}
               </span>
               <span
@@ -180,10 +184,10 @@ export function LivePayoutLeaderboard({ onSelectEvidence }: { onSelectEvidence?:
 
             <button
               onClick={() => onSelectEvidence && onSelectEvidence(entry)}
-              className="mt-2 flex w-full items-center justify-center gap-1 rounded-[10px] border border-line bg-ink py-1.5 text-xs font-semibold text-paper-dim transition-all duration-200 hover:border-coral/60 hover:text-paper active:scale-[0.98]"
+              className="mt-2 flex w-full items-center justify-center gap-1 rounded-[10px] border border-line bg-ink py-1.5 text-xs font-semibold text-paper-dim transition-all duration-fast hover:border-coral/60 hover:text-paper active:scale-[0.98]"
             >
               <span>Inspect Proof</span>
-              <svg className="h-3 w-3 text-evidence transition-transform duration-200 group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <svg className="h-3 w-3 text-evidence transition-transform duration-fast group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
               </svg>
             </button>

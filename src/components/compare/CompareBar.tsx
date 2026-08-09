@@ -45,7 +45,7 @@ export const CompareBar: React.FC = () => {
             {item.name}
             <button
               aria-label={`Remove ${item.name} from comparison`}
-              className="flex h-4 w-4 items-center justify-center rounded-full text-paper-dim transition-colors duration-200 hover:bg-coral/20 hover:text-coral"
+              className="flex h-4 w-4 items-center justify-center rounded-full text-paper-dim transition-colors duration-fast hover:bg-coral/20 hover:text-coral"
               onClick={() => writeCompareSelection(items.filter((x) => x.slug !== item.slug))}
               type="button"
             >
@@ -54,7 +54,7 @@ export const CompareBar: React.FC = () => {
           </span>
         ))}
         <Link
-          className="ml-1 rounded-full bg-gold px-3.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[1px] text-ink transition-opacity duration-200 hover:opacity-90"
+          className="ml-1 rounded-full bg-gold px-3.5 py-1.5 font-mono text-[11px] font-semibold uppercase tracking-[1px] text-ink transition-opacity duration-fast hover:opacity-90"
           href={buildCompareUrl(items.map((i) => i.slug))}
         >
           Compare {items.length}

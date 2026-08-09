@@ -61,7 +61,7 @@ export const GridContent: React.FC<
               { value: 'name' as const, label: 'A–Z' },
             ].map((option) => (
               <button
-                className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors duration-200 ${
+                className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors duration-fast ${
                   sortActive(option.value)
                     ? 'border-gold bg-gold/15 text-gold'
                     : 'border-line text-paper-dim hover:border-evidence hover:text-paper'
@@ -80,7 +80,7 @@ export const GridContent: React.FC<
               Min score
             </span>
             <select
-              className="rounded-full border border-line bg-ink px-3 py-1.5 font-mono text-[11px] text-paper outline-none transition-colors duration-200 focus:border-evidence"
+              className="rounded-full border border-line bg-ink px-3 py-1.5 font-mono text-[11px] text-paper outline-none transition-colors duration-fast focus:border-evidence"
               onChange={(e) => set({ minScore: Number(e.target.value) })}
               value={controls.minScore}
             >
@@ -99,7 +99,7 @@ export const GridContent: React.FC<
               Market
             </span>
             <button
-              className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors duration-200 ${
+              className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors duration-fast ${
                 controls.market === null
                   ? 'border-gold bg-gold/15 text-gold'
                   : 'border-line text-paper-dim hover:border-evidence hover:text-paper'
@@ -112,7 +112,7 @@ export const GridContent: React.FC<
             {markets.map((market) => (
               <button
                 aria-current={controls.market === market.slug ? 'true' : undefined}
-                className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors duration-200 ${
+                className={`rounded-full border px-3 py-1 font-mono text-[11px] transition-colors duration-fast ${
                   controls.market === market.slug
                     ? 'border-gold bg-gold/15 text-gold'
                     : 'border-line text-paper-dim hover:border-evidence hover:text-paper'

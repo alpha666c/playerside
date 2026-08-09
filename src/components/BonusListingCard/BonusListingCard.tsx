@@ -11,7 +11,7 @@ export const BonusListingCard: React.FC<{
   isIllustrativeSample?: boolean | null
 }> = ({ href, title, operatorName, summary, terms, badge, isIllustrativeSample }) => (
   <Link
-    className="block rounded-[var(--radius)] border border-line bg-dusk p-6 transition-colors duration-200 hover:border-gold/50 sm:p-[26px]"
+    className="block rounded-[var(--radius)] border border-line bg-dusk p-6 transition-colors duration-fast hover:border-gold/50 sm:p-[26px]"
     href={href}
   >
     {badge ? (

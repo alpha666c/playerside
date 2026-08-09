@@ -57,7 +57,7 @@ export const MissionsPromo: React.FC = () => {
           <div className="flex flex-wrap items-center gap-3 pt-1">
             <Link
               href="/missions"
-              className="inline-flex items-center gap-2 rounded-[10px] bg-coral px-5 py-2.5 text-sm font-bold text-ink-2 shadow-lg shadow-coral/20 transition-all duration-200 hover:bg-coral/90 hover:shadow-xl hover:shadow-coral/25 active:scale-[0.98]"
+              className="inline-flex items-center gap-2 rounded-[10px] bg-coral px-5 py-2.5 text-sm font-bold text-ink-2 shadow-lg shadow-coral/20 transition-all duration-fast hover:bg-coral/90 hover:shadow-xl hover:shadow-coral/25 active:scale-[0.98]"
             >
               Open the mission board
               <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,7 +108,7 @@ export const MissionsPromo: React.FC = () => {
                 </div>
                 <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-dusk-2">
                   <div
-                    className="h-full rounded-full bg-gradient-to-r from-gold to-evidence transition-[width] duration-700"
+                    className="h-full rounded-full bg-gradient-to-r from-gold to-evidence transition-[width] duration-slow"
                     style={{ width: `${Math.min(100, ((profile.totalXp % 100) / 100) * 100)}%` }}
                   />
                 </div>

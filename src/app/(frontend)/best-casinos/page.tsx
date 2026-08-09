@@ -21,7 +21,7 @@ export default function BestCasinosIndexPage() {
       <div className="container grid gap-6 sm:grid-cols-2">
         {topLists.map((list) => (
           <Link
-            className="group block rounded-[var(--radius)] border border-line bg-dusk p-7 transition-colors duration-200 hover:border-gold/50 sm:p-8"
+            className="group block rounded-[var(--radius)] border border-line bg-dusk p-7 transition-colors duration-fast hover:border-gold/50 sm:p-8"
             href={`/best-casinos/${list.slug}`}
             key={list.slug}
           >

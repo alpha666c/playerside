@@ -47,7 +47,7 @@ export const ScoreBreakdown: React.FC<{
         const open = openKeys.has(category.key)
         return (
           <div
-            className="rounded-[var(--radius)] border border-line bg-dusk p-5 transition-colors duration-200 hover:border-evidence/40 sm:p-6"
+            className="rounded-[var(--radius)] border border-line bg-dusk p-5 transition-colors duration-fast hover:border-evidence/40 sm:p-6"
             key={category.key}
           >
             <button
@@ -74,7 +74,7 @@ export const ScoreBreakdown: React.FC<{
                 </span>
                 <span
                   aria-hidden="true"
-                  className={`font-mono text-[11px] text-paper-dim transition-transform duration-200 ${open ? 'rotate-180' : ''}`}
+                  className={`font-mono text-[11px] text-paper-dim transition-transform duration-fast ${open ? 'rotate-180' : ''}`}
                 >
                   ▾
                 </span>
@@ -82,7 +82,7 @@ export const ScoreBreakdown: React.FC<{
             </button>
             <div className="mb-3 mt-2 h-[5px] overflow-hidden rounded-full bg-dusk-2">
               <div
-                className="h-full rounded-full bg-gradient-to-r from-coral to-evidence transition-[width] duration-500"
+                className="h-full rounded-full bg-gradient-to-r from-coral to-evidence transition-[width] duration-slow"
                 style={{ width: `${((entry.score ?? 0) / 10) * 100}%` }}
               />
             </div>

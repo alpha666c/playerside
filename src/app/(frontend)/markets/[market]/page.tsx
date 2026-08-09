@@ -61,7 +61,7 @@ export default async function MarketArchivePage({ params: paramsPromise }: Args)
       <div className="container mb-10">
         <div className="flex flex-wrap gap-2">
           <Link
-            className="rounded-full border border-line px-3.5 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-200 hover:border-evidence hover:text-paper"
+            className="rounded-full border border-line px-3.5 py-2 font-mono text-[12px] text-paper-dim transition-colors duration-fast hover:border-evidence hover:text-paper"
             href="/casinos"
           >
             All casinos
@@ -69,7 +69,7 @@ export default async function MarketArchivePage({ params: paramsPromise }: Args)
           {marketArchives.map((other) => (
             <Link
               aria-current={other.slug === meta.slug ? 'page' : undefined}
-              className={`rounded-full border px-3.5 py-2 font-mono text-[12px] transition-colors duration-200 ${
+              className={`rounded-full border px-3.5 py-2 font-mono text-[12px] transition-colors duration-fast ${
                 other.slug === meta.slug
                   ? 'border-gold bg-gold/10 text-gold'
                   : 'border-line text-paper-dim hover:border-evidence hover:text-paper'

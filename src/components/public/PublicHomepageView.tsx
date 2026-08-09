@@ -36,12 +36,17 @@ export function PublicHomepageView() {
         />
 
         {/* Coordinate readout — the one tactical flourish that ties the hero
-            to the HUD language. Hidden on small screens. */}
+            to the HUD language, with a slow radar sweep behind it (Phase E:
+            radar accents only where they earn attention — this is the one
+            spot on the homepage that does). Hidden on small screens. */}
         <div
           aria-hidden
-          className="pointer-events-none absolute right-6 top-6 hidden select-none font-mono text-[10px] uppercase tracking-[0.22em] text-paper-dim/40 lg:block"
+          className="pointer-events-none absolute right-6 top-6 hidden select-none lg:block"
         >
-          SEC-01 // LIVE_INTEL
+          <div className="radar absolute -right-6 -top-6 h-28 w-28 opacity-70" />
+          <span className="relative font-mono text-[10px] uppercase tracking-[0.22em] text-paper-dim/40">
+            SEC-01 // LIVE_INTEL
+          </span>
         </div>
         <div
           aria-hidden

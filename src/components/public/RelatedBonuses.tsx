@@ -23,7 +23,7 @@ export const RelatedBonuses: React.FC<{ bonuses: BonusLink[] }> = ({ bonuses }) 
       <div className="grid gap-3 sm:grid-cols-2">
         {bonuses.map((bonus) => (
           <Link
-            className="group rounded-[var(--radius)] border border-line bg-dusk p-4 transition-colors duration-200 hover:border-gold/50 sm:p-5"
+            className="group rounded-[var(--radius)] border border-line bg-dusk p-4 transition-colors duration-fast hover:border-gold/50 sm:p-5"
             href={`/bonuses/${bonus.kind}/${bonus.slug}`}
             key={`${bonus.kind}-${bonus.slug}`}
           >

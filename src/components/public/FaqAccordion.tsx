@@ -37,7 +37,7 @@ export const FaqAccordion: React.FC<{ items: { q: string; a: string }[] }> = ({ 
               </span>
               <span
                 aria-hidden="true"
-                className={`font-mono text-sm text-gold transition-transform duration-200 ${
+                className={`font-mono text-sm text-gold transition-transform duration-fast ${
                   open ? 'rotate-45' : ''
                 }`}
               >

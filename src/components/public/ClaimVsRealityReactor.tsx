@@ -75,7 +75,7 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
           return (
             <div
               key={idx}
-              className={`hud-scan rounded-[10px] border bg-ink-2/80 p-5 transition-all duration-300 ${accent}`}
+              className={`hud-scan rounded-[10px] border bg-ink-2/80 p-5 transition-all duration-med ${accent}`}
             >
               <div className="mb-3 flex items-center justify-between border-b border-line pb-3">
                 <span className="font-mono text-xs font-bold uppercase tracking-wider text-paper-dim">
@@ -118,7 +118,7 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
 
                 <div className="flex items-center gap-3">
                   {isStamped ? (
-                    <div className="flex items-center gap-2 rounded-[10px] border border-success/50 bg-success/10 px-3 py-1.5 font-mono text-xs font-bold text-success animate-in zoom-in-95 duration-150">
+                    <div className="flex items-center gap-2 rounded-[10px] border border-success/50 bg-success/10 px-3 py-1.5 font-mono text-xs font-bold text-success animate-in zoom-in-95 duration-fast">
                       <svg className="h-4 w-4 text-success" viewBox="0 0 24 24" fill="none" stroke="currentColor">
                         <circle cx="12" cy="12" r="10" strokeWidth="2" />
                         <path d="M8 12l3 3 5-6" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" />
@@ -128,7 +128,7 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
                   ) : (
                     <button
                       onClick={() => triggerStamp(idx, item)}
-                      className="flex items-center gap-1.5 rounded-[10px] bg-coral px-3.5 py-1.5 text-xs font-bold text-ink-2 shadow-sm transition-all duration-200 hover:bg-coral/90 hover:shadow-md active:scale-95"
+                      className="flex items-center gap-1.5 rounded-[10px] bg-coral px-3.5 py-1.5 text-xs font-bold text-ink-2 shadow-sm transition-all duration-fast hover:bg-coral/90 hover:shadow-md active:scale-95"
                     >
                       <svg className="h-3.5 w-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
@@ -145,7 +145,7 @@ export function ClaimVsRealityReactor({ items }: { items?: ClaimVsRealityItem[] 
 
       {/* Evidence Reference Details */}
       {activeEvidence && (
-        <div className="space-y-2 rounded-[10px] border border-line bg-ink-2 p-4 font-mono text-xs animate-in fade-in duration-150">
+        <div className="space-y-2 rounded-[10px] border border-line bg-ink-2 p-4 font-mono text-xs animate-in fade-in duration-fast">
           <div className="flex items-center justify-between font-bold text-evidence">
             <span>EVIDENCE FILE DETAILS — {activeEvidence.evidenceRef}</span>
             <button onClick={() => setActiveEvidence(null)} aria-label="Dismiss evidence details" className="text-paper-dim transition-colors hover:text-paper">

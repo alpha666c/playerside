@@ -29,7 +29,7 @@ export const XpBar: React.FC<XpBarProps> = ({ totalXp, level, rankTitle }) => {
         aria-valuenow={pct}
         aria-label={`Level ${level} progress`}
       >
-        <div className="h-full rounded-full bg-gradient-to-r from-gold to-evidence transition-[width] duration-700" style={{ width: `${pct}%` }} />
+        <div className="h-full rounded-full bg-gradient-to-r from-gold to-evidence transition-[width] duration-slow" style={{ width: `${pct}%` }} />
       </div>
       <p className="mt-1 font-mono text-[10px] text-paper-dim/70">Next: {nextRank}</p>
     </div>

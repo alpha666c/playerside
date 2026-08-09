@@ -84,7 +84,7 @@ const MissionRow: React.FC<{
             aria-label={`${quest.title} progress`}
           >
             <div
-              className="h-full rounded-full bg-gradient-to-r from-gold to-evidence transition-[width] duration-700"
+              className="h-full rounded-full bg-gradient-to-r from-gold to-evidence transition-[width] duration-slow"
               style={{ width: `${pct}%` }}
             />
           </div>
