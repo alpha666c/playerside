@@ -1,3 +1,13 @@
+## 2026-08-09 — Phase G round 2 planned: orchestrator control room + approve-to-publish
+
+- **Planned (doc-only commit):** extended the Phase G Cofounder spec with the `/admin/cofounder`
+  control room (tickets & today's plan, streaming chat + plan items, agents-at-work + delegation
+  queue + Approve & Publish) and the human-initiated approve → publish flow (draft → link → flip
+  ordering, verdict freshness guard, deterministic-slug idempotency). The model can never publish;
+  Viktor's Approve triggers the mechanical publish and the existing revalidate hooks update the site.
+- Spec updated: `docs/review-handoffs/2026-08-09-ai-cofounder-phase-g-build-spec.md` §11–§13
+  (QA round 2: APPROVE_WITH_FIXES, all resolved). Build order G.6/G.6b; tests #13–#20.
+
 ## 2026-08-09 — Phase G planned: "The Cofounder" — AI operations partner in the admin
 
 - **Planned (doc-only commit):** approved build spec for a chat-first meta-agent in the

@@ -1,0 +1,12 @@
+docs(plan): Phase G round 2 - orchestrator control room + approve-to-publish
+
+Extend the Cofounder spec with the /admin/cofounder control room
+(tickets and today plan, streaming chat + plan items, agents-at-work +
+delegation queue + Approve and Publish) and the human-initiated
+approve-to-publish flow: draft, link, flip ordering so no orphaned
+live docs can exist, verdictForVersion freshness guard, deterministic
+slug idempotency, BLOCKED_CONFLICT on stale approve. The model never
+publishes; Viktor's Approve triggers the mechanical publish and the
+existing revalidate hooks update the site. QA round 2:
+APPROVE_WITH_FIXES, all resolved in spec sections 11-13. Tests 13-20.
+Logged in DECISION-LOG and CHANGELOG.

@@ -1,6 +1,6 @@
 # Phase G — "The Cofounder": AI Operations Partner in the Admin (Build Spec)
 
-> **Status:** APPROVED (2026-08-09) after QA. Planning + QA flow: orchestrator-drafted spec → independent red-team QA (`code-reviewer-deepseek-flash`) returned **APPROVE_WITH_FIXES** (S0-1, S1-1..4, S2-1..4, S3s) → all findings incorporated (see §11). This file is the build reference; implementation starts when Viktor says go.
+> **Status:** APPROVED (2026-08-09) after QA. Planning + QA flow: orchestrator-drafted spec → independent red-team QA (`code-reviewer-deepseek-flash`) returned **APPROVE_WITH_FIXES** (S0-1, S1-1..4, S2-1..4, S3s) → all findings incorporated (see §13). **Round 2 (2026-08-09): orchestrator control room (§11) + approve-to-publish flow (§12) added and re-QA'd (§13).** This file is the build reference; implementation starts when Viktor says go.
 > **Model:** DeepSeek V4 Flash (`deepseek-v4-flash`) via the DeepSeek OpenAI-compatible API — fast and capable, per Viktor's call. Per-role override map kept configurable.
 
 ---
@@ -227,6 +227,14 @@ Integration (against local DB):
 10. Existing 161 tests stay green; new tests added beside them. G.5 additionally asserts model output never flips `verificationStatus` away from `unverified` (QA S1-2).
 11. `CofounderSessions` optimistic-version conflict: stale `expectedVersion` on a plan write → 409, no clobber (QA S2-3).
 12. `/api/cofounder/health` model self-check returns the resolved, verified model id (QA S0-1).
+13. **Approve research (round 2):** approving a desk-research delegation applies `deskResearchOutput` + `evidenceRegister` via the concurrency contract; version bumps; case fields reflect the draft.
+14. **Approve & publish (round 2):** from a case at `integrity-check` with a PASS verdict, the publish step creates the public review doc in the right collection with `_status: 'published'` (traditional vs crypto by `casinoType`), links `publishedReviewId`, moves the case to `monitoring`, and the revalidate hook fires; a missing compliance field fails the publish (400 from `enforcePublishCompliance`) and leaves the case untouched.
+15. **Publish idempotency (round 2):** re-publishing an already-published case updates the existing review doc instead of creating a duplicate.
+16. **Publish is human-only (round 2):** the Cofounder's tool surface contains no publish tool — a model-initiated publish attempt is rejected by the route (only the authenticated approve action may publish).
+17. **Status aggregation (round 2):** `GET /api/cofounder/status` returns open tickets, active aiRuns, delegation jobs, and the pipeline rollup.
+18. **Concurrent publish (round 2):** two simultaneous publishes of the same case → exactly one live doc (deterministic slug + unique constraint; second attempt becomes an idempotent update); no duplicate.
+19. **Verdict freshness (round 2):** case version bumped after the integrity PASS → publish rejected until re-check.
+20. **Partial-failure compensation (round 2):** review doc created as draft, case link fails → doc stays draft (nothing live), retry succeeds idempotently.
 
 ---
 
@@ -237,7 +245,8 @@ Integration (against local DB):
 - **G.3** Ticket endpoints + `/api/cofounder` route (system-prompt bundle §6, tool loop, streaming, turn recording).
 - **G.4** Tools T1–T9 (T4 via allowlist, T5 live-file reads, T6 adapter interface + first provider, T8 delegation queue).
 - **G.5** Real wiring of the five existing agents onto `llm.ts` (delegation becomes real).
-- **G.6** Admin UI: `/admin/cofounder` workspace (ticket/plan rail + streaming chat + context inspector) in the Payload design language; CaseChatPanel upgraded to streaming via `llm.ts`.
+- **G.6** Admin UI — the control room: `/admin/cofounder` three-pane workspace (tickets & today's plan / ticket workspace with streaming chat + plan items + pinned cases / agents-at-work + delegation jobs + approve & publish card) in the Payload design language; `GET /api/cofounder/status` aggregation; CaseChatPanel upgraded to streaming via `llm.ts`.
+- **G.6b** Approve-to-publish flow (§12): approve action routes + `src/lib/cofounder/publish.ts` + case↔review mapping; human-only, idempotent, compliance-gated.
 - **G.7** Test suite §8 + gates (tsc, lint, tests, build) + red-team RG/injection pass + docs (`DECISION-LOG`, `CHANGELOG`, this spec kept in sync) + commit/push.
 
 ---
@@ -249,10 +258,63 @@ Integration (against local DB):
 3. **Streaming transport** — SSE `ReadableStream` is the default; if the admin bundle fights it, fall back to chunked JSON (`text/event-stream` compatible) — same client contract.
 4. **Daily cap value** — default 1000 calls/day; tune to observed usage after G.7.
 5. **Ticket auto-title** — Cofounder derives `title` + `sessionType` from the opening message; Viktor can rename.
+6. **Publish mapping & rollback (round 2)** — exact case→review field mapping is finalized at G.6b; unpublish/rollback (review `_status: 'draft'` + case back) ships as a follow-up, not v1.
+7. **Approve granularity (round 2)** — per-plan-item approve (research/scoring/content) applies drafts individually; a single 'Approve & Publish' button only appears at integrity-check with a PASS verdict. Whether non-final stages auto-advance on approve: default NO (pipeline stages stay explicit).
 
 ---
 
-## 11. QA findings resolution (2026-08-09)
+## 11. Orchestrator workspace — the control room (round 2)
+
+**What Viktor sees:** one admin view (`/admin/cofounder`) that turns the Cofounder from a chat panel into a full operations deck — tasks, agents at work, tickets, and approvals in one place.
+
+Three panes:
+
+1. **Left — Tickets & Today.** Today's plan rollup (casinos + no-deposit bonuses scheduled / done / blocked), the ticket list (open/active/paused/done, `#CF-YYMMDD-NN`, title, sessionType, lastActiveAt), and a "New ticket" action. Clicking a ticket loads it into the center pane.
+2. **Center — Ticket workspace.** Ticket header (status chips, sessionType, created/lastActive), the streaming Cofounder thread, the ticket's plan items (kind, target, linked case, status todo/in-progress/blocked/done, per-item actions), and pinned cases (deep links to their pipeline stage + case edit/chat pages).
+3. **Right — Agents & Tasks.** Three stacked sections:
+   - **Agents at work:** aggregated `aiRuns` across the session's pinned cases — role label (Desk Researcher / Score Analyst / Editorial Writer / Integrity Checker / Monitor), case, status, started/completed times, expandable structured output. Statuses are truthful (S2-2): `aiRun.status` flips to `running` when the model call actually starts; at most one active run is shown per case (single-writer); runs stuck `pending` > ~15 min render as `stale` with a dismiss.
+   - **Delegation queue:** `delegationQueue` jobs (role, brief, linked case, QUEUED→APPROVED→RUNNING→DONE/REJECTED) with Approve/Reject per job; approving a pipeline-agent job also applies its draft to the case via the concurrency contract.
+   - **Approve & Publish:** the final card — visible when a pinned case is at `integrity-check` with a PASS verdict; one button runs the publish flow (§12). Never enabled otherwise.
+
+Supporting endpoint: `GET /api/cofounder/status` — aggregates open tickets, active aiRuns, delegation jobs, and the pipeline rollup (`lib/pipeline.ts`); the UI polls it fast (~5s) only while a run is in progress, backing off to ~30s when idle (S3). The right pane is collapsible — default is a compact status strip ("3 runs active · 2 jobs awaiting approve"); the per-case CaseChatPanel stays for deep work.
+
+Everything stays read-only except the explicit approve/publish actions (all behind `payload.auth` + the optimistic-version contract on writes).
+
+## 12. Approve-to-publish flow (round 2)
+
+Viktor's ask: "once I approve what's been done — research, review, content — it should automatically go on the website." Mechanism, respecting the load-bearing rule (**no agent publishes autonomously — Viktor's Approve is the only trigger**):
+
+**Approve actions (per work product):**
+
+| Approve what | Applies to the case | Case stage |
+|---|---|---|
+| Research (desk-researcher delegation) | `deskResearchOutput` + `evidenceRegister` via `applyDraft` (expectedVersion + changedFields) | desk-research |
+| Scoring (score-analyst delegation) | `computedScores` | editorial (no scores) |
+| Content (editorial-writer delegation) | `editorialDraft` | editorial (scored) |
+| **Approve & Publish** | creates the public review doc (§12.1), links `publishedReviewId`, case → `monitoring` | integrity-check (verdict PASS required) |
+
+**Review-before-write (S2-1):** every approve action is only enabled when the pending draft is shown in the UI (exact fields + the case version the UI loaded). The approve payload sends `expectedVersion` from the loaded case; a stale approve gets a 409 surfaced on the job as `BLOCKED_CONFLICT` — never silently retried. Every approve/reject/publish logs an `agent-logs` audit event (approving user + case version + runId).
+
+### 12.1 The publish step (`src/lib/cofounder/publish.ts`)
+
+Ordering is deliberate (QA round 2, S1-1): the irreversible "goes live" step is LAST, so a partial failure never leaves an orphaned live doc.
+
+1. **Server-side re-read guard (S1-2):** re-read the case at publish time (never trust the client's claim): `status === 'integrity-check'` AND verdict PASS AND `case.version === verdictForVersion` (see §12.2). Admin auth; in-flight guard so a double-click/second tab can't run two publishes (S1-3).
+2. Select collection by `casinoType` → `traditional-casino-reviews` or `crypto-casino-reviews` (bonus workflows → `wagering-bonuses` / `no-wagering-bonuses`).
+3. **Create the review doc as a DRAFT** with a deterministic slug (derived from `operatorName` via `slugField` + unique constraint — a concurrent create 409s and is treated as an idempotent update, S1-3). Map case → doc: `name` ← operatorName, `markets` ← licenseJurisdiction, `compliance.licenseNumber/licenseAuthority` ← desk-research licensing block, `scoreFields` ← computedScores (rubric recomputed by the existing `computeOverallScore` beforeChange hook), `reviewCoreFields` ← verdict + summary + hero, `claimsVsRealityFields` ← evidenceRegister, editorial richText ← `editorialDraft` (Lexical conversion — the "agent JSON ≠ Payload shape" translation).
+4. **Version-checked case update:** link `publishedReviewId` + `status: 'monitoring'` (§3 PUBLISHED exit condition) through the concurrency contract (`expectedVersion` + `changedFields`); `agent-logs` audit event (approving user + case version + runId).
+5. **Flip the doc `_status: 'published'`.** `enforcePublishCompliance` fires here as the gate — a missing license/market/verdict fails with a clear 400 and **nothing goes live** (the case is already linked but the doc stays draft; re-publish is idempotent). If the flip fails, alert in `agent-logs` and leave the doc draft (S1-1 compensation).
+6. The collection's afterChange hook revalidates `/casinos`, `/casinos/:slug`, `/reviews` — **the site updates itself**.
+7. Re-publish: if `publishedReviewId` is set, update that existing doc (never a duplicate). UI warns when the review doc was edited directly in admin after the last publish (`reviewDoc.updatedAt > lastPublishAt`).
+8. Rollback (follow-up, not v1): set the review doc `_status: 'draft'` + case back to integrity-check.
+
+### 12.2 Verdict freshness (S1-2)
+
+Extend `integritySignOff` to record `verdictForVersion` — the case `version` at verdict time. Publish is only allowed when the server-side re-read shows the case still at `integrity-check`, verdict PASS, and `version === verdictForVersion`. Any edit after the verdict (draft, scores, research) bumps the version and forces a re-check.
+
+**Hard rule:** the publish tool is NOT in the Cofounder's tool surface (T1–T9) — the model can never publish, approve, or apply. The route accepts publish only from the authenticated Approve action. This keeps "automatically on the website" as *human-initiated automation*, consistent with ORG.md §3.3 and the AI-AGENTS-GUIDE §1 rule.
+
+## 13. QA findings resolution (2026-08-09)
 
 Red-team QA (`code-reviewer-deepseek-flash`) returned **APPROVE_WITH_FIXES**; all findings incorporated:
 
@@ -269,7 +331,19 @@ Red-team QA (`code-reviewer-deepseek-flash`) returned **APPROVE_WITH_FIXES**; al
 | `#CF-####` counter race | S2 | §2 date-prefixed `#CF-YYMMDD-NN` |
 | T5 file reads per call / delimiter unpinned / trim budget unpinned | S3 | short TTL cache note; pinned `<untrusted_data>` wrapper (§6.3); 12k budget constant (§7.1) |
 
-**Verdict after resolution: APPROVED — added to phases as Phase G.**
+**Round 2 (orchestrator + publish):**
+
+| Finding | Severity | Resolution |
+|---|---|---|
+| Publish ordering — orphaned live doc on partial failure | S1 | §12.1 draft→link→flip ordering + compensation (nothing live until the final flip) |
+| Verdict freshness — stale verdict for an older draft | S1 | §12.2 `verdictForVersion` + server-side re-read guard |
+| Concurrent publish / double-click duplicates | S1 | §12.1 deterministic slug + unique constraint + in-flight guard |
+| Blind / stale approve | S2 | §12 review-before-write + `expectedVersion` + `BLOCKED_CONFLICT` |
+| Fake-parallel / zombie runs | S2 | §11 truthful `running` status + one-active-run-per-case + staleness rule |
+| Missing failure-mode tests | S2 | §8 tests #18–#20 |
+| Polling cost / pane overload / re-publish clobber / audit scope | S3 | §11 idle backoff + collapsible pane; §12.1 manual-edit warning; audit on every approve |
+
+**Verdict after resolution: APPROVED — added to phases as Phase G (round 2 additions approved 2026-08-09).**
 
 ## Where things live
 
@@ -280,6 +354,8 @@ Red-team QA (`code-reviewer-deepseek-flash`) returned **APPROVE_WITH_FIXES**; al
 | Ticket collection | `src/collections/CofounderSessions/index.ts` (new) |
 | Chat + ticket routes | `src/app/(payload)/api/cofounder/route.ts` + `.../tickets/route.ts` (new) |
 | Admin workspace | `src/components/admin/CofounderView.tsx` (new) + `payload.config.ts` view registration |
+| Status + approve/publish routes | `src/app/(payload)/api/cofounder/status/route.ts`, `.../approve/route.ts` (new) |
+| Publish lib (case → public review) | `src/lib/cofounder/publish.ts` (new) |
 | System-prompt builder | `src/lib/cofounder/promptBundle.ts` + `tools.ts` (new) |
 | Pipeline agent rewiring | `src/agents/*.ts` (G.5) |
 | Locked rules sources | `docs/review-system/checklist.md`, `src/rubrics/*.ts`, claims + commission-wall term list |

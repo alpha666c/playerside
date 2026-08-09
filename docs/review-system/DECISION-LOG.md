@@ -306,3 +306,33 @@ drafts delegations to the roster — model DeepSeek V4 Flash.
 - Plan: `docs/review-handoffs/2026-08-09-ai-cofounder-phase-g-build-spec.md`. Build order
   G.1–G.7. Implementation starts on Viktor's go.
 
+
+## 2026-08-09 — Phase G round 2: orchestrator control room + approve-to-publish (approved)
+
+**Goal:** extend the Cofounder from a chat panel into a full operations deck — a `/admin/cofounder`
+control room (tickets & today's plan / ticket workspace / agents-at-work + delegation queue +
+approve & publish) and a human-initiated **approve → publish** flow so approved research,
+scoring, and content land on the website automatically.
+
+- **Approve actions are per-work-product:** research → applies deskResearchOutput + evidenceRegister;
+  scoring → applies computedScores; content → applies editorialDraft (all via the existing
+  applyDraft concurrency contract); **Approve & Publish** → creates the public review doc
+  (traditional/crypto by casinoType; bonuses → wagering/no-wagering), links publishedReviewId,
+  case → monitoring. The site revalidates itself via the existing afterChange hooks.
+- **Human-initiated only:** publish/approve/apply are NOT in the Cofounder's tool surface — the
+  model can never publish. "Automatically on the website" = the human's Approve triggers the
+  mechanical publish, consistent with the no-autonomous-write rule and ORG.md §3.3.
+- **Publish ordering (QA S1-1):** create review doc as DRAFT with deterministic slug → version-checked
+  case link → flip `_status: 'published'` (compliance gate fires here). Nothing goes live until the
+  final flip, so a partial failure never orphans a live doc; re-publish is idempotent.
+- **Verdict freshness (QA S1-2):** `integritySignOff` gains `verdictForVersion`; publish requires a
+  server-side re-read (status integrity-check + PASS + version match). Edits after the verdict force
+  a re-check.
+- **Concurrency (QA S1-3):** deterministic slug + unique constraint + in-flight guard prevent
+  double-publish duplicates. Review-before-write: approve sends the loaded case version; stale
+  approve → 409 surfaced as BLOCKED_CONFLICT.
+- **Truthful "agents at work" (QA S2-2):** aiRun.status flips to running at model-call start,
+  one active run per case, stale-pending rule (~15 min → stale + dismiss).
+- QA round 2: APPROVE_WITH_FIXES (3 S1, 3 S2, 3 S3) — all resolved in spec §12/§11/§13.
+  Build order extended: G.6 control room + G.6b publish flow; tests #13–#20.
+
