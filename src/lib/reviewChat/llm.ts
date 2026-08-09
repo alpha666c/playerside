@@ -133,7 +133,10 @@ export const getLlmConfig = async (
       process.env.LLM_MODEL?.trim() ||
       process.env.DEEPSEEK_MODEL?.trim() ||
       db.llmModel?.trim() ||
-      'deepseek/deepseek-v4-flash:free',
+      // decision 2026-08-09 (follow-up): the :free variant rotates out of the
+      // catalog; the paid variant is the SAME model at ~$0.00000014/token
+      // (~14c per million tokens) and never rotates — effectively free.
+      'deepseek/deepseek-v4-flash',
     maxTokens: Number(process.env.LLM_MAX_TOKENS ?? db.llmMaxTokens ?? 4000),
     dailyCap: Number(process.env.LLM_SPEND_CAP_PER_DAY ?? db.llmSpendCapPerDay ?? 1000),
   }

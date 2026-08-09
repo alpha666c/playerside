@@ -416,3 +416,23 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
   would have failed).
 - **Note for G.2+:** Viktor's key goes in the admin System Settings (or `LLM_API_KEY` env);
   the key is an OpenRouter key, not a DeepSeek key.
+## 2026-08-09 — LLM default finalized: paid `deepseek/deepseek-v4-flash` (not `:free`)
+
+- **Decision (Viktor, via ask_user):** confirm DeepSeek V4 Flash is the right model and use it.
+  The default flips from the dead `deepseek/deepseek-v4-flash:free` to the **paid**
+  `deepseek/deepseek-v4-flash` on OpenRouter — ~$0.00000014/token ≈ **14¢ per million tokens**
+  (pennies/day even at 300 calls + heavy research contexts). It is the SAME model Viktor chose,
+  it never rotates out of the catalog, and the client was already wired for it.
+- **Why not the `:free` list Viktor pasted:** live-verified — only 3 of those are in the catalog
+  right now (poolside/laguna-xs-2.1:free, cohere/north-mini-code:free, nvidia nemotron nano — the
+  last excluded by his NVIDIA rule); the Google Gemma 4 free variants and Nemotron 3 Ultra/Super
+  :free are already rotated out; zero DeepSeek :free exists. OpenRouter `:free` models also carry
+  strict daily limits — the "annoying rate limit" problem again.
+- **Provider research (subagent, Aug 2026):** Google AI Studio Gemini 3 Flash free tier is the
+  standout zero-cost option (1,500 RPD, no card, tool calling + JSON + streaming, ~1M ctx) —
+  documented as the fallback if a $0 escape hatch is ever wanted. Together AI
+  (Llama-3.3-70B-Turbo-Free) and Groq (14,400 RPD) are decent; GitHub Models retired Jul 2026;
+  Cerebras needs a payment method.
+- **Wiring:** default model updated in `llm.ts` + SystemSettings global + `.env.example`
+  (`LLM_MODEL` and deprecated `DEEPSEEK_MODEL` aliases); tests + CREDENTIAL-LOG + Phase G build
+  spec updated. Key stays an OpenRouter key (openrouter.ai/keys) in the admin System Settings.

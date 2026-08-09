@@ -15,8 +15,10 @@ import { resetSystemSettingsCache } from '@/lib/reviewChat/settings'
 
 /**
  * Phase G (G.1) — shared LLM client tests (spec §8, tests 2/3/12). Defaults
- * target OpenRouter hosting DeepSeek V4 Flash (`deepseek/deepseek-v4-flash:free`,
- * decision 2026-08-09); `DEEPSEEK_*` env names remain as deprecated aliases.
+ * target OpenRouter hosting DeepSeek V4 Flash (paid variant
+ * `deepseek/deepseek-v4-flash`, ~14c per million tokens — decision 2026-08-09:
+ * the :free variant rotates out of the catalog); `DEEPSEEK_*` env names remain
+ * as deprecated aliases.
  *
  * All model/network interactions are mocked — no live key, no network, no DB
  * (the payload instance is stubbed). Locks: daily-cap 429, no-key failure,
@@ -68,12 +70,12 @@ describe('llm config', () => {
   it('reads env with documented defaults', async () => {
     vi.stubEnv('LLM_API_KEY', 'sk-test')
     vi.stubEnv('LLM_BASE_URL', 'https://openrouter.ai/api/v1/')
-    vi.stubEnv('LLM_MODEL', 'deepseek/deepseek-v4-flash:free')
+    vi.stubEnv('LLM_MODEL', 'deepseek/deepseek-v4-flash')
     const c = await getLlmConfig(stubPayload() as never, stubReq() as never)
     expect(c.apiKey).toBe('sk-test')
     expect(c.keySource).toBe('env')
     expect(c.baseUrl).toBe('https://openrouter.ai/api/v1') // trailing slash stripped
-    expect(c.model).toBe('deepseek/deepseek-v4-flash:free')
+    expect(c.model).toBe('deepseek/deepseek-v4-flash')
     expect(c.maxTokens).toBe(4000)
     expect(c.dailyCap).toBe(1000)
     expect(await isLlmConfigured(stubPayload() as never, stubReq() as never)).toBe(true)
@@ -87,13 +89,13 @@ describe('llm config', () => {
     expect(c.model).toBe('deepseek-chat')
   })
 
-  it('defaults to the OpenRouter free model when nothing is configured', async () => {
+  it('defaults to DeepSeek V4 Flash (paid, ~free) when nothing is configured', async () => {
     vi.stubEnv('LLM_API_KEY', '')
     vi.stubEnv('DEEPSEEK_API_KEY', '')
     const c = await getLlmConfig(stubPayload() as never, stubReq() as never)
     expect(c.apiKey).toBeNull()
     expect(c.baseUrl).toBe('https://openrouter.ai/api/v1')
-    expect(c.model).toBe('deepseek/deepseek-v4-flash:free')
+    expect(c.model).toBe('deepseek/deepseek-v4-flash')
   })
 
   it('falls back to the admin System Settings when no env key exists', async () => {
@@ -134,14 +136,14 @@ describe('llm config', () => {
   })
 
   it('resolves per-role model overrides before the default', async () => {
-    vi.stubEnv('LLM_MODEL', 'deepseek/deepseek-v4-flash:free')
+    vi.stubEnv('LLM_MODEL', 'deepseek/deepseek-v4-flash')
     vi.stubEnv('LLM_MODEL_DESK_RESEARCHER', 'deepseek-chat')
     const req = stubReq() as never
     expect(await resolveModel(stubPayload() as never, req, 'desk-researcher')).toBe('deepseek-chat')
     expect(await resolveModel(stubPayload() as never, req, 'cofounder')).toBe(
-      'deepseek/deepseek-v4-flash:free',
+      'deepseek/deepseek-v4-flash',
     )
-    expect(await resolveModel(stubPayload() as never, req)).toBe('deepseek/deepseek-v4-flash:free')
+    expect(await resolveModel(stubPayload() as never, req)).toBe('deepseek/deepseek-v4-flash')
   })
 })
 
@@ -155,12 +157,12 @@ describe('chatLlm', () => {
 
   it('returns content + parsed tool calls and audits the call', async () => {
     vi.stubEnv('LLM_API_KEY', 'sk-test')
-    vi.stubEnv('LLM_MODEL', 'deepseek/deepseek-v4-flash:free')
+    vi.stubEnv('LLM_MODEL', 'deepseek/deepseek-v4-flash')
     const fetchMock = vi.fn().mockResolvedValue(
       new Response(
         JSON.stringify({
           id: 'chatcmpl-1',
-          model: 'deepseek/deepseek-v4-flash:free',
+          model: 'deepseek/deepseek-v4-flash',
           choices: [
             {
               message: {
@@ -187,7 +189,7 @@ describe('chatLlm', () => {
     expect(url).toBe('https://openrouter.ai/api/v1/chat/completions')
     expect((init.headers as Record<string, string>).Authorization).toBe('Bearer sk-test')
     const body = JSON.parse(String(init.body)) as Record<string, unknown>
-    expect(body.model).toBe('deepseek/deepseek-v4-flash:free')
+    expect(body.model).toBe('deepseek/deepseek-v4-flash')
     expect(body.stream).toBe(false)
     expect(result.content).toBe('Hello there')
     expect(result.toolCalls).toEqual([{ id: 'call-1', name: 'get_today_plan', arguments: '{}' }])
@@ -231,7 +233,7 @@ describe('healthCheck', () => {
     expect(r.ok).toBe(false)
     expect(r.keyConfigured).toBe(false)
     expect(r.keySource).toBe('none')
-    expect(r.resolvedModel).toBe('deepseek/deepseek-v4-flash:free')
+    expect(r.resolvedModel).toBe('deepseek/deepseek-v4-flash')
   })
 
   it('verifies the model id with a tiny call when a key is present', async () => {
@@ -239,13 +241,13 @@ describe('healthCheck', () => {
     vi.stubGlobal(
       'fetch',
       vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ model: 'deepseek/deepseek-v4-flash:free' }), { status: 200 }),
+        new Response(JSON.stringify({ model: 'deepseek/deepseek-v4-flash' }), { status: 200 }),
       ),
     )
     const r = await healthCheck(stubPayload() as never, stubReq() as never)
     expect(r.ok).toBe(true)
     expect(r.keyConfigured).toBe(true)
-    expect(r.resolvedModel).toBe('deepseek/deepseek-v4-flash:free')
+    expect(r.resolvedModel).toBe('deepseek/deepseek-v4-flash')
     expect(typeof r.latencyMs).toBe('number')
   })
 })

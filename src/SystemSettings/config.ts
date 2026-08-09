@@ -52,10 +52,10 @@ export const SystemSettings: GlobalConfig = {
         {
           name: 'llmModel',
           type: 'text',
-          defaultValue: 'deepseek/deepseek-v4-flash:free',
+          defaultValue: 'deepseek/deepseek-v4-flash',
           admin: {
             description:
-              'Model id — OpenRouter id by default (decision 2026-08-09: Viktor uses deepseek/deepseek-v4-flash:free). Note: OpenRouter :free variants rotate out occasionally; if the health check reports the model unavailable, pick the nearest paid variant (deepseek/deepseek-v4-flash ≈ $0.00000014/token) or switch to DeepSeek direct (deepseek-chat). GET /api/cofounder/health verifies the id the endpoint actually serves.',
+              'Model id — decision 2026-08-09: Viktor chose DeepSeek V4 Flash; the paid variant (default, ~$0.00000014/token ≈ 14c per million tokens) is used because the :free variant rotates out of the catalog. Alternatives if ever needed: deepseek-chat (DeepSeek direct) or Gemini 3 Flash free (Google AI Studio). GET /api/cofounder/health verifies the id the endpoint actually serves.',
           },
         },
       ],

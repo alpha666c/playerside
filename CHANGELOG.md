@@ -9,6 +9,15 @@
   (174 green). Viktor's DeepSeek key tested live: HTTP 402 Insufficient Balance — OpenRouter key
   required (admin System Settings or `LLM_API_KEY` env).
 
+- **fix(ai): default LLM finalized — paid `deepseek/deepseek-v4-flash` (~14¢ per million tokens).**
+  The `:free` variant Viktor picked was rotated out of OpenRouter's catalog (live-verified: no
+  DeepSeek `:free` exists; only 2 relevant models from his pasted list are live — Poolside Laguna
+  XS 2.1 and Cohere North Mini Code, both with strict free limits). The paid variant is the same
+  model, effectively free, and never rotates. Default model updated in `llm.ts`, the SystemSettings
+  global, and `.env.example`; tests, CREDENTIAL-LOG, and the Phase G build spec updated to match.
+  Gemini 3 Flash free tier (Google AI Studio, 1,500 calls/day, no card) documented as the $0
+  fallback. Gates: tsc + lint + 176/176 tests green.
+
 ## 2026-08-09 — Phase G: admin-managed settings — keys live in the DB, one place for every host
 
 - **New `SystemSettings` global** (`/admin/globals/system-settings`, admin-only): DeepSeek API

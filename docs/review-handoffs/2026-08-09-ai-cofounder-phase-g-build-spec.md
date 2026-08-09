@@ -1,7 +1,7 @@
 # Phase G — "The Cofounder": AI Operations Partner in the Admin (Build Spec)
 
 > **Status:** APPROVED (2026-08-09) after QA. Planning + QA flow: orchestrator-drafted spec → independent red-team QA (`code-reviewer-deepseek-flash`) returned **APPROVE_WITH_FIXES** (S0-1, S1-1..4, S2-1..4, S3s) → all findings incorporated (see §13). **Round 2 (2026-08-09): orchestrator control room (§11) + approve-to-publish flow (§12) added and re-QA'd (§13).** This file is the build reference; implementation starts when Viktor says go.
-> **Model:** DeepSeek V4 Flash via **OpenRouter** — `deepseek/deepseek-v4-flash:free` (decision 2026-08-09, Viktor's call; the key is an OpenRouter key from openrouter.ai/keys). The literal `deepseek-v4-flash` id is an OpenRouter naming — DeepSeek's own API serves `deepseek-chat`. Fallback if the `:free` variant rotates out: `deepseek/deepseek-v4-flash` (paid, ~$0.00000014/token) or DeepSeek direct (`deepseek-chat`). Per-role override map kept configurable.
+> **Model:** DeepSeek V4 Flash via **OpenRouter** — `deepseek/deepseek-v4-flash` (paid variant, ~$0.00000014/token ≈ 14¢ per million tokens — effectively free; decision 2026-08-09 follow-up: the `:free` variant Viktor originally picked was rotated out of the catalog, and the paid variant is the same model that never rotates; the key is an OpenRouter key from openrouter.ai/keys). The literal `deepseek-v4-flash` id is an OpenRouter naming — DeepSeek's own API serves `deepseek-chat`. Alternatives if ever needed: `deepseek-chat` (DeepSeek direct) or Gemini 3 Flash free (Google AI Studio). Per-role override map kept configurable.
 
 ---
 
@@ -31,7 +31,7 @@ The five pipeline agents (Desk Researcher, Score Analyst, Editorial Writer, Inte
 - **Env (add to `.env.example` + `CREDENTIAL-LOG.md`):**
   - `LLM_API_KEY` (required in non-dev; an OpenRouter key — `DEEPSEEK_API_KEY` remains as a deprecated alias)
   - `LLM_BASE_URL` (default `https://openrouter.ai/api/v1`)
-  - `LLM_MODEL` (default `deepseek/deepseek-v4-flash:free`; `DEEPSEEK_*` aliases still read if unset)
+  - `LLM_MODEL` (default `deepseek/deepseek-v4-flash` — paid variant, ~14¢/M tokens; `DEEPSEEK_*` aliases still read if unset)
   - `LLM_MAX_TOKENS` (default 4000), `LLM_SPEND_CAP_PER_DAY` (default, e.g. 1000 calls/day — see §7.1)
   - **Model id is a candidate, not an assumption (QA S0-1):** the exact model string the chosen endpoint serves is verified at G.1 with a 1-request self-check — `GET /api/cofounder/health` fires one tiny call and returns the resolved model id. If the provider serves a differently-named id, set `LLM_MODEL` to the verified one and record it in `CREDENTIAL-LOG.md`. `LLM_BASE_URL` must match the provider that actually serves the id. **Watch the `:free` rotation:** OpenRouter free variants drop out of the catalog periodically — the health check is the canary.
 - **API:**
