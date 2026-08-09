@@ -46,6 +46,7 @@
   single-value-enum footgun). 8 int tests; gates: tsc + lint + **184/184**.
 
 ## 2026-08-09 — Phase G G.4: the Cofounder workspace (/admin/cofounder)
+- **fix(admin): regenerate the Payload importMap so every custom admin view actually renders.** Root cause of the blank `/admin/pipeline`, `/admin/gamification`, and `/admin/cofounder` pages (and the reason the browser-verification pass for G.4 had to be retried): Payload v3 routes string-referenced admin components through `src/app/(payload)/admin/importMap.js`, and that file was stale (Aug 6) — none of the three custom views were in it, so the client threw `getFromImportMap: PayloadComponent not found` and rendered nothing. Fix: regenerated the importMap (+8 lines) and wired `payload generate:importmap` into `prebuild` (after `wait-for-db`, so it reaches every `pnpm build` and Vercel deploy) **and** into `dev`, so a future custom view can never blank-page silently again. Verified end-to-end in real Chrome (Playwright, system Chromium channel): all three views render content, the Cofounder workspace panes render, a live chat turn streams a reply, plan items add to the board, and the console is clean (0 errors). Chrome-bridge verification is now a repeatable, scripted flow in this repo.
 
 - **feat(admin): three-pane Cofounder workspace (spec §11).** Registered as a custom admin view at
   `/admin/cofounder` (`CofounderView.tsx`): **left** — today's plan rollup + the ticket list

@@ -27,6 +27,10 @@ import { RowLabel as RowLabel_1f6ff6ff633e3695d348f4f3c58f1466 } from '@/Footer/
 import { RowLabel as RowLabel_37f8c01f9b3746ed237295fe1d464a65 } from '@/Homepage/RowLabel'
 import { default as default_1a7510af427896d367a49dbf838d2de6 } from '@/components/BeforeDashboard'
 import { default as default_8a7ab0eb7ab5c511aba12e68480bfe5e } from '@/components/BeforeLogin'
+import { default as default_40d6be1452302557473bddd55f6e2c6f } from '@/components/admin/PipelineView'
+import { default as default_b270957583c314717539c292e9491145 } from '@/components/admin/GamificationView'
+import { default as default_5cd48676f75d1c0d4776b89876a1bb2b } from '@/components/admin/CaseChatPanel'
+import { default as default_b81acc8e198172943efacc71a4c445b1 } from '@/components/admin/CofounderView'
 import { CollectionCards as CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1 } from '@payloadcms/next/rsc'
 
 /** @type import('payload').ImportMap */
@@ -60,5 +64,9 @@ export const importMap = {
   "@/Homepage/RowLabel#RowLabel": RowLabel_37f8c01f9b3746ed237295fe1d464a65,
   "@/components/BeforeDashboard#default": default_1a7510af427896d367a49dbf838d2de6,
   "@/components/BeforeLogin#default": default_8a7ab0eb7ab5c511aba12e68480bfe5e,
+  "@/components/admin/PipelineView#default": default_40d6be1452302557473bddd55f6e2c6f,
+  "@/components/admin/GamificationView#default": default_b270957583c314717539c292e9491145,
+  "@/components/admin/CaseChatPanel#default": default_5cd48676f75d1c0d4776b89876a1bb2b,
+  "@/components/admin/CofounderView#default": default_b81acc8e198172943efacc71a4c445b1,
   "@payloadcms/next/rsc#CollectionCards": CollectionCards_f9c02e79a4aed9a3924487c0cd4cafb1
 }

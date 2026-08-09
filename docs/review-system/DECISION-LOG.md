@@ -535,3 +535,27 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
   boundary visible rather than shipping half-baked approve controls.
 - **The workspace is desktop-first with wrapping panes** (no JS media queries — matches the other
   admin panels' inline-style approach); on narrow windows the three cards stack.
+
+## 2026-08-09 — Admin hotfix: importMap regeneration (custom views blank)
+
+- **Symptom:** `/admin/pipeline`, `/admin/gamification`, and `/admin/cofounder` rendered a bare
+  page (no nav, no content, no console error visible to the user) while collections and the
+  dashboard worked fine. The G.4 workspace had been "verified" by API smoke only; the first real
+  browser pass (Playwright + system Chrome) caught the blank pages.
+- **Root cause:** Payload v3 resolves string-referenced admin components (views, panels, etc.)
+  through a generated **importMap** (`src/app/(payload)/admin/importMap.js`). That file was stale
+  (last generated Aug 6) and predated all three custom views, so the client logged
+  `getFromImportMap: PayloadComponent not found in importMap` and skipped the view entirely.
+  The repo's `generate:importmap` script existed but was **not** part of `dev` or `build`, so the
+  map could silently rot.
+- **Fix:** ran `payload generate:importmap` (map now contains PipelineView, GamificationView,
+  CofounderView; +8 lines) and wired it into `prebuild` (after `wait-for-db`) and `dev`, matching
+  the official Payload template. Every `pnpm build` (incl. Vercel's lifecycle prebuild) and every
+  dev boot now regenerates the map, so a future custom view cannot blank-page silently again.
+- **Verification (new, repeatable):** scripted Playwright run against real system Chrome on
+  `localhost:3001` — login, hard-nav to all three views (all render, body text present), full
+  Cofounder E2E (three panes, live chat stream, plan-item add), zero console errors,
+  screenshots to `/tmp/playerside-verify/`. The browser-bridge outage earlier in the session is
+  no longer a blocker: verification happens through the repo's own Playwright tooling.
+- **Scope note:** this also fixed the pipeline + gamification views (Phase 5) which had the same
+  latent bug; no app-logic changes were needed.
