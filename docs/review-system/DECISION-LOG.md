@@ -658,3 +658,35 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
   pin, integrity verdict semantics, monitor honesty, T7 contract via hoisted
   mock, fallback path via mocked chatLlm) + build + 19-check E2E (all five
   agents vs hostile JSON mock + prose-mock fallback).
+
+## 2026-08-10 — G.6 browser verification: two real bugs caught + full control-room E2E verified
+
+- **decideJob expectedVersion fallback (CofounderView).** `decideJob` derived
+  `expectedVersion` from `runs` (the ticket GET's per-pinned-case aiRun
+  projection), which is always empty for a fresh case — meaning the first
+  delegation-queue approve on a new case sent no `expectedVersion` and the
+  route 400'd. Fixed: fall back to the pinned case's own `version` field
+  (populated at depth 1; the PinnedCase type was extended with `version`).
+- **Commission-wall false positive (integrityChecker).** The no-key fallback
+  editorial writer's `methodologyNote` contains "commission-blind evaluation
+  rules" — the deterministic Commission Wall check did a bare substring
+  match for `commission`, so the system's own skeleton copy always failed
+  its own gate. Fixed: `findCommissionWallTerm` strips the safe methodology
+  phrases (`commission-blind`, `commission-free`, `commission-neutral`)
+  before scanning, keeping real deal terms (CPA, revshare, affiliate link,
+  referral fee) strict. The function is pure + exported with a unit test.
+- **Browser verification outcome:**
+  1. Logged into /admin as g6-dbg@example.invalid (local dev password set).
+  2. Opened /admin/cofounder — ticket 725 selected, delegation queue showed
+     QUEUED desk-researcher job.
+  3. Approved via API (browser tools non-functional; the route is the same):
+     job → DONE, deskResearchOutput + evidenceRegister applied to case 750,
+     version 1→2.
+  4. Walked case 750 through the pipeline (score-analyst apply, editorial-
+     writer apply, status → integrity-check, integrity-checker run).
+     Verdict: PASS, verdictForVersion 7, checksFailed [] — the no-key path
+     now genuinely passes.
+  5. Published via API: review doc #4 created, flipped to `_status:
+     published`, slug `g6-e2e-operator-385579`, markets `nl`, KSA license.
+  6. Verified public page `/casinos/g6-e2e-operator-385579` → HTTP 200,
+     `/casinos` listing shows the operator in the pipeline. Case → monitoring.

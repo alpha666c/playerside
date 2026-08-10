@@ -18,6 +18,22 @@ import { runAgentLlm } from '@/agents/llmBridge'
 
 const COMMISSION_WALL_TERMS = ['commission', 'cpa', 'revshare', 'rev-share', 'affiliate link', 'referral fee']
 
+/**
+ * The site's own methodology disclosures that legitimately contain the word
+ * "commission" (e.g. the skeleton editorial copy: "commission-blind
+ * evaluation rules") — these are NOT commercial deal terms, and flagging
+ * them would make a thin fallback draft fail its own gate forever (caught
+ * by the G.6 browser E2E: no-key walk could never PASS). We strip these
+ * phrases before scanning so real deal terms are still caught. Pure +
+ * exported for unit tests.
+ */
+const COMMISSION_SAFE_PHRASES = /commission[- ]?(?:blind|free|neutral)/g
+
+export const findCommissionWallTerm = (editorialDraftStr: string): string | null => {
+  const normalized = editorialDraftStr.toLowerCase().replace(COMMISSION_SAFE_PHRASES, '')
+  return COMMISSION_WALL_TERMS.find((term) => normalized.includes(term)) ?? null
+}
+
 interface IntegrityFinding {
   severity: string
   issue: string
@@ -76,7 +92,7 @@ export async function runIntegrityChecker(
   }
 
   // Check 2: Commission Wall Compliance
-  const forbiddenTermFound = COMMISSION_WALL_TERMS.find((term) => editorialDraftStr.includes(term))
+  const forbiddenTermFound = findCommissionWallTerm(editorialDraftStr)
   if (forbiddenTermFound) {
     deterministicFailed.push(`Commission Wall Violation: Draft contains prohibited commercial term '${forbiddenTermFound}'.`)
   }

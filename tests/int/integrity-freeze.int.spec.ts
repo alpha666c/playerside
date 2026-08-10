@@ -5,6 +5,7 @@ import React from 'react'
 import { renderToStaticMarkup } from 'react-dom/server'
 import { loadCaseContextAllowlist } from '@/lib/reviewChat/loadCaseContext'
 import { enforceStatusTransition } from '@/collections/ResearchQueue'
+import { findCommissionWallTerm } from '@/agents/integrityChecker'
 // must mirror app/.../page.tsx imports
 import HomePage from '@/app/(frontend)/page'
 import { PublicHomepageView } from '@/components/public/PublicHomepageView'
@@ -50,6 +51,28 @@ describe('Integrity Freeze Required Tests', () => {
     const inputString = JSON.stringify(cleanEditorialInput).toLowerCase()
     const foundTerm = commercialDealTerms.find((term) => inputString.includes(term))
     expect(foundTerm).toBeUndefined()
+  })
+
+  // Test 3b (G.6 regression): the Commission Wall check must NOT false-positive
+  // on the site's own methodology disclosure ("commission-blind evaluation") —
+  // a no-key fallback editorial draft would otherwise fail its own gate forever
+  // and a thin walk could never reach a PASS verdict (caught by the G.6 browser
+  // E2E). Real commercial deal terms must still be caught.
+  it('commission wall flags real deal terms but not the commission-blind methodology disclosure', () => {
+    const skeletonDraft = JSON.stringify({
+      summary: 'Editorial Review — Commission-blind evaluation rules apply.',
+      methodologyNote: 'This score was produced under Playerside commission-blind evaluation rules. Commercial affiliate agreements do not influence scoring.',
+      complianceBlock: { ageRequirement: '18+ Only. Gambling can be addictive — play responsibly.' },
+    }).toLowerCase()
+    expect(findCommissionWallTerm(skeletonDraft)).toBeNull()
+
+    // A genuine commercial deal term in the draft is still blocked.
+    expect(findCommissionWallTerm('earn a cpa deal for every signup')).not.toBeNull()
+    expect(findCommissionWallTerm('we share 25% revshare with partners')).not.toBeNull()
+    expect(findCommissionWallTerm('our affiliate link tracks deposits')).not.toBeNull()
+    // Bare standalone 'commission' used as a deal term is still caught after
+    // the safe-phrase strip (e.g. "we take a commission on deposits").
+    expect(findCommissionWallTerm('we take a commission on deposits')).not.toBeNull()
   })
 
   // Test 4: ResearchQueue stage transitions only via allowed server path

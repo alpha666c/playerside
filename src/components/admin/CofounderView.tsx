@@ -276,11 +276,24 @@ export default function CofounderView() {
     try {
       // Review-before-write (S2-1): send the case version the UI loaded for
       // draft-applying roles; a stale approve 409s as BLOCKED_CONFLICT.
+      // The ticket GET's `runs` only covers cases that already have an aiRun
+      // (agent activity); a fresh case that was pinned but never run has no
+      // runs entry, so fall back to the pinned case's own `version` field
+      // (the pinnedCases are populated at depth 1 in the ticket GET).
       const caseId = job.caseId != null ? Number(job.caseId) : null
+      const pinned = (ticket?.pinnedCases ?? []).find((p) => {
+        const c = typeof p === 'object' && p !== null ? (p as PinnedCase) : null
+        return c?.id === caseId
+      })
+      const pinnedC = typeof pinned === 'object' && pinned !== null ? (pinned as PinnedCase) : null
+      const pinnedVersion =
+        caseId != null && Number.isFinite(caseId) ? (typeof pinnedC?.version === 'number' ? pinnedC.version : null) : null
       const expectedVersion =
-        caseId != null && Number.isFinite(caseId)
-          ? (runs.find((r) => r.caseId === caseId)?.caseVersion ?? undefined)
-          : undefined
+        typeof pinnedVersion === 'number'
+          ? pinnedVersion
+          : caseId != null && Number.isFinite(caseId)
+            ? (runs.find((r) => r.caseId === caseId)?.caseVersion ?? undefined)
+            : undefined
       const data = (await fetchJson('/api/cofounder/approve', {
         method: 'POST',
         body: JSON.stringify({
@@ -839,7 +852,14 @@ type DelegationJob = {
   outputRef?: string | null
 }
 
-type PinnedCase = { id: number; caseNumber?: string | null; operatorName?: string | null; status?: string | null }
+type PinnedCase = {
+  id: number
+  caseNumber?: string | null
+  operatorName?: string | null
+  status?: string | null
+  /** Optimistic-concurrency token of the case (ticket GET populates pinned cases at depth 1). */
+  version?: number | null
+}
 
 /** G.6 — one aiRun on a pinned case, compact projection from the ticket GET. */
 type CaseRun = {
