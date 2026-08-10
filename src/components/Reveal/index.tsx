@@ -15,6 +15,8 @@ type RevealProps = {
   onReveal?: () => void
   /** IntersectionObserver threshold. */
   threshold?: number
+  /** Optional blur-to-sharp entrance (premium text reveal). Reduced motion keeps a plain fade. */
+  blur?: boolean
 }
 
 /**
@@ -35,6 +37,7 @@ export const Reveal: React.FC<RevealProps> = ({
   delayMs = 0,
   onReveal,
   threshold = 0.2,
+  blur = false,
 }) => {
   const ref = useRef<HTMLElement>(null)
   const [visible, setVisible] = useState(false)
@@ -91,15 +94,20 @@ export const Reveal: React.FC<RevealProps> = ({
         // reduced motion keeps a fast plain fade — DESIGN-SYSTEM §5.
         // NB: Tailwind v4 translate-* use the modern `translate` property,
         // so the transition list must cover it (not just `transform`) or
-        // the slide snaps while only opacity animates.
-        'transition-[opacity,translate] ease-expo',
+        // the slide snaps while only opacity animates. filter is included
+        // for the optional blur entrance (no-op when blur is off).
+        'transition-[opacity,translate,filter] ease-expo',
         reducedMotion
           ? hidden
             ? 'duration-med opacity-0'
             : 'duration-med opacity-100'
           : hidden
-            ? 'duration-slow opacity-0 translate-y-7'
-            : 'duration-slow opacity-100 translate-y-0',
+            ? blur
+              ? 'duration-slow opacity-0 translate-y-7 blur-[6px]'
+              : 'duration-slow opacity-0 translate-y-7'
+            : blur
+              ? 'duration-slow opacity-100 translate-y-0 blur-0'
+              : 'duration-slow opacity-100 translate-y-0',
         className,
       ),
       'data-visible': visible,

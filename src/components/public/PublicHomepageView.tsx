@@ -62,23 +62,26 @@ export function PublicHomepageView() {
             <MachinedSealLazy size={72} title="Playerside verification seal" />
           </div>
 
-          {/* Top badge */}
-          <div className="flex justify-center">
+          {/* Top badge — entry ceremony step 1 (eyebrow rise). */}
+          <div className="enter-eyebrow flex justify-center">
             <div className="inline-flex items-center gap-2.5 rounded-full border border-line bg-ink/80 px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-evidence backdrop-blur-xl">
               <span className="h-1.5 w-1.5 rounded-full bg-evidence animate-pulse" />
               The Only Evidence-Backed Casino &amp; Bonus Database
             </div>
           </div>
 
-          {/* Headline & subhead */}
+          {/* Headline & subhead — ceremony step 2 (title blur-rise), 3 (fade). */}
           <div className="mx-auto max-w-4xl space-y-5 text-center">
-            <h1 className="t-display text-white">
+            <h1 className="enter-title t-display text-white">
               Evidence-Backed Protocol. <br />
               <span className="bg-gradient-to-r from-coral via-[#ffb08a] to-evidence bg-clip-text text-transparent">
                 Zero Bonus Traps.
               </span>
             </h1>
-            <p className="mx-auto max-w-2xl text-base leading-relaxed text-paper-dim sm:text-lg">
+            <p
+              className="enter-fade mx-auto max-w-2xl text-base leading-relaxed text-paper-dim sm:text-lg"
+              style={{ animationDelay: '120ms' }}
+            >
               We test withdrawals with real cash, verify licenses directly at regulator databases,
               and decode bonus fine print so you never get trapped.
             </p>
@@ -89,21 +92,25 @@ export function PublicHomepageView() {
             <InstantFilterBar onFilterChange={(f) => setFilters(f)} />
           </div>
 
-          {/* Live proof metrics — HUD readouts, not marketing boxes. */}
-          <div className="mx-auto grid max-w-4xl grid-cols-2 gap-4 pt-4 text-center md:grid-cols-4">
-            <div className="panel p-4">
+          {/* Live proof metrics — HUD readouts, not marketing boxes. Ceremony
+              step 4 (fade, after the headline). */}
+          <div
+            className="enter-fade mx-auto grid max-w-4xl grid-cols-2 gap-4 pt-4 text-center md:grid-cols-4"
+            style={{ animationDelay: '240ms' }}
+          >
+            <div className="panel kinetic p-4">
               <div className="t-data text-2xl font-semibold text-coral">100%</div>
               <div className="t-eyebrow mt-1">Commission-Blind</div>
             </div>
-            <div className="panel p-4">
+            <div className="panel kinetic p-4">
               <div className="t-data text-2xl font-semibold text-evidence">&lt; 15m</div>
               <div className="t-eyebrow mt-1">Avg Tested Crypto Payout</div>
             </div>
-            <div className="panel p-4">
+            <div className="panel kinetic p-4">
               <div className="t-data text-2xl font-semibold text-paper">0</div>
               <div className="t-eyebrow mt-1">Hidden Wagering Clauses</div>
             </div>
-            <div className="panel p-4">
+            <div className="panel kinetic p-4">
               <div className="t-data text-2xl font-semibold text-evidence">PRIVATE</div>
               <div className="t-eyebrow mt-1">Vercel Blob Evidence Store</div>
             </div>

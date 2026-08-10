@@ -3585,6 +3585,14 @@ export interface SystemSetting {
    * Exa API key (https://dashboard.exa.ai → API Keys) for the trending-research tool (Phase G G.4).
    */
   exaApiKey?: string | null;
+  /**
+   * ElevenLabs API key (https://elevenlabs.io → Profile → API Keys) for Vex voice lines (Phase H3 — Vex is silent-first: animate + text until this is set).
+   */
+  elevenLabsApiKey?: string | null;
+  /**
+   * Google AI Studio / Gemini API key (https://aistudio.google.com/apikey) for Vex concept art + marketing video assets (Imagen / Veo, Phase H3).
+   */
+  geminiApiKey?: string | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -3682,6 +3690,8 @@ export interface SystemSettingsSelect<T extends boolean = true> {
   llmMaxTokens?: T;
   llmSpendCapPerDay?: T;
   exaApiKey?: T;
+  elevenLabsApiKey?: T;
+  geminiApiKey?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

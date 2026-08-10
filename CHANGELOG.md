@@ -1,3 +1,33 @@
+- **feat(ui): Phase H1 — palette convergence + the alive-layer (Wire Room groundwork).**
+  The 4-layer Alive-UI gameplan (research + roadmap, docs/review-handoffs/
+  2026-08-10-alive-ui-gameplan.md) kicked off with "kill the dead pixels":
+  every public surface now speaks one brand language.
+  - **Hero shader converged:** the WebGL evidence field dropped the old
+    amber/emerald (#fbbf24/#34d399) for brand tokens — coral ledger dots
+    (#ff5d45) with evidence-blue verified points (#6ea8d8); the cursor
+    ripple is now the coral action color. Static reduced-motion fallback
+    (globals.css .evidence-field-static) matches.
+  - **Dashboard zone re-skinned:** /dashboard shell, TeamDashboardClient,
+    operator directory and case inspector moved off zinc-950/amber-400 to
+    ink/dusk/line/coral/evidence/success/warning; stage badges mapped to the
+    brand semantic set (published = solid green, monitoring = dashed green
+    outline so the two never blur together).
+  - **Alive-layer primitives:** `.kinetic` hover utility (transform/border/
+    shadow through the motion tokens, hover-only under @media (hover:hover))
+    and the entry ceremony (.enter-eyebrow/.enter-title/.enter-fade one-shot
+    choreography, collapsed to instant by the global reduced-motion rule).
+    Applied to the homepage hero (badge → title blur-rise → subhead → proof
+    metrics) and to dashboard cards.
+  - **Reveal component:** new optional `blur` prop (blur-to-sharp entrance)
+    with reduced-motion plain-fade fallback.
+  - **Admin SystemSettings:** new `elevenLabsApiKey` + `geminiApiKey` fields
+    (same managed-key pattern as Exa — paste once at /admin/globals/
+    system-settings, every host reads from the DB). Migration
+    20260810_add_system_settings_keys + regression test locking the
+    save/read contract (the "Something went wrong" bug class).
+  - Verified: tsc, lint, 255/255 int tests (incl. new settings spec), build
+    clean, migration applied, old hexes gone from the shipped bundle.
+
 - **fix(control-room): two real bugs caught by the browser E2E — the control room now works end-to-end.**
   - **decideJob expectedVersion gap:** the UI's approve function read `expectedVersion` from `runs` (derived from `aiRuns`), so a fresh case with no prior runs (common for the first delegation-queue approve) never sent the version → the route returned 400 "expectedVersion is required". Fixed: `decideJob` falls back to the pinned case's own `version` field (populated at depth 1 in the ticket GET), so the very first approve on a fresh case works.
   - **Commission-wall false positive:** the no-key fallback editorial writer's `methodologyNote` contains "commission-blind evaluation rules" — the integrity checker's Commission Wall check did a bare substring match for `commission`, which always blocked the fallback skeleton copy. Fixed: `findCommissionWallTerm` strips the safe methodology phrases (`commission-blind`, `commission-free`, `commission-neutral`) before scanning, so the system's own disclosure never false-positives. Real commercial terms (CPA, revshare, affiliate link, referral fee) are still caught.

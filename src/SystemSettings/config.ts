@@ -103,6 +103,27 @@ export const SystemSettings: GlobalConfig = {
           'Exa API key (https://dashboard.exa.ai → API Keys) for the trending-research tool (Phase G G.4).',
       },
     },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'elevenLabsApiKey',
+          type: 'text',
+          admin: {
+            description:
+              'ElevenLabs API key (https://elevenlabs.io → Profile → API Keys) for Vex voice lines (Phase H3 — Vex is silent-first: animate + text until this is set).',
+          },
+        },
+        {
+          name: 'geminiApiKey',
+          type: 'text',
+          admin: {
+            description:
+              'Google AI Studio / Gemini API key (https://aistudio.google.com/apikey) for Vex concept art + marketing video assets (Imagen / Veo, Phase H3).',
+          },
+        },
+      ],
+    },
   ],
   hooks: {
     afterChange: [

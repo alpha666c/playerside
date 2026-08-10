@@ -17,9 +17,15 @@ export interface SystemSettingsDoc {
   llmMaxTokens?: number | null
   llmSpendCapPerDay?: number | null
   exaApiKey?: string | null
+  elevenLabsApiKey?: string | null
+  geminiApiKey?: string | null
 }
 
-export type SystemSecretKey = 'llmDeepSeekApiKey' | 'exaApiKey'
+export type SystemSecretKey =
+  | 'llmDeepSeekApiKey'
+  | 'exaApiKey'
+  | 'elevenLabsApiKey'
+  | 'geminiApiKey'
 
 const CACHE_TTL_MS = 15_000
 

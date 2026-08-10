@@ -690,3 +690,38 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
      published`, slug `g6-e2e-operator-385579`, markets `nl`, KSA license.
   6. Verified public page `/casinos/g6-e2e-operator-385579` → HTTP 200,
      `/casinos` listing shows the operator in the pipeline. Case → monitoring.
+
+## 2026-08-10 — Phase H1 (Alive UI: palette convergence + alive-layer)
+
+- **Gameplan approved.** 6 parallel web researchers (Awwwards/trend · iGaming
+  affiliate UX · gamification science · motion stack · AI character/voice/video ·
+  color/type/microcopy) + ui-ux-pro-max queries + local audit → the "Wire Room"
+  creative direction (the site as one live intel operation, Vex as handler).
+  Full plan: `docs/review-handoffs/2026-08-10-alive-ui-gameplan.md`. User
+  approved H1 start, Vex = silent-first (animate + text), art = AI-generated
+  concepts once the Gemini key is in.
+- **HeroField shader → brand tokens.** The field still rendered the pre-design-
+  system palette (amber #fbbf24 / emerald #34d399). Mapped to the locked
+  semantics: coral = action/ledger, evidence-blue = verified points; the
+  pointer ripple (an action gesture) now uses coral. Static fallback matched.
+  This was the single biggest "subpages feel out of colour" contributor.
+- **Dashboard zone (app/(frontend)/dashboard/*) converged.** zinc-950/amber-400
+  shell, TeamDashboardClient, operators + case-inspector pages → ink/dusk/line/
+  coral/evidence/success/warning. FIX-13 (zinc vs brand) finally closed on the
+  public frontend.
+- **Stage-badge semantics (reviewer S2 fix).** published = solid success green;
+  monitoring = dashed success outline so adjacent pipeline stages never blur.
+- **Alive-layer primitives.** `.kinetic` (hover-only via @media (hover:hover),
+  token-driven) and the entry ceremony classes — one-shot, reduced-motion
+  collapses via the existing global override; SSR/no-JS safe because CSS
+  keyframes don't need JS and never hide content permanently.
+- **SystemSettings key fields.** `elevenLabsApiKey` + `geminiApiKey` follow the
+  exaApiKey pattern (text fields, admin-only, env still wins). New migration
+  20260810 + a committed int test (tests/int/system-settings.int.spec.ts) so the
+  "Something went wrong on save" bug class (llmProvider enum footgun) can't
+  return silently. Nothing reads the keys yet — H3 (Vex voice/art) consumes them.
+- **What's next (H2+):** Wire Room hero 2.0 (pointer-reactive field already
+  coral now; scroll-velocity atmosphere + view transitions + cursor system),
+  H3 Vex character (Rive bust + ElevenLabs TTS on beats), H4 telemetry theater
+  (animated scores, dossier reveals, wagering translation pills), H5 sound,
+  H6 measurement.

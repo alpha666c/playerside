@@ -567,17 +567,86 @@ html[data-theme='light'] {
 }
 
 /* Static evidence field — the reduced-motion / no-WebGL stand-in for the
-   WebGL hero field. Same sparse amber ledger with rare emerald "sealed"
-   points, rendered as tiled CSS gradients. Zero animation: users who asked
-   for less motion still get the brand atmosphere, just still. No grid
-   layers here — the hero section already paints the blueprint grid. */
+   WebGL hero field. Same sparse coral ledger with rare evidence-blue
+   "verified" points (Phase H1 palette convergence), rendered as tiled CSS
+   gradients. Zero animation: users who asked for less motion still get the
+   brand atmosphere, just still. No grid layers here — the hero section
+   already paints the blueprint grid. */
 .evidence-field-static {
   background-image:
-    radial-gradient(circle 1.5px at 18px 14px, rgba(251, 191, 36, 0.4), transparent 2px),
-    radial-gradient(circle 1.5px at 84px 58px, rgba(251, 191, 36, 0.3), transparent 2px),
-    radial-gradient(circle 1.5px at 132px 88px, rgba(52, 211, 153, 0.5), transparent 2px),
+    radial-gradient(circle 1.5px at 18px 14px, rgba(255, 93, 69, 0.4), transparent 2px),
+    radial-gradient(circle 1.5px at 84px 58px, rgba(255, 93, 69, 0.3), transparent 2px),
+    radial-gradient(circle 1.5px at 132px 88px, rgba(110, 168, 216, 0.5), transparent 2px),
     radial-gradient(circle 1px at 54px 92px, rgba(243, 238, 232, 0.18), transparent 1.5px);
   background-size: 190px 120px, 190px 120px, 190px 120px, 190px 120px;
+}
+
+/* ------------------------------------------------------------------ */
+/* Alive-layer primitives — Phase H1 (kinetic surfaces + entry ceremony) */
+/* ------------------------------------------------------------------ */
+
+/* Kinetic card surface: transform + border + shadow on hover/active, all
+   through the motion tokens. Hover-only via @media (hover: hover) so touch
+   devices never see stuck hover states; the global prefers-reduced-motion
+   override collapses the transitions to instant. */
+.kinetic {
+  transition:
+    transform var(--dur-med) var(--ease-out-expo),
+    border-color var(--dur-fast) var(--ease-out-quart),
+    box-shadow var(--dur-med) var(--ease-out-expo);
+}
+@media (hover: hover) {
+  .kinetic:hover {
+    transform: translateY(-2px);
+    border-color: rgba(110, 168, 216, 0.4);
+  }
+}
+.kinetic:active {
+  transform: translateY(0);
+}
+
+/* Entry ceremony — one-shot page-load choreography. Order: eyebrow → title
+   (blur-rise) → content (fade). Durations ride the motion tokens; the
+   global prefers-reduced-motion rule collapses these to instant, so they
+   are safe to add anywhere. */
+@keyframes enter-rise {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes enter-title {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+    filter: blur(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+    filter: blur(0);
+  }
+}
+@keyframes enter-fade {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+.enter-eyebrow {
+  animation: enter-rise var(--dur-slow) var(--ease-out-expo) both;
+}
+.enter-title {
+  animation: enter-title 0.7s var(--ease-out-expo) both;
+}
+.enter-fade {
+  animation: enter-fade var(--dur-slow) var(--ease-out-quart) both;
 }
 
 /* Film-grain overlay — fixed, pointer-transparent, sits above page content. */

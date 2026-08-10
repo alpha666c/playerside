@@ -11,8 +11,10 @@ import { pixelRatioForTier, QualityTier } from './quality'
 // ---------------------------------------------------------------------------
 // Fragment shader — the living "evidence field".
 //
-// Brand grammar: a sparse ledger of evidence points in amber, with rare
-// emerald "sealed" points and a coral ripple that rings out from the cursor.
+// Brand grammar (Phase H1 palette convergence): a sparse ledger of evidence
+// points in coral, with rare evidence-blue "verified" points and a coral
+// ripple that rings out from the cursor. Coral = action/focus, evidence =
+// verified measurement — per DESIGN-SYSTEM.md §1.
 // The 4D axis: dots stretch with scroll velocity and drift in the direction
 // of intent, then settle to still the moment the user stops — causal, never
 // looping. A hair of pointer parallax lets the layer read as a surface with
@@ -36,8 +38,8 @@ const fragmentShader = /* glsl */ `
   uniform float uVelocity;
   uniform vec2 uRippleOrigin;
   uniform float uRippleStart;
-  uniform vec3 uColorA; // amber
-  uniform vec3 uColorB; // emerald
+  uniform vec3 uColorA; // coral (action / ledger base)
+  uniform vec3 uColorB; // evidence-blue (verified points)
 
   varying vec2 vUv;
 
@@ -70,7 +72,7 @@ const fragmentShader = /* glsl */ `
     float r = (0.17 + 0.07 * pulse) * (0.5 + 0.5 * h);
     float dotMask = smoothstep(r, r - 0.12, d);
 
-    // Rare lit points read as "verified" — emerald, like the green pulse dot.
+    // Rare lit points read as "verified" — evidence-blue, the measurement accent.
     float lit = step(0.88, h);
     vec3 col = mix(uColorA, uColorB, lit) * dotMask * (0.35 + 0.65 * pulse);
 
@@ -84,7 +86,8 @@ const fragmentShader = /* glsl */ `
       float travel = 1.0 - ringAge / 1.5;
       ring = (1.0 - smoothstep(0.0, 0.035, abs(pd - ringEdge))) * travel * exp(-pd * 2.6);
     }
-    col += uColorB * ring * 0.55;
+    // The ripple is the pointer's action gesture — coral, the action color.
+    col += uColorA * ring * 0.55;
 
     // Brief brightening while scrolling fast.
     col += uColorA * abs(uVelocity) * 0.12;
@@ -97,9 +100,9 @@ const fragmentShader = /* glsl */ `
   }
 `
 
-// Matches the live hero system (amber → emerald gradient headline on zinc).
-const FIELD_AMBER = new THREE.Color('#fbbf24')
-const FIELD_EMERALD = new THREE.Color('#34d399')
+// Phase H1: brand tokens only — coral ledger, evidence-blue verified points.
+const FIELD_CORAL = new THREE.Color('#ff5d45')
+const FIELD_EVIDENCE = new THREE.Color('#6ea8d8')
 
 // One ripple = one gesture: ignites at the pointer, expands once, dies.
 const RIPPLE_LIFETIME = 1.5
@@ -169,8 +172,8 @@ const HeroScene: React.FC = () => {
       uVelocity: { value: 0 },
       uRippleOrigin: { value: new THREE.Vector2(0.5, 0.5) },
       uRippleStart: { value: -RIPPLE_LIFETIME },
-      uColorA: { value: FIELD_AMBER },
-      uColorB: { value: FIELD_EMERALD },
+      uColorA: { value: FIELD_CORAL },
+      uColorB: { value: FIELD_EVIDENCE },
     }),
     // size is re-read in useFrame; uniforms are created once.
     // eslint-disable-next-line react-hooks/exhaustive-deps
