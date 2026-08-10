@@ -56,6 +56,9 @@ export function loadCaseContextAllowlist(role: AgentRole): string[] {
       'evidenceRegister',
       'handsOnResults',
       'editorialDraft',
+      // G.6 (§12.2): the checker records `version` at verdict time so publish
+      // can enforce verdict freshness (case.version === verdictForVersion).
+      'version',
     ],
     'integrity-checker': [
       'computedScores',
@@ -63,6 +66,8 @@ export function loadCaseContextAllowlist(role: AgentRole): string[] {
       'evidenceRegister',
       'handsOnResults',
       'editorialDraft',
+      // G.6 (§12.2): verdict freshness — see integrity-check above.
+      'version',
     ],
     monitor: [
       'publishedReviewId',

@@ -11,15 +11,16 @@ import { runMonitor } from '@/agents/monitor'
 /**
  * Phase G — the Cofounder's tool surface (spec §4). Shipped so far: T1
  * (get_today_plan / set_plan_item), T2 (create_ticket / resume_ticket /
- * close_ticket) in G.3, and T7 (run_pipeline_agent — G.5) which triggers the
- * five real pipeline agents as DRAFT-ONLY runs. T3–T6/T8–T9 land in later
+ * close_ticket) in G.3, T7 (run_pipeline_agent — G.5) which triggers the
+ * five real pipeline agents as DRAFT-ONLY runs, and T8 (draft_delegation —
+ * G.6) which enqueues a structured roster-job brief. T3–T6/T9 land in later
  * phases.
  *
  * Guardrails (spec §4 / §7.4):
  * - No write tool touches research-queue case fields, XP, or publish.
  * - run_pipeline_agent never passes `apply` — case drafts stay human-applied.
- * - set_plan_item writes go through the optimistic-version contract
- *   (expectedVersion + changedFields: ['plan']) — never a blind write.
+ * - set_plan_item / draft_delegation writes go through the optimistic-version
+ *   contract (expectedVersion + changedFields) — never a blind write.
  * - Every tool call is audited via `agent-logs` event `tool_call` (metadata).
  */
 
@@ -296,6 +297,86 @@ const PIPELINE_AGENT_FNS: Record<
 
 export const PIPELINE_AGENT_ROLES = Object.keys(PIPELINE_AGENT_FNS)
 
+/**
+ * T8 roster roles (spec §4 T8): jobs proposed for the ROSTER agents (QA,
+ * reviewer, researcher, content writer) — no runnable pipeline function; a
+ * human/orchestrator executes the brief outside the admin. The five pipeline
+ * roles are also delegatable (desk-researcher etc. → G.5 fns on approve).
+ */
+export const DELEGATION_ROLES = [
+  'qa',
+  'reviewer',
+  'researcher',
+  'content-writer',
+  ...PIPELINE_AGENT_ROLES,
+] as const
+
+export type DelegationRole = (typeof DELEGATION_ROLES)[number]
+
+const isDelegationRole = (v: unknown): v is DelegationRole =>
+  typeof v === 'string' && (DELEGATION_ROLES as readonly string[]).includes(v)
+
+/**
+ * T8 — draft_delegation (spec §4 T8 / §4.1, G.6). Enqueues a structured job
+ * brief on the ticket's `delegationQueue` as QUEUED. The Cofounder PROPOSES;
+ * Viktor approves/rejects in the control room (G.6 approve route) — the
+ * model can never run roster work or apply pipeline drafts itself.
+ */
+const draftDelegation = async (
+  payload: Payload,
+  req: PayloadRequest,
+  args: Record<string, unknown>,
+  ctx: ToolContext,
+): Promise<ToolResult> => {
+  const ticketId = (args.ticketId as number | undefined) ?? ctx.ticketId
+  if (!ticketId) return { ok: false, output: 'No ticketId — create or resume a ticket first (create_ticket / resume_ticket).' }
+  const role = args.role
+  if (!isDelegationRole(role)) {
+    return {
+      ok: false,
+      output: `draft_delegation: unknown role '${String(role)}' — one of ${DELEGATION_ROLES.join(', ')}.`,
+    }
+  }
+  const brief = (args.brief as string | undefined)?.trim()
+  if (!brief) return { ok: false, output: 'draft_delegation requires a brief (context, deliverable, output contract).' }
+
+  const doc = await payload.findByID({ collection: 'cofounder-sessions', id: ticketId, req, depth: 0 })
+  if (!doc) return { ok: false, output: 'Ticket not found.' }
+
+  const queue = Array.isArray(doc.delegationQueue) ? [...doc.delegationQueue] : []
+  const job = {
+    jobId: crypto.randomUUID(),
+    role,
+    brief,
+    source: 'cofounder',
+    status: 'QUEUED' as const,
+    caseId: (args.caseId as number | null | undefined) ?? null,
+    outputRef: null,
+    createdAt: new Date().toISOString(),
+    approvedAt: null,
+    completedAt: null,
+  }
+  queue.push(job as (typeof queue)[number])
+
+  const updated = await payload.update({
+    id: ticketId,
+    collection: 'cofounder-sessions',
+    req,
+    context: { expectedVersion: doc.version ?? 1, changedFields: ['delegationQueue'] },
+    data: { delegationQueue: queue },
+  })
+  return {
+    ok: true,
+    output: {
+      ticketNumber: updated.ticketNumber,
+      jobId: job.jobId,
+      role: job.role,
+      status: 'QUEUED',
+      note: `Job ${job.jobId} enqueued (${job.role}) — Viktor approves/rejects it in the control room.`,
+    },
+  }
+}
+
 const pipelineAgentSummary = (role: string, result: Record<string, unknown>): string => {
   switch (role) {
     case 'desk-researcher': {
@@ -466,6 +547,38 @@ export const cofounderTools: LlmToolDef[] = [
       },
     },
   },
+  {
+    type: 'function',
+    function: {
+      name: 'draft_delegation',
+      description:
+        'Enqueue a structured job brief for a roster or pipeline agent on the current ticket (status QUEUED). The Cofounder proposes; Viktor approves/rejects it in the control room. Roster roles (qa, reviewer, researcher, content-writer) are executed by a human/orchestrator outside the admin; pipeline roles (desk-researcher, score-analyst, editorial-writer, integrity-checker, monitor) run as drafts on approve. You cannot execute roster work yourself.',
+      parameters: {
+        type: 'object',
+        properties: {
+          ticketId: { type: 'number', description: 'Optional — defaults to the current ticket.' },
+          role: {
+            type: 'string',
+            enum: [
+              'qa',
+              'reviewer',
+              'researcher',
+              'content-writer',
+              'desk-researcher',
+              'score-analyst',
+              'editorial-writer',
+              'integrity-checker',
+              'monitor',
+            ],
+          },
+          brief: { type: 'string', description: 'Structured per agent-roster.md: context, deliverable, output contract.' },
+          caseId: { type: 'number', description: 'Linked research-queue case id when applicable.' },
+        },
+        required: ['role', 'brief'],
+        additionalProperties: false,
+      },
+    },
+  },
 ]
 
 /**
@@ -565,6 +678,9 @@ export const executeCofounderTool = async (
         break
       case 'run_pipeline_agent':
         result = await runPipelineAgent(payload, req, args, ctx)
+        break
+      case 'draft_delegation':
+        result = await draftDelegation(payload, req, args, ctx)
         break
       default:
         result = { ok: false, output: `Unknown tool: ${toolName}` }

@@ -84,6 +84,20 @@ export const buildDeskSkeleton = (): Record<string, unknown> => {
 }
 
 /**
+ * The evidenceRegister.sourceType select on research-queue only accepts the
+ * five enum values below. The model (and the fallback placeholder) may emit
+ * anything — normalize to the enum, defaulting to 'other'. A raw value that
+ * slips through would fail Payload's select validation on apply, turning a
+ * legitimately thin fallback run into a 500 (caught by G.6 E2E).
+ */
+const EVIDENCE_SOURCE_TYPES = new Set(['regulator-register', 'operator-primary', 'community-source', 'hands-on-test', 'other'])
+
+const normalizeSourceType = (value: unknown): string => {
+  const raw = String(value ?? '').trim().toLowerCase()
+  return EVIDENCE_SOURCE_TYPES.has(raw) ? raw : 'other'
+}
+
+/**
  * Build the evidence register from the model's proposal (spec §5: rows are
  * model-generated, always `unverified`). Only rows that are grounded survive
  * the no-invention guard — the row must carry a source URL or reference a
@@ -111,7 +125,7 @@ export const buildEvidenceRegister = (
       label: String(row.label ?? row.claimKey ?? 'Desk research finding'),
       claimKey: row.claimKey ?? null,
       claimSummary: row.claimSummary ?? null,
-      sourceType: String(row.sourceType ?? 'public-web').slice(0, 40),
+      sourceType: normalizeSourceType(row.sourceType),
       mediaRef: row.mediaRef ?? null,
       sourceUrl: sourceUrl || null,
       archiveRef: null,
@@ -132,7 +146,7 @@ export const buildEvidenceRegister = (
       label: 'Desk research: no grounded evidence rows proposed',
       claimKey: null,
       claimSummary: 'The model could not ground any new claim in the case context or a cited source.',
-      sourceType: 'public-web',
+      sourceType: 'other',
       mediaRef: null,
       sourceUrl: null,
       archiveRef: null,
@@ -180,6 +194,9 @@ export async function runDeskResearch(
     '2. confidence must be "unverified" for every claim.',
     '3. evidenceRegister: an array of rows { label, claimKey, claimSummary, sourceType,',
     '   sourceUrl, notes } for the claims you made. Rows with no sourceUrl are dropped.',
+    '   sourceType must be one of: regulator-register (license/regulator page),',
+    '   operator-primary (casino/brand site), community-source (forum/Reddit/aggregator),',
+    '   hands-on-test (our own test evidence), other. Do not invent other values.',
     '4. _assistantSummary: an object with "note" (prose: what you scanned, gaps found,',
     '   red flags, recommended hands-on checks) and "scannedClaims" (a key->value map of',
     '   what you could or could not verify from the context).',

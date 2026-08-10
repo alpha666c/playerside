@@ -55,6 +55,11 @@ const complianceEvents = new Set([
   'case_created',
   'status_transition',
   'case_updated',
+  // Phase G (G.6): publish-family audit events are compliance-class
+  // (spec §12 — every approve/reject/publish logged with approving user +
+  // case version + runId). Delegation decisions stay operational.
+  'review_published',
+  'publish_error',
 ])
 
 const computeRetentionClass: CollectionBeforeChangeHook = ({ data }) => {
@@ -104,6 +109,15 @@ export const AgentLogs: CollectionConfig<'agent-logs'> = {
         // Phase G (G.3): every Cofounder tool invocation (spec §7.2) —
         // metadata only (tool name + args + ok), never message content.
         { label: 'Tool call', value: 'tool_call' },
+        // Phase G (G.6): control-room audits (spec §12) — delegation
+        // decisions + publish outcomes, with approving user/case version/
+        // runId in details.
+        { label: 'Delegation approved', value: 'delegation_approved' },
+        { label: 'Delegation rejected', value: 'delegation_rejected' },
+        { label: 'Delegation conflict', value: 'delegation_conflict' },
+        { label: 'Delegation error', value: 'delegation_error' },
+        { label: 'Review published', value: 'review_published' },
+        { label: 'Publish error', value: 'publish_error' },
       ],
       required: true,
     },

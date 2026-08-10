@@ -133,9 +133,15 @@ export async function runIntegrityChecker(
   // G.6 note (reviewer S3): the publish/approve gate MUST key off `verdict`
   // (=== 'PASS'), never `checksFailed.length` — advisory S3 findings keep
   // checksFailed non-empty while verdict stays PASS.
+  //
+  // G.6 (§12.2 verdict freshness): record the case `version` at verdict time
+  // so publish can reject a stale verdict for an edited case. The context is
+  // allowlisted for 'version' (loadCaseContext) — never trust a client claim.
+  const verdictForVersion = (context as { version?: unknown }).version as number | undefined
   const integrityOutput = {
     verdict,
     checkedAt: new Date().toISOString(),
+    verdictForVersion: typeof verdictForVersion === 'number' ? verdictForVersion : null,
     checksEvaluated: 5 + (Array.isArray(modelFindings) ? modelFindings.length : 0),
     checksFailed,
     notes:

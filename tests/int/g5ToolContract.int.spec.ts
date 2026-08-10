@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest'
+import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vitest'
 
 import { cofounderTools, executeCofounderTool, PIPELINE_AGENT_ROLES } from '@/lib/cofounder/tools'
 
@@ -18,12 +18,20 @@ vi.mock('@/agents/deskResearcher', () => ({
 const payloadStub = {
   findByID: vi.fn(),
   create: vi.fn().mockResolvedValue({ id: 1 }),
+  update: vi.fn(),
   logger: { error: vi.fn() },
 }
 const req = { user: { email: 'test@example.invalid' } } as never
 
 beforeAll(() => {
   payloadStub.findByID.mockResolvedValue({ id: 7 })
+})
+
+// Mock state must not leak between tests — the happy-path draft_delegation
+// test legitimately calls payloadStub.update; the negative tests assert
+// `not.toHaveBeenCalled()` on a clean slate.
+beforeEach(() => {
+  vi.clearAllMocks()
 })
 
 afterAll(() => {
@@ -41,18 +49,84 @@ describe('T7 run_pipeline_agent', () => {
     ])
   })
 
-  it('spec test #5 — the tool surface contains no case-write/publish tool', () => {
+  it('spec test #5 — the tool surface contains no case-write/publish/approve tool', () => {
     const names = cofounderTools.map((t) => t.function.name)
     expect(names).not.toContain('apply_draft')
     expect(names).not.toContain('publish')
+    expect(names).not.toContain('approve')
     expect(names).not.toContain('update_case')
     expect(names).not.toContain('grant_xp')
     // run_pipeline_agent is draft-only by construction — assert its presence
     expect(names).toContain('run_pipeline_agent')
+    // G.6 — draft_delegation enqueues jobs, but approval is human-only
+    expect(names).toContain('draft_delegation')
     // every exposed tool is handled by the dispatcher (no dead/unaudited tools)
     for (const name of names) {
-      expect(['get_today_plan', 'set_plan_item', 'create_ticket', 'resume_ticket', 'close_ticket', 'run_pipeline_agent']).toContain(name)
+      expect([
+        'get_today_plan',
+        'set_plan_item',
+        'create_ticket',
+        'resume_ticket',
+        'close_ticket',
+        'run_pipeline_agent',
+        'draft_delegation',
+      ]).toContain(name)
     }
+  })
+
+  it('G.6 — draft_delegation enqueues a QUEUED job on the ticket (no autonomous execution)', async () => {
+    const ticket = {
+      id: 11,
+      ticketNumber: '#CF-260809-11',
+      version: 3,
+      delegationQueue: [{ jobId: 'existing', role: 'qa', status: 'DONE' }],
+    }
+    payloadStub.findByID.mockResolvedValueOnce(ticket)
+    payloadStub.update.mockResolvedValueOnce({ ...ticket, delegationQueue: [], version: 4 })
+    const res = await executeCofounderTool(
+      payloadStub as never,
+      req,
+      'draft_delegation',
+      { ticketId: 11, role: 'content-writer', brief: 'Write the bonus explainer for the linked case.' },
+      {},
+    )
+    expect(res.ok).toBe(true)
+    expect(payloadStub.update).toHaveBeenCalledTimes(1)
+    const updateArgs = payloadStub.update.mock.calls[0][0]
+    expect(updateArgs.collection).toBe('cofounder-sessions')
+    // optimistic-version write — never a blind one
+    expect(updateArgs.context).toEqual({ expectedVersion: 3, changedFields: ['delegationQueue'] })
+    const jobs = updateArgs.data.delegationQueue as Array<Record<string, unknown>>
+    expect(jobs).toHaveLength(2)
+    const newJob = jobs[1]
+    expect(newJob.status).toBe('QUEUED')
+    expect(newJob.source).toBe('cofounder')
+    expect(newJob.role).toBe('content-writer')
+    expect(typeof newJob.jobId).toBe('string')
+  })
+
+  it('G.6 — draft_delegation rejects an unknown role without writing', async () => {
+    const res = await executeCofounderTool(
+      payloadStub as never,
+      req,
+      'draft_delegation',
+      { ticketId: 11, role: 'sysadmin', brief: 'x' },
+      {},
+    )
+    expect(res.ok).toBe(false)
+    expect(payloadStub.update).not.toHaveBeenCalled()
+  })
+
+  it('G.6 — draft_delegation requires a brief (never an empty proposal)', async () => {
+    const res = await executeCofounderTool(
+      payloadStub as never,
+      req,
+      'draft_delegation',
+      { ticketId: 11, role: 'qa', brief: '   ' },
+      {},
+    )
+    expect(res.ok).toBe(false)
+    expect(payloadStub.update).not.toHaveBeenCalled()
   })
 
   it('refuses to run an agent when the turn budget is nearly exhausted', async () => {

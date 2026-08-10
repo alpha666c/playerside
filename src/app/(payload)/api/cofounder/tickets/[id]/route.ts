@@ -37,6 +37,33 @@ export async function GET(
   })
   if (!doc) return new Response('Ticket not found.', { status: 404 })
 
+  // G.6 — per-pinned-case run summaries for the "agents at work" pane.
+  // Each pinned case is populated at depth 1 (research-queue doc), so its
+  // `aiRuns` array is available here; we ship a compact projection (role,
+  // status, times, runId, expandable output + case version for approve).
+  const isObject = (v: unknown): v is Record<string, unknown> =>
+    typeof v === 'object' && v !== null
+  const runs = ((doc.pinnedCases ?? []) as unknown[]).flatMap((p) => {
+    if (!isObject(p) || !Array.isArray(p.aiRuns)) return []
+    return (p.aiRuns as unknown[]).map((r) => {
+      const run = isObject(r) ? r : {}
+      return {
+        runId: String(run.runId ?? ''),
+        caseId: Number(p.id),
+        caseNumber: (p.caseNumber as string | null) ?? null,
+        operatorName: (p.operatorName as string | null) ?? null,
+        caseStatus: (p.status as string | null) ?? null,
+        caseVersion: (p.version as number | null | undefined) ?? 1,
+        agentRole: String(run.agentRole ?? 'chat'),
+        status: String(run.status ?? 'pending'),
+        startedAt: typeof run.startedAt === 'string' ? run.startedAt : null,
+        completedAt: typeof run.completedAt === 'string' ? run.completedAt : null,
+        // Expandable structured output (agents-at-work pane, spec §11).
+        output: isObject(run.output) ? run.output : null,
+      }
+    })
+  })
+
   return Response.json({
     id: doc.id,
     ticketNumber: doc.ticketNumber,
@@ -47,6 +74,7 @@ export async function GET(
     thread: doc.thread ?? [],
     pinnedCases: doc.pinnedCases ?? [],
     delegationQueue: doc.delegationQueue ?? [],
+    runs,
     lastActiveAt: doc.lastActiveAt,
     createdAt: doc.createdAt,
     version: doc.version,

@@ -5,6 +5,58 @@
 
 ---
 
+## 2026-08-09 — Phase G G.6/G.6b: delegation executor + Approve & Publish
+
+- **Approve route is the delegation executor.** `POST /api/cofounder/approve`
+  decides a queued delegation job: QUEUED→REJECTED, QUEUED→APPROVED for
+  roster-only roles (no apply), while the five pipeline roles run the REAL
+  agent function WITH apply (`applyDraft` + `expectedVersion` +
+  `changedFields`). A wrong-stage job is marked APPROVED without apply;
+  an agent 409 → `BLOCKED_CONFLICT` + revert to QUEUED; any other failure
+  → revert QUEUED + notes. `updateQueue` rebases on a fresh ticket version
+  (one 409 retry) so a concurrent ticket edit can't wedge the executor.
+- **Two real bugs the E2E caught:**
+  1. *`req.context` leak (phantom 409).* The route's earlier ticket-write
+     passed an optimistic-version `context`, which Payload mutates onto the
+     SHARED `req`; the agent's `completeAiRun` case-write then consumed the
+     stale `expectedVersion` and 409'd (start bumped 1→2, complete saw 1,
+     0 rows). Fix: the agent runs on a **fresh local req** — the ticket's
+     version context can no longer leak into case writes.
+  2. *`sourceType: 'public-web'` enum violation.* The `evidenceRegister`
+     select only accepts 5 enum values, but the desk researcher's fallback
+     placeholder and row mapping emitted `public-web` — a desk-research
+     apply WITHOUT an LLM key always failed validation (500). Fix:
+     `normalizeSourceType` (default `other`) + the system prompt now
+     enumerates the exact enum so real model calls stop guessing.
+- **Publish (§12) is human-initiated only.** No publish/approve tool in the
+  Cofounder's surface (hard rule §12.2). Ordering: server-side re-read guard
+  (status integrity-check + PASS verdict + `case.version ===
+  verdictForVersion`) → create DRAFT (deterministic slug, concurrent create
+  = idempotent update) → version-checked case link/sign-off/status
+  (integrity-check → published → monitoring) → flip doc to live as the LAST
+  step with `enforcePublishCompliance` as the gate (S1-1 compensation: case
+  linked but doc stays draft on gate failure).
+- **Verdict freshness keys off the run, not counts (G.5 coupling note
+  honored).** `latestIntegrityRun` picks the latest COMPLETED
+  integrity-checker run by `completedAt`; publish requires
+  `integrityResult.verdict === 'PASS'` AND `verdictForVersion ===
+  case.version` — advisory S3 findings keep `checksFailed` non-empty while
+  verdict stays PASS.
+- **`delegationQueue` gains `notes`** (migration `20260809_211624`) — the
+  executor's BLOCKED_CONFLICT/failure reason was being silently dropped by
+  Payload (field didn't exist; arrays normalize to tables, so a migration
+  was required). Also `AgentLogs` select/union extension + migration
+  `20260809_210514`.
+- **T8 `draft_delegation` tool** creates queue jobs for the five pipeline
+  roles (ticket-scoped, same budget/audit rules as T7).
+- **Verification:** tsc + lint + 253/253 tests (2 new regression tests:
+  sourceType normalization/placeholder, approve runs the agent on a fresh
+  req) + build + 12-check HTTP E2E: approve→apply lands on the case (job
+  DONE + outputRef), reject, 409 double-decide, publish blocked without a
+  fresh PASS verdict (WRONG_STAGE / BLOCKED_CONFLICT / VERDICT_BLOCKED /
+  STALE_VERDICT), status/ticket GET. Publish positive path + idempotent
+  re-publish covered by `g6Publish.int.spec.ts` (15 tests).
+
 ## 2026-07-22 — Stake remains paused
 
 Stake.com (`#PS-2026-001`) does not begin real desk research, hands-on testing, or any other pipeline stage. This has been stated as a standing instruction across multiple sessions and is re-confirmed here: `research_queue` and `operators` are both empty (0 rows, confirmed live) — the planning documents (`docs/review-handoffs/PS-2026-001-queued-2026-07-22.md`, `docs/review-system/CREDENTIAL-LOG.md`) describe intent and pre-research facts to verify, but no actual CaseFile has been created. No case may be created for Stake or any other operator without Viktor's explicit fresh sign-off, evaluated against the "Definition of Ready for Stake" criteria in `docs/review-handoffs/2026-07-22-platform-before-stake-reconciliation.md`.

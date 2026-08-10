@@ -141,6 +141,34 @@ describe('llmBridge no-invention guard', () => {
     )
     expect(fabricated.every((r) => r.claimKey !== 'madeUpThing')).toBe(true)
   })
+
+  // G.6 regression (found by the approve E2E): the sourceType select on
+  // research-queue only accepts five enum values. A raw model value (or the
+  // legacy 'public-web' fallback) must normalize to the enum — otherwise the
+  // apply's Payload select validation 500s the whole approve.
+  it('buildEvidenceRegister normalizes sourceType to the schema enum (G.6)', () => {
+    const today = '2026-08-09'
+    const parsed = {
+      evidenceRegister: [
+        { label: 'A', claimKey: 'licenseNumber', claimSummary: 'GLH-OCCHSDW-19302017', sourceType: 'public-web', sourceUrl: null },
+        { label: 'B', claimKey: 'welcomeBonus', claimSummary: '2000 EUR welcome bonus', sourceType: 'community-source', sourceUrl: 'https://stake.example/bonus' },
+      ],
+    }
+    const rows = buildEvidenceRegister(parsed, contextValueSet(context), today)
+    expect(rows[0].sourceType).toBe('other') // 'public-web' is not in the enum → default
+    expect(rows[1].sourceType).toBe('community-source') // valid enum value passes through
+  })
+
+  // G.6 regression: when the model grounds nothing (e.g. the no-LLM-key
+  // fallback), the placeholder row must also carry an enum-valid sourceType.
+  // Before the fix it wrote 'public-web' → apply always failed validation.
+  it('buildEvidenceRegister fallback placeholder uses an enum-valid sourceType (G.6)', () => {
+    const rows = buildEvidenceRegister(null, new Set(), '2026-08-09')
+    expect(rows).toHaveLength(1)
+    expect(rows[0].sourceType).toBe('other')
+    expect(rows[0].claimKey).toBeNull()
+    expect(rows[0].verificationStatus).toBe('unverified')
+  })
 })
 
 describe('editorialWriter.buildEditorialDraft (compliance pin)', () => {

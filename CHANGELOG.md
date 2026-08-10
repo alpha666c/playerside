@@ -1,3 +1,32 @@
+- **feat(ai): Phase G G.6/G.6b — the delegation control room: Approve & Publish.**
+  `POST /api/cofounder/approve` is now the delegation executor: QUEUED→REJECTED,
+  QUEUED→APPROVED for roster-only roles (no apply), while the five pipeline roles
+  run the REAL agent function WITH apply (`applyDraft` + `expectedVersion` +
+  `changedFields`). Wrong-stage jobs are marked APPROVED without apply; an agent
+  409 → `BLOCKED_CONFLICT` + revert to QUEUED; any other failure → revert QUEUED +
+  notes. `updateQueue` rebases on a fresh ticket version (one 409 retry).
+  `POST /api/cofounder/publish` is the human-initiated §12 two-step (DRAFT doc →
+  link case → flip doc live) with server-side re-read + verdict-freshness gates
+  (`verdict === PASS` AND `case.version === verdictForVersion`, keyed off the latest
+  COMPLETED integrity run, not counts). `GET /api/cofounder/status` aggregates
+  case/ticket/job counts for the control room; new **T8 `draft_delegation`** tool
+  creates queue jobs for the five roles. `delegationQueue.notes` (migration
+  `20260809_211624`) + AgentLogs select/union extension (migration `20260809_210514`).
+- **fix(ai): two real bugs the G.6 E2E caught.** (1) *`req.context` leak (phantom
+  409)* — the route's ticket-write passed an optimistic-version `context` which
+  Payload mutates onto the SHARED `req`, so the agent's `completeAiRun` case-write
+  consumed a stale `expectedVersion` and 409'd; the agent now runs on a **fresh
+  local req**. (2) *`sourceType: 'public-web'` enum violation* — the evidence
+  register select only accepts 5 enum values but the desk researcher's fallback
+  placeholder and row mapping emitted `public-web`, so a desk-research apply
+  without an LLM key always failed validation; fixed with `normalizeSourceType`
+  (default `other`) + the system prompt now enumerates the exact enum.
+- **Verification:** tsc + lint + **253/253 tests** (2 new regression tests) + build
+  + 12-check HTTP E2E (approve→apply lands on case, reject, 409 double-decide,
+  publish blocked without fresh verdict: WRONG_STAGE / BLOCKED_CONFLICT /
+  VERDICT_BLOCKED / STALE_VERDICT, status/ticket GET); publish positive path +
+  idempotent re-publish covered by `g6Publish.int.spec.ts` (15 tests).
+
 - **fix(ai): lock the LLM provider to OpenRouter (`deepseek/deepseek-v4-flash:free`).** The
   Cofounder + pipeline agents now target OpenRouter by default — env names are provider-agnostic
   (`LLM_API_KEY` / `LLM_BASE_URL` / `LLM_MODEL`, with `DEEPSEEK_*` kept as deprecated aliases),

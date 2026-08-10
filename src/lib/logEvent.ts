@@ -19,6 +19,13 @@ export type AgentLogEvent =
   | 'ticket_status_change'
   // Phase G (G.3): Cofounder tool invocations (spec §7.2)
   | 'tool_call'
+  // Phase G (G.6): control-room delegation + publish audits (spec §12)
+  | 'delegation_approved'
+  | 'delegation_rejected'
+  | 'delegation_conflict'
+  | 'delegation_error'
+  | 'review_published'
+  | 'publish_error'
 
 export type LogEventInput = {
   agentId: string

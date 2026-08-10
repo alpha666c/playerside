@@ -298,6 +298,7 @@ export const CofounderSessions: CollectionConfig<'cofounder-sessions'> = {
         { name: 'createdAt', type: 'date' },
         { name: 'approvedAt', type: 'date' },
         { name: 'completedAt', type: 'date' },
+        { name: 'notes', type: 'textarea', admin: { description: 'Decision context: BLOCKED_CONFLICT, wrong-stage notes, reject reason.' } },
       ],
     },
     { name: 'lastActiveAt', type: 'date', admin: { description: 'For the "resume" surface — bumped on every write.' } },

@@ -1389,7 +1389,13 @@ export interface AgentLog {
     | 'ticket_created'
     | 'ticket_updated'
     | 'ticket_status_change'
-    | 'tool_call';
+    | 'tool_call'
+    | 'delegation_approved'
+    | 'delegation_rejected'
+    | 'delegation_conflict'
+    | 'delegation_error'
+    | 'review_published'
+    | 'publish_error';
   timestamp: string;
   agentId: string;
   /**
@@ -1848,6 +1854,10 @@ export interface CofounderSession {
         createdAt?: string | null;
         approvedAt?: string | null;
         completedAt?: string | null;
+        /**
+         * Decision context: BLOCKED_CONFLICT, wrong-stage notes, reject reason.
+         */
+        notes?: string | null;
         id?: string | null;
       }[]
     | null;
@@ -3105,6 +3115,7 @@ export interface CofounderSessionsSelect<T extends boolean = true> {
         createdAt?: T;
         approvedAt?: T;
         completedAt?: T;
+        notes?: T;
         id?: T;
       };
   lastActiveAt?: T;

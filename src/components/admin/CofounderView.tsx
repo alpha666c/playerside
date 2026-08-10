@@ -31,11 +31,23 @@ export default function CofounderView() {
   const [busy, setBusy] = useState(false)
   const [pendingUser, setPendingUser] = useState<string | null>(null)
   const [streamText, setStreamText] = useState('')
-  const [lastToolEvents, setLastToolEvents] = useState<ToolEvent[] | null>(null)
+  // G.6 — the per-turn tool feed moved out of the right pane (agents-at-work
+  // replaced it); we keep the setter for the output-gate notice plumbing.
+  const [, setLastToolEvents] = useState<ToolEvent[] | null>(null)
 
   const [newTitle, setNewTitle] = useState('')
   const [planKind, setPlanKind] = useState<PlanKind>('casino-review')
   const [planTarget, setPlanTarget] = useState('')
+
+  // G.6 — control room: status strip (polled), collapsible right pane,
+  // stale-run dismissal, in-flight approve/publish markers.
+  const [statusPayload, setStatusPayload] = useState<StatusPayload | null>(null)
+  const [rightOpen, setRightOpen] = useState(false)
+  const [dismissedRuns, setDismissedRuns] = useState<Set<string>>(new Set())
+  const [decidingJobId, setDecidingJobId] = useState<string | null>(null)
+  const [publishingCaseId, setPublishingCaseId] = useState<number | null>(null)
+  // React-Compiler-safe wall clock: state, not Date.now() inside useMemo.
+  const [now, setNow] = useState(() => Date.now())
 
   // Live selection ref — guards stale responses (reviewer S2): an in-flight
   // GET/chat for the previous ticket must never overwrite the new selection.
@@ -90,6 +102,39 @@ export default function CofounderView() {
   useEffect(() => {
     if (selectedId !== null) reloadTicket()
   }, [selectedId, reloadTicket])
+
+  // G.6 — control-room status polling (spec §11): fast (~5s) while a run is
+  // in progress, backing off to ~30s when idle (S3). Never flashes an error
+  // on a poll failure — keep the last known strip.
+  const statusRef = useRef<StatusPayload | null>(null)
+  useEffect(() => {
+    let cancelled = false
+    let timer: ReturnType<typeof setTimeout> | null = null
+    const tick = async () => {
+      try {
+        const data = (await fetchJson('/api/cofounder/status')) as StatusPayload
+        statusRef.current = data
+        if (!cancelled) setStatusPayload(data)
+      } catch {
+        // keep last known strip
+      }
+      if (!cancelled) {
+        timer = setTimeout(tick, (statusRef.current?.runs.active ?? 0) > 0 ? 5000 : 30000)
+      }
+    }
+    tick()
+    return () => {
+      cancelled = true
+      if (timer) clearTimeout(timer)
+    }
+  }, [])
+
+  // Keep the wall clock fresh for staleness renders (cheap, decoupled from
+  // the poll cadence).
+  useEffect(() => {
+    const id = setInterval(() => setNow(Date.now()), 15_000)
+    return () => clearInterval(id)
+  }, [])
 
   const selectTicket = (id: number) => {
     setSelectedId(id)
@@ -221,11 +266,108 @@ export default function CofounderView() {
     }
   }
 
+  // G.6 — delegation decide (approve/reject) + approve & publish.
+  const decideJob = async (job: DelegationJob, decision: 'approve' | 'reject') => {
+    if (selectedId === null || busy || decidingJobId !== null) return
+    const jobId = job.jobId ?? ''
+    if (!jobId) return
+    setDecidingJobId(jobId)
+    setNotice(null)
+    try {
+      // Review-before-write (S2-1): send the case version the UI loaded for
+      // draft-applying roles; a stale approve 409s as BLOCKED_CONFLICT.
+      const caseId = job.caseId != null ? Number(job.caseId) : null
+      const expectedVersion =
+        caseId != null && Number.isFinite(caseId)
+          ? (runs.find((r) => r.caseId === caseId)?.caseVersion ?? undefined)
+          : undefined
+      const data = (await fetchJson('/api/cofounder/approve', {
+        method: 'POST',
+        body: JSON.stringify({
+          ticketId: selectedId,
+          jobId,
+          decision,
+          ...(expectedVersion !== undefined ? { expectedVersion } : {}),
+          ...(decision === 'reject' ? { note: 'Rejected by Viktor in the control room.' } : {}),
+        }),
+      })) as { ok: boolean; status: string; applied?: boolean; message?: string }
+      await Promise.all([reloadTicket(), loadList()])
+      setNotice({
+        tone: 'ok',
+        text: data.message ?? `Job ${decision === 'approve' ? 'approved' : 'rejected'}.`,
+      })
+    } catch (err) {
+      setNotice({ tone: 'err', text: err instanceof Error ? err.message : 'Decision failed' })
+      await reloadTicket()
+    } finally {
+      setDecidingJobId(null)
+    }
+  }
+
+  const runPublish = async (caseId: number, expectedVersion: number) => {
+    if (busy || publishingCaseId !== null) return
+    setPublishingCaseId(caseId)
+    setNotice(null)
+    try {
+      const data = (await fetchJson('/api/cofounder/publish', {
+        method: 'POST',
+        body: JSON.stringify({ caseId, expectedVersion }),
+      })) as { ok: boolean; message?: string; publishedReviewId?: number | string }
+      await Promise.all([reloadTicket(), loadList()])
+      setNotice({ tone: 'ok', text: data.message ?? 'Review published.' })
+    } catch (err) {
+      setNotice({ tone: 'err', text: err instanceof Error ? err.message : 'Publish failed' })
+      await reloadTicket()
+    } finally {
+      setPublishingCaseId(null)
+    }
+  }
+
+  const dismissRun = (runId: string) => {
+    setDismissedRuns((prev) => {
+      const next = new Set(prev)
+      next.add(runId)
+      return next
+    })
+  }
+
   const thread = useMemo(() => ticket?.thread ?? [], [ticket?.thread])
   const openPlan = useMemo(
     () => (ticket?.plan ?? []).filter((p) => OPEN_STATUSES.includes(p.status ?? 'todo')),
     [ticket?.plan],
   )
+
+  // G.6 — agents-at-work data from the ticket's runs (extended GET) with the
+  // truthfulness rules from spec §11: stale = pending/running started > 15
+  // min ago (dismissable); one active run per case. Computed inline (not
+  // useMemo) — the React Compiler memoizes pure derived values itself, and
+  // manual memoization of Set/Map-heavy derivations trips its
+  // preserve-manual-memoization rule.
+  const runs = ticket?.runs ?? []
+  const visibleRuns = runs.filter((r) => !dismissedRuns.has(r.runId))
+  const staleRunIds = new Set<string>()
+  for (const r of runs) {
+    if (r.status !== 'pending' && r.status !== 'running') continue
+    const started = r.startedAt ? new Date(r.startedAt).getTime() : 0
+    if (now - started > 15 * 60 * 1000) staleRunIds.add(r.runId)
+  }
+
+  // Approve & Publish eligibility: a pinned case at integrity-check whose
+  // latest integrity-checker run holds a fresh PASS verdict (§12.2 —
+  // verdictForVersion must equal the case version the UI loaded).
+  const publishableCases = (() => {
+    const best = new Map<number, CaseRun>()
+    for (const r of runs) {
+      if (r.agentRole !== 'integrity-checker' || r.caseStatus !== 'integrity-check') continue
+      const verdict = (r.output as { integrityResult?: { verdict?: string; verdictForVersion?: number | null } } | null)
+        ?.integrityResult
+      if (verdict?.verdict !== 'PASS') continue
+      if (typeof verdict.verdictForVersion === 'number' && verdict.verdictForVersion !== r.caseVersion) continue
+      const prev = best.get(r.caseId)
+      if (!prev || (r.completedAt ?? '') > (prev.completedAt ?? '')) best.set(r.caseId, r)
+    }
+    return [...best.values()]
+  })()
 
   return (
     <div style={{ padding: '0 24px 32px', fontFamily: 'var(--font-body)' }}>
@@ -238,8 +380,8 @@ export default function CofounderView() {
         ) : null}
       </div>
       <p style={{ margin: '0 0 16px', color: 'var(--theme-elevation-500)', fontSize: 13.5 }}>
-        Plan sessions, chat with the Cofounder, and track tool activity. Delegation approve/publish
-        arrive with the control room (G.6).
+        Plan sessions, chat with the Cofounder, and run the control room: agents at work, delegation
+        approve/reject, and approve-to-publish (human-only).
       </p>
 
       {error ? (
@@ -497,64 +639,163 @@ export default function CofounderView() {
           )}
         </section>
 
-        {/* ---------- RIGHT: agents & tasks (G.4 slice) ---------- */}
-        <section style={{ flex: '1 1 260px', minWidth: 250, maxWidth: 340 }}>
-          <Card title="Tool activity">
-            {lastToolEvents === null ? (
-              <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', padding: '4px 0' }}>
-                Run a chat turn to see which tools the Cofounder invoked (e.g. <Chip tone="neutral">get_today_plan</Chip>, <Chip tone="neutral">set_plan_item</Chip>). Every call is also audited in agent-logs.
-              </div>
-            ) : lastToolEvents.length === 0 ? (
-              <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', padding: '4px 0' }}>
-                Last turn answered directly — no tools called.
+        {/* ---------- RIGHT: control room (G.6) ---------- */}
+        <section style={{ flex: rightOpen ? '1 1 280px' : '0 1 190px', minWidth: rightOpen ? 260 : 170, maxWidth: rightOpen ? 350 : 240 }}>
+          {/* Compact status strip — always visible (collapsible pane, spec §11) */}
+          <Card
+            title="Control room"
+            right={
+              <button type="button" onClick={() => setRightOpen((v) => !v)} style={smallButton}>
+                {rightOpen ? 'Collapse' : 'Expand'}
+              </button>
+            }
+          >
+            {statusPayload === null ? (
+              <div style={{ fontSize: 12, color: 'var(--theme-elevation-500)', padding: '2px 0' }}>
+                Loading status…
               </div>
             ) : (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                {lastToolEvents.map((ev, i) => (
-                  <div key={i} style={{ border: '1px solid var(--theme-elevation-200)', borderRadius: 8, padding: '8px 10px', background: 'var(--theme-bg)' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                      <Chip tone={ev.ok ? 'ok' : 'err'}>{ev.ok ? 'ok' : 'err'}</Chip>
-                      <span style={{ fontSize: 12, fontWeight: 600, fontFamily: 'var(--font-mono, monospace)' }}>{ev.name}</span>
-                    </div>
-                    <details style={{ marginTop: 6, fontSize: 11.5 }}>
-                      <summary style={{ cursor: 'pointer', color: 'var(--theme-elevation-500)', fontWeight: 600 }}>Output</summary>
-                      <pre style={{ margin: '6px 0 0', padding: 8, borderRadius: 6, background: 'var(--theme-elevation-50)', border: '1px solid var(--theme-elevation-200)', overflow: 'auto', maxHeight: 180, fontSize: 10.5, lineHeight: 1.5, fontFamily: 'var(--font-mono, monospace)' }}>
-                        {JSON.stringify(ev.output, null, 2)}
-                      </pre>
-                    </details>
-                  </div>
-                ))}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 5, fontSize: 12 }}>
+                <span>
+                  <b>{statusPayload.runs.active}</b> run{statusPayload.runs.active === 1 ? '' : 's'} active
+                  {statusPayload.runs.stale > 0 ? ` · ${statusPayload.runs.stale} stale` : ''}
+                </span>
+                <span>
+                  <b>{statusPayload.jobsAwaitingApprove}</b> job{statusPayload.jobsAwaitingApprove === 1 ? '' : 's'} awaiting approve
+                </span>
+                <span style={{ color: 'var(--theme-elevation-500)' }}>
+                  pipeline: {statusPayload.pipeline.inReview} in review · {statusPayload.pipeline.published} live
+                </span>
               </div>
             )}
           </Card>
 
-          <div style={{ marginTop: 14 }}>
-            <Card title="Delegation queue">
-              {(ticket?.delegationQueue ?? []).length === 0 ? (
-                <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', padding: '4px 0' }}>
-                  No jobs proposed yet. When the Cofounder proposes work (research, drafts), jobs appear here as QUEUED.
-                </div>
-              ) : (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
-                  {(ticket?.delegationQueue ?? []).map((job, i) => (
-                    <div key={job.id ?? i} style={{ border: '1px solid var(--theme-elevation-200)', borderRadius: 8, padding: '8px 10px', background: 'var(--theme-bg)' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4 }}>
-                        <Chip tone={jobTone(job.status)}>{job.status ?? '—'}</Chip>
-                        <span style={{ fontSize: 12, fontWeight: 600 }}>{ROLE_LABELS[job.role ?? ''] ?? job.role ?? '—'}</span>
-                      </div>
-                      <div style={{ fontSize: 11.5, color: 'var(--theme-elevation-500)', lineHeight: 1.45 }}>{job.brief ?? ''}</div>
-                      <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 3 }}>
-                        {job.jobId ?? ''}{job.createdAt ? ` · ${new Date(job.createdAt).toLocaleString()}` : ''}
-                      </div>
+          {rightOpen ? (
+            <>
+              {/* Agents at work (spec §11) */}
+              <div style={{ marginTop: 14 }}>
+                <Card title="Agents at work">
+                  {visibleRuns.length === 0 ? (
+                    <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', padding: '4px 0' }}>
+                      No agent runs on the pinned cases yet — delegate work or run a pipeline agent from the chat.
                     </div>
-                  ))}
-                </div>
-              )}
-              <div style={{ marginTop: 10, fontSize: 11, color: 'var(--theme-elevation-500)', fontStyle: 'italic' }}>
-                Approve/reject + approve-to-publish join with the control room (G.6).
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {visibleRuns.map((r) => (
+                        <div key={r.runId} style={{ border: '1px solid var(--theme-elevation-200)', borderRadius: 8, padding: '8px 10px', background: 'var(--theme-bg)', opacity: staleRunIds.has(r.runId) ? 0.65 : 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 3, flexWrap: 'wrap' }}>
+                            <Chip tone={runTone(r.status, staleRunIds.has(r.runId))}>{staleRunIds.has(r.runId) ? 'stale' : r.status}</Chip>
+                            <span style={{ fontSize: 12, fontWeight: 600 }}>{ROLE_LABELS[r.agentRole] ?? r.agentRole}</span>
+                            <span style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', flex: 1, textAlign: 'right' }}>
+                              {r.operatorName ?? r.caseNumber ?? `case ${r.caseId}`}
+                            </span>
+                          </div>
+                          <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginBottom: 3 }}>
+                            started {r.startedAt ? new Date(r.startedAt).toLocaleTimeString() : '—'}
+                            {r.completedAt ? ` · done ${new Date(r.completedAt).toLocaleTimeString()}` : ''}
+                          </div>
+                          {staleRunIds.has(r.runId) ? (
+                            <button type="button" onClick={() => dismissRun(r.runId)} style={smallButton}>
+                              Dismiss
+                            </button>
+                          ) : null}
+                          {r.output ? (
+                            <details style={{ marginTop: 4, fontSize: 11.5 }}>
+                              <summary style={{ cursor: 'pointer', color: 'var(--theme-elevation-500)', fontWeight: 600 }}>Structured output</summary>
+                              <pre style={{ margin: '6px 0 0', padding: 8, borderRadius: 6, background: 'var(--theme-elevation-50)', border: '1px solid var(--theme-elevation-200)', overflow: 'auto', maxHeight: 200, fontSize: 10, lineHeight: 1.5, fontFamily: 'var(--font-mono, monospace)' }}>
+                                {JSON.stringify(r.output, null, 2)}
+                              </pre>
+                            </details>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
               </div>
-            </Card>
-          </div>
+
+              {/* Delegation queue with approve/reject (spec §4.1 / §12) */}
+              <div style={{ marginTop: 14 }}>
+                <Card title="Delegation queue">
+                  {(ticket?.delegationQueue ?? []).length === 0 ? (
+                    <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', padding: '4px 0' }}>
+                      No jobs proposed yet. When the Cofounder proposes work (research, drafts), jobs appear here as QUEUED.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {(ticket?.delegationQueue ?? []).map((job, i) => (
+                        <div key={job.id ?? i} style={{ border: '1px solid var(--theme-elevation-200)', borderRadius: 8, padding: '8px 10px', background: 'var(--theme-bg)' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 4, flexWrap: 'wrap' }}>
+                            <Chip tone={jobTone(job.status)}>{job.status ?? '—'}</Chip>
+                            <span style={{ fontSize: 12, fontWeight: 600 }}>{ROLE_LABELS[job.role ?? ''] ?? job.role ?? '—'}</span>
+                            {job.status === 'QUEUED' ? (
+                              <span style={{ marginLeft: 'auto', display: 'flex', gap: 6 }}>
+                                <button
+                                  type="button"
+                                  disabled={busy || decidingJobId !== null}
+                                  onClick={() => decideJob(job, 'approve')}
+                                  style={{ ...smallButton, background: 'var(--theme-success-400)' }}
+                                >
+                                  Approve
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={busy || decidingJobId !== null}
+                                  onClick={() => decideJob(job, 'reject')}
+                                  style={{ ...smallButton, background: 'var(--theme-error-400)' }}
+                                >
+                                  Reject
+                                </button>
+                              </span>
+                            ) : null}
+                          </div>
+                          <div style={{ fontSize: 11.5, color: 'var(--theme-elevation-500)', lineHeight: 1.45 }}>{job.brief ?? ''}</div>
+                          <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginTop: 3 }}>
+                            {job.jobId ?? ''}
+                            {job.caseId ? ` · case ${String(job.caseId)}` : ''}
+                            {job.outputRef ? ` · ${String(job.outputRef)}` : ''}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </Card>
+              </div>
+
+              {/* Approve & Publish (spec §12) */}
+              <div style={{ marginTop: 14 }}>
+                <Card title="Approve & Publish">
+                  {publishableCases.length === 0 ? (
+                    <div style={{ fontSize: 12.5, color: 'var(--theme-elevation-500)', padding: '4px 0' }}>
+                      A case becomes publishable when it reaches integrity-check with a fresh PASS verdict. Run the integrity checker, then come back here.
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                      {publishableCases.map((r) => (
+                        <div key={r.caseId} style={{ border: '1px solid var(--theme-success-400)', borderRadius: 8, padding: '8px 10px', background: 'var(--theme-bg)' }}>
+                          <div style={{ fontSize: 12, fontWeight: 600 }}>{r.operatorName ?? r.caseNumber ?? `Case ${r.caseId}`}</div>
+                          <div style={{ fontSize: 10.5, color: 'var(--theme-elevation-500)', marginBottom: 6 }}>
+                            {r.caseNumber} · integrity PASS (v{r.caseVersion}) · verdict {r.completedAt ? new Date(r.completedAt).toLocaleString() : ''}
+                          </div>
+                          <button
+                            type="button"
+                            disabled={busy || publishingCaseId !== null}
+                            onClick={() => runPublish(r.caseId, r.caseVersion)}
+                            style={{ ...smallButton, background: 'var(--theme-success-400)', padding: '6px 12px' }}
+                          >
+                            {publishingCaseId === r.caseId ? 'Publishing…' : 'Approve & Publish'}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  <div style={{ marginTop: 8, fontSize: 11, color: 'var(--theme-elevation-500)', fontStyle: 'italic' }}>
+                    Human-only trigger — publish creates the review doc, links the case, and the site revalidates itself.
+                  </div>
+                </Card>
+              </div>
+            </>
+          ) : null}
         </section>
       </div>
     </div>
@@ -594,9 +835,34 @@ type DelegationJob = {
   source?: string | null
   status?: string | null
   createdAt?: string | null
+  caseId?: number | string | null
+  outputRef?: string | null
 }
 
 type PinnedCase = { id: number; caseNumber?: string | null; operatorName?: string | null; status?: string | null }
+
+/** G.6 — one aiRun on a pinned case, compact projection from the ticket GET. */
+type CaseRun = {
+  runId: string
+  caseId: number
+  caseNumber: string | null
+  operatorName: string | null
+  caseStatus: string | null
+  caseVersion: number
+  agentRole: string
+  status: string
+  startedAt: string | null
+  completedAt: string | null
+  output: Record<string, unknown> | null
+}
+
+/** G.6 — GET /api/cofounder/status aggregation (compact strip + polling). */
+type StatusPayload = {
+  tickets: { open: number; active: number }
+  runs: { active: number; stale: number; detail: CaseRun[] }
+  jobsAwaitingApprove: number
+  pipeline: { total: number; inReview: number; published: number; byStage: Record<string, number> }
+}
 
 type TicketDetail = {
   id: number
@@ -608,6 +874,7 @@ type TicketDetail = {
   thread: ThreadTurn[]
   pinnedCases: (PinnedCase | number)[]
   delegationQueue: DelegationJob[]
+  runs: CaseRun[]
   lastActiveAt: string | null
   createdAt: string | null
   version: number | null
@@ -730,6 +997,21 @@ const jobTone = (status: string | null | undefined): 'ok' | 'warn' | 'err' | 'ac
       return 'warn'
     case 'REJECTED':
       return 'err'
+    default:
+      return 'neutral'
+  }
+}
+
+const runTone = (status: string, stale: boolean): 'ok' | 'warn' | 'err' | 'accent' | 'neutral' => {
+  if (stale) return 'warn'
+  switch (status) {
+    case 'complete':
+    case 'complete-with-warning':
+      return status === 'complete' ? 'ok' : 'warn'
+    case 'failed':
+      return 'err'
+    case 'running':
+      return 'accent'
     default:
       return 'neutral'
   }
