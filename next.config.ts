@@ -46,6 +46,13 @@ const nextConfig: NextConfig = {
   },
   reactStrictMode: true,
   redirects,
+  // H2 (Wire Room): Next 16 native View Transitions API support — client
+  // navigations get the `::view-transition-*` choreography defined in
+  // globals.css (a quick room-lens crossfade). No-op on browsers without
+  // the API; reduced-motion users get instant transitions (see globals.css).
+  experimental: {
+    viewTransition: true,
+  },
   turbopack: {
     root: path.resolve(dirname),
   },

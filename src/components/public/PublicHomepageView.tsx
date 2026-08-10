@@ -28,6 +28,8 @@ export function PublicHomepageView() {
     <div className="min-h-screen bg-ink text-paper font-sans">
       {/* Command deck — the hero, framed as a live intel readout. */}
       <section className="relative isolate overflow-hidden border-b border-line bg-blueprint">
+        {/* Wire Room atmosphere — slow-drifting evidence/coral washes (H2). */}
+        <div aria-hidden className="atmos" />
         {/* Living evidence field — WebGL atmosphere (gated, decorative). */}
         <HeroFieldView />
         {/* Ambient brand glow — restrained evidence/coral wash, not neon. */}
@@ -56,15 +58,22 @@ export function PublicHomepageView() {
           LAT 52.37 // LON 4.90 // EVIDENCE_LINK
         </div>
 
+        {/* CRT scanline texture — the room is a screen (H2). */}
+        <div aria-hidden className="hud-scanlines pointer-events-none absolute inset-0" />
+
         <div className="relative z-10 mx-auto max-w-6xl space-y-10 px-4 pb-16 pt-14 sm:px-6 sm:pb-24 sm:pt-20 lg:px-8">
           {/* Signature machined seal — the one true 3D brand mark (code-split, graceful fallback). */}
           <div className="flex justify-center">
             <MachinedSealLazy size={72} title="Playerside verification seal" />
           </div>
 
-          {/* Top badge — entry ceremony step 1 (eyebrow rise). */}
+          {/* Top badge — entry ceremony step 1 (eyebrow rise). data-magnetic:
+              the Wire Room cursor leans it toward the pointer on desktop. */}
           <div className="enter-eyebrow flex justify-center">
-            <div className="inline-flex items-center gap-2.5 rounded-full border border-line bg-ink/80 px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-evidence backdrop-blur-xl">
+            <div
+              data-magnetic
+              className="inline-flex items-center gap-2.5 rounded-full border border-line bg-ink/80 px-4 py-1.5 font-mono text-[11px] uppercase tracking-[0.18em] text-evidence backdrop-blur-xl"
+            >
               <span className="h-1.5 w-1.5 rounded-full bg-evidence animate-pulse" />
               The Only Evidence-Backed Casino &amp; Bonus Database
             </div>

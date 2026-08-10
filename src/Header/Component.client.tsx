@@ -15,7 +15,7 @@ interface HeaderClientProps {
 
 export const HeaderClient: React.FC<HeaderClientProps> = ({ data }) => {
   return (
-    <header className="sticky top-0 z-40 border-b border-line border-t-2 border-t-coral/60 bg-ink/72 backdrop-blur-[14px]">
+    <header className="vt-header sticky top-0 z-40 border-b border-line border-t-2 border-t-coral/60 bg-ink/72 backdrop-blur-[14px]">
       <div className="container relative flex items-center justify-between gap-4 py-5">
         <Link aria-label="Playerside — home" className="shrink-0" href="/">
           <Logo loading="eager" priority="high" />

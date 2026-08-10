@@ -11,7 +11,7 @@ export async function Footer() {
   const navItems = footerData?.navItems || []
 
   return (
-    <footer className="mt-auto border-t border-line bg-ink-2 text-paper-dim">
+    <footer className="vt-footer mt-auto border-t border-line bg-ink-2 text-paper-dim">
       <div className="container flex flex-col gap-7 py-12 sm:py-14">
         <div className="flex flex-col justify-between gap-6 border-b border-line pb-7 md:flex-row md:items-center">
           <Link aria-label="Playerside — home" href="/">

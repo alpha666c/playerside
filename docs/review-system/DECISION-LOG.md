@@ -763,3 +763,23 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
 - **Pre-existing debt found (not blocking):** `scripts/seed-research-queue.ts`
   fails `tsc -p tsconfig.scripts.json` (Payload create overload mismatch) — file
   unmodified by us, not in the build path. Fix in a cleanup pass if desired.
+
+## 2026-08-10 — Phase H2 (Wire Room hero 2.0) decisions
+
+- **View transitions via Next `experimental.viewTransition`, not a library.** Next
+  16.2.6 ships the flag; `next-view-transitions` would be a third-party dep for the
+  same cross-fade. Root transition keyframes (`vt-out`/`vt-in`) live in globals.css
+  and are scoped to `prefers-reduced-motion: no-preference` (the global reduced
+  motion override does NOT reach the browser's `::view-transition-*` overlay, so it
+  gets its own explicit guard). Header/footer get `view-transition-name` via
+  `@supports` — inert in browsers without the API.
+- **CursorSignal is a glow + magnetic lean, NOT a cursor replacement.** No
+  `cursor: none`, no native-cursor masking — the browser cursor and `:focus-visible`
+  ring stay fully intact (reviewer S3: custom cursor must never hide a11y affordances).
+  Magnetic displacement is capped (2–7px) so it's a lean, never a fight.
+- **Live media-query listeners, not one-shot mount checks.** If the user flips
+  prefers-reduced-motion or plugs in a touch screen while the page is open, the
+  component disables/enables reactively (reviewer S2).
+- **Magnetic state uses a symmetric enter/leave pair** (pointerout with relatedTarget
+  check + document mouseleave). Single `clearMagnetic()` path guarantees the element
+  always resets and the rAF loop never leaks (reviewer S2).

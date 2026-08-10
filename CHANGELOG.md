@@ -1,3 +1,17 @@
+- **feat(ui): Phase H2 — Wire Room hero 2.0 (view transitions, atmosphere, cursor signal).**
+  `experimental.viewTransition` on for Next-native route cross-fades; persistent
+  header/footer get their own transition identity (`vt-header`/`vt-footer`) so the
+  chrome stays put while the page body cross-fades (root `vt-out`/`vt-in`, guarded
+  by prefers-reduced-motion). Hero gets a `.atmos` layer — two slow-drifting
+  evidence/coral washes (transform-only, pointer-transparent, reduced-motion off) —
+  plus the static `.hud-scanlines` CRT texture. New `CursorSignal` desktop cursor
+  glow: evidence/coral radial signal trailing the pointer + subtle magnetic pull on
+  `[data-magnetic]` CTAs; gated on `(hover:hover) and (pointer:fine)` and
+  prefers-reduced-motion, with live media-query listeners and a symmetric
+  enter/leave cleanup so magnetic state can never leak (reviewer S2). No React
+  re-renders (refs + rAF), transform-only animation, native cursor and
+  `:focus-visible` untouched.
+
 - **fix(deploy): unblock Vercel builds — converge the delegation-queue DROP TYPE on the dev-pushed prod DB.**
   Every deploy for ~24h failed at prebuild's `ci-migrate` step: migration
   20260809_184012's `up` ran a bare `DROP TYPE "enum_cofounder_sessions_delegation_queue_source"`,

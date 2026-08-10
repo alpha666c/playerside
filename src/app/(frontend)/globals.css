@@ -670,3 +670,117 @@ html[data-theme='light'] {
   }
 }
 
+/* ------------------------------------------------------------------ */
+/* H2 — Wire Room atmosphere: view transitions, ambient drift, CRT     */
+/* ------------------------------------------------------------------ */
+
+/* View Transitions — the room's screen-change. Old frame eases out with a
+   hair of scale; new frame eases in. The global reduced-motion rule above
+   does NOT cover the ::view-transition pseudo-elements (they're on the
+   browser's overlay, not in the DOM), so they get their own explicit guard. */
+@media (prefers-reduced-motion: no-preference) {
+  ::view-transition-old(root) {
+    animation: vt-out 0.24s var(--ease-out-quart) both;
+  }
+  ::view-transition-new(root) {
+    animation: vt-in 0.24s var(--ease-out-quart) both;
+  }
+}
+@keyframes vt-out {
+  to {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+@keyframes vt-in {
+  from {
+    opacity: 0;
+    transform: scale(0.99);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
+
+/* Ambient atmosphere — slow-drifting evidence/coral washes behind the hero
+   content. Transform-only (compositor-friendly), pointer-transparent,
+   contained by the hero's overflow-hidden. Two layered discs drift on
+   alternating axes so the room never sits still. */
+.atmos {
+  position: absolute;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+.atmos::before,
+.atmos::after {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: -10%;
+  width: 120%;
+  height: 120%;
+  border-radius: 9999px;
+  will-change: transform;
+}
+.atmos::before {
+  background:
+    radial-gradient(circle at 30% 28%, rgba(110, 168, 216, 0.1), transparent 55%),
+    radial-gradient(circle at 72% 68%, rgba(255, 93, 69, 0.07), transparent 55%);
+  animation: atmos-a 34s var(--ease-out-quart) infinite alternate;
+}
+.atmos::after {
+  background:
+    radial-gradient(circle at 76% 22%, rgba(110, 168, 216, 0.06), transparent 50%),
+    radial-gradient(circle at 22% 82%, rgba(255, 93, 69, 0.05), transparent 55%);
+  animation: atmos-b 46s var(--ease-out-quart) infinite alternate;
+}
+@keyframes atmos-a {
+  to {
+    transform: translate3d(4%, 3%, 0) scale(1.08);
+  }
+}
+@keyframes atmos-b {
+  to {
+    transform: translate3d(-3%, -4%, 0) scale(1.12);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .atmos::before,
+  .atmos::after {
+    animation: none;
+  }
+}
+
+/* CRT scanline texture — the hero reads as a surveillance screen. Static,
+   extremely faint; safe under reduced motion (no animation involved). */
+.hud-scanlines {
+  background-image: repeating-linear-gradient(
+    0deg,
+    rgba(243, 238, 232, 0.055) 0px,
+    rgba(243, 238, 232, 0.055) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  background-size: 100% 3px;
+}
+
+/* Persistent chrome gets its own transition identity so the header/footer
+   stay put while only the page body cross-fades between routes. Names are
+   inert in browsers without View Transitions support. */
+.vt-header,
+.vt-footer {
+  view-transition-name: none;
+}
+@supports (view-transition-name: none) {
+  .vt-header {
+    view-transition-name: playerside-header;
+  }
+  .vt-footer {
+    view-transition-name: playerside-footer;
+  }
+}
+
