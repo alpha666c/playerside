@@ -1,3 +1,24 @@
+- **fix(deploy): unblock Vercel builds — converge the delegation-queue DROP TYPE on the dev-pushed prod DB.**
+  Every deploy for ~24h failed at prebuild's `ci-migrate` step: migration
+  20260809_184012's `up` ran a bare `DROP TYPE "enum_cofounder_sessions_delegation_queue_source"`,
+  but on the prod DB (bootstrapped by dev-mode schema push) that enum was
+  never created — 20260809_183111 got baselined when its CREATE TABLE hit
+  duplicates, so the whole transaction (incl. its CREATE TYPEs) rolled back.
+  `42704` (undefined_object) wasn't in the reconciler's tolerance sets, so
+  ci-migrate exited 1 and every build died before static generation.
+  - 20260809_184012 `up`: `DROP TYPE` → `DROP TYPE IF EXISTS` (same hardening
+    pattern as 20260809_182227's llm_provider conversion).
+  - `scripts/ci-migrate.ts`: `DROP_ALREADY_APPLIED_CODES` now includes 42704
+    (missing TYPE) — any future DROP-type migration converges on dev-pushed
+    DBs instead of hard-failing; 42704 only applies to drop-type ups, so
+    non-drop migrations stay strict.
+  - Verified on the real Vercel build: `20260809_184012 APPLIED`, chain
+    reconciled (7 applied, 15 already-present, 22 total), ✓ compiled 14.6s,
+    ✓ 51/51 static pages generated, deployment Ready.
+  - Housekeeping: ElevenLabs + Gemini keys stored as Vercel production env
+    vars (Sensitive, values hidden) + in the local dev system-settings
+    global — keys never committed to the repo.
+
 - **feat(ui): Phase H1 — palette convergence + the alive-layer (Wire Room groundwork).**
   The 4-layer Alive-UI gameplan (research + roadmap, docs/review-handoffs/
   2026-08-10-alive-ui-gameplan.md) kicked off with "kill the dead pixels":

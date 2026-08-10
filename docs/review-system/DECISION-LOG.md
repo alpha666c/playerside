@@ -725,3 +725,41 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
   H3 Vex character (Rive bust + ElevenLabs TTS on beats), H4 telemetry theater
   (animated scores, dossier reveals, wagering translation pills), H5 sound,
   H6 measurement.
+
+## 2026-08-10 — Deploy hotfix: 20260809_184012 DROP TYPE on dev-pushed prod DB
+
+- **Symptom:** every Vercel deployment for ~24h failed (5 in a row) at prebuild's
+  `scripts/ci-migrate.ts` with `[ci-migrate] 20260809_184012 FAILED (42704): type
+  "public.enum_cofounder_sessions_delegation_queue_source" does not exist` →
+  `ELIFECYCLE Command failed`, so `next build` never ran static generation.
+- **Root cause (two layers):**
+  1. Prod was bootstrapped by a dev-mode schema push (documented history), so
+     `20260809_183111` (the delegation-queue CREATE TABLE + CREATE TYPE batch)
+     got baselined: its first CREATE TABLE hit duplicates → the whole
+     transaction rolled back → the `enum_..._source` TYPE was never created,
+     even though the table exists (Payload dev push made it).
+  2. `20260809_184012.up` then did a bare `DROP TYPE enum_..._source` — the
+     "convert enum column to varchar" migration couldn't drop a type that
+     never existed. `42704` (undefined_object) is NOT in the reconciler's
+     `ALREADY_EXISTS_CODES` {42P07, 42701, 42710, 42723, 42P04, 23505} nor the
+     drop-tolerant set {42P01, 42703} (missing table/column) — missing TYPE
+     raises 42704, the gap that killed the builds.
+- **Fix (two parts, both shipped in 37ba76f):**
+  - `20260809_184012.up` → `DROP TYPE IF EXISTS` (mirrors the hardening
+    `20260809_182227` already had for `enum_system_settings_llm_provider`).
+  - `ci-migrate.ts` `DROP_ALREADY_APPLIED_CODES` gains `42704` — scoped to
+    drop-type ups only (isDropTypeUp), so non-drop migrations stay strict and
+    future enum drops on dev-pushed DBs converge instead of hard-failing.
+- **Verified on the real Vercel build (dpl_7EhsKfxgnC2yr42EfaN3z71Yqktk):**
+  `20260809_184012 APPLIED` · reconcile done — 7 applied, 15 already-present
+  (22 total) · ✓ Compiled 14.6s · ✓ 51/51 static pages · status Ready.
+  (Deployment is SSO-protected → anonymous curl 302s to vercel.com/login, expected.)
+- **Keys:** ElevenLabs + Gemini API keys stored as Vercel **production** env vars
+  (ELEVENLABS_API_KEY, GEMINI_API_KEY — type Sensitive, values hidden) and in the
+  **local dev** system-settings global. Nothing committed to the repo; user plans
+  to rotate the ElevenLabs key later — rotation = edit the Vercel env var.
+  Note: env vars were added after this deploy started, so they'll be live on the
+  next deploy; no code consumes them until H3 anyway.
+- **Pre-existing debt found (not blocking):** `scripts/seed-research-queue.ts`
+  fails `tsc -p tsconfig.scripts.json` (Payload create overload mismatch) — file
+  unmodified by us, not in the build path. Fix in a cleanup pass if desired.
