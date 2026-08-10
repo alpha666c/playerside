@@ -45,12 +45,19 @@ const ALREADY_EXISTS_CODES = new Set([
 ])
 
 /**
- * For DROP-type migrations, "object does not exist" (42P01 / 42703) means the
- * drop already happened — the migration is effectively applied, so baseline.
+ * For DROP-type migrations, "object does not exist" means the drop already
+ * happened — the migration is effectively applied, so baseline.
+ * 42P01/42703 = missing table/column; 42704 (undefined_object) = missing
+ * TYPE — the one that actually bit prod 2026-08-10: 20260809_184012's bare
+ * `DROP TYPE enum_cofounder_sessions_delegation_queue_source` failed on the
+ * dev-pushed prod DB where the enum was never created (183111 baselined and
+ * rolled back its CREATE TYPEs). 184012 itself is now hardened with
+ * `DROP TYPE IF EXISTS`; this code keeps ANY future DROP-type migration
+ * convergent on dev-pushed DBs.
  * (All migrations here have a `down()` full of DROPs, so we scan only the
  * `up()` body to decide.)
  */
-const DROP_ALREADY_APPLIED_CODES = new Set(['42P01', '42703'])
+const DROP_ALREADY_APPLIED_CODES = new Set(['42P01', '42703', '42704'])
 
 function isDropTypeUp(source: string): boolean {
   const upStart = source.indexOf('function up(')
