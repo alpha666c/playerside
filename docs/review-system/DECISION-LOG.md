@@ -856,3 +856,44 @@ removal deterministically at the editorial choke point, per the approved
 
 **Deferred:** open-seo integration is Phase I2 (needs VPS + DataForSEO key). open-generative-ai
 and AutoGPT remain deferred per the plan.
+
+## 2026-08-11 — Phase I2: open-seo prep (settings + seo_lookup tool + VPS compose)
+
+**What shipped (prep only — no live data yet):** SystemSettings gained `openSeoUrl`,
+`openSeoProjectId`, `dataForSeoApiKey` (secret) and `seoRowCapPerDay` (default 500).
+New `src/lib/openSeo.ts` (read-only MCP client for the self-hosted
+every-app/open-seo instance), the Cofounder's `seo_lookup` tool (per-turn cap 3,
+daily row budget via `seo_call` audit events, read-only tools only,
+wrapUntrustedData), a hardened VPS compose block + env contract in
+`infra/open-seo/`, `.env.example` parity. 19 new tests; 297/297 suite green;
+tsc + lint + build clean. Live E2E awaits the VPS container + DataForSEO key (Viktor).
+
+**Deliberate deviations from the approved plan (logged per house rule):**
+1. **Migration hand-written, not `payload migrate:create`.** The plan's reviewer
+   required `payload migrate:create` (DROP TYPE incident lesson). The identical
+   in-repo precedent for nullable GLOBAL field adds
+   (`20260810_add_system_settings_keys`) is a hand-written idempotent ALTER; this
+   migration follows it exactly: `ADD COLUMN IF NOT EXISTS` ×4 + `ALTER TYPE …
+   ADD VALUE IF NOT EXISTS 'seo_call'` (PG12+ safe in-transaction; the value is
+   only USED at runtime after commit). Both guards are the converged hardening.
+2. **Settings surface is 4 fields, not the plan's 2.** `openSeoProjectId` was
+   added because open-seo's research/rank MCP tools are project-scoped
+   (`withMcpProjectAuth`) — `seo_lookup` is unusable without it.
+   `seoRowCapPerDay` was added because I2.3 says "mirror LLM_SPEND_CAP_PER_DAY",
+   which is a DB setting. Both are justified, admin-documented additions.
+3. **Plan said "postgres + app" compose; open-seo is worker/D1-backed**
+   (Wrangler + D1/SQLite store at `/app/.wrangler`) — the compose block has no
+   Postgres service; the plan's hosting assumption was corrected.
+4. **Success-only spend accounting (reviewer S2).** A failed tools/call (isError)
+   records no `seo_call` row and does not consume the per-turn counter, because a
+   client-side failure may or may not have hit DataForSEO. Undercount is bounded
+   by the per-turn cap + limit ≤ 50; documented in infra/open-seo/README.md.
+
+**Guardrails re-verified by tests:** SSRF impossible (URL/project/key come from
+settings/env only — the model's args can never supply a host) · hostile SERP
+content is HTML-stripped (script content included) and wrapped in
+`<untrusted_data>` · daily row budget sums `seo_call` rows (the log IS the
+counter, mirroring llm.ts) · `Number(null) = 0` silent-cap-disable bug caught and
+fixed in `num()` · the g5ToolContract dispatcher allowlist gained `seo_lookup`
+(the governance drift-catcher did its job).
+

@@ -109,6 +109,10 @@ export const AgentLogs: CollectionConfig<'agent-logs'> = {
         // Phase G (G.3): every Cofounder tool invocation (spec §7.2) —
         // metadata only (tool name + args + ok), never message content.
         { label: 'Tool call', value: 'tool_call' },
+        // Phase I2: seo_lookup calls (metadata: metric, query, rows) — doubles
+        // as the DataForSEO daily billable-row counter (per-row billing).
+        // Operational class, like llm_call.
+        { label: 'SEO call', value: 'seo_call' },
         // Phase G (G.6): control-room audits (spec §12) — delegation
         // decisions + publish outcomes, with approving user/case version/
         // runId in details.

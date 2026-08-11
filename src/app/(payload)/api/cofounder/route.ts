@@ -81,6 +81,10 @@ export async function POST(request: Request): Promise<Response> {
     })
 
     // 4. Tool loop — max 4 iterations, hard wall-clock budget (QA S1-3).
+    // ONE mutable ctx object per turn (Phase I2): the tools may carry state
+    // across calls within the turn — seoCallsUsed enforces the seo_lookup
+    // per-turn cap. budgetRemainingMs is refreshed before each call.
+    const toolCtx = { ticketId: ticket.id, budgetRemainingMs: 0, seoCallsUsed: 0 }
     const toolHistory: LlmMessage[] = []
     const toolEvents: Array<{
       name: string
@@ -117,13 +121,8 @@ export async function POST(request: Request): Promise<Response> {
         } catch {
           args = {}
         }
-        const toolRes = await executeCofounderTool(payload, req, tc.name, args, {
-          ticketId: ticket.id,
-          // Reviewer S2 (G.5): pass the remaining wall-clock budget so the
-          // run_pipeline_agent tool can refuse to start an agent run it cannot
-          // finish inside the turn's 190s cap.
-          budgetRemainingMs: WALL_CLOCK_MS - (Date.now() - startedAt),
-        })
+        toolCtx.budgetRemainingMs = WALL_CLOCK_MS - (Date.now() - startedAt)
+        const toolRes = await executeCofounderTool(payload, req, tc.name, args, toolCtx)
         toolEvents.push({ name: tc.name, args, ok: toolRes.ok, output: toolRes.output })
         toolHistory.push({
           role: 'tool',

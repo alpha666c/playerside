@@ -1390,6 +1390,7 @@ export interface AgentLog {
     | 'ticket_updated'
     | 'ticket_status_change'
     | 'tool_call'
+    | 'seo_call'
     | 'delegation_approved'
     | 'delegation_rejected'
     | 'delegation_conflict'
@@ -3593,6 +3594,22 @@ export interface SystemSetting {
    * Google AI Studio / Gemini API key (https://aistudio.google.com/apikey) for Vex concept art + marketing video assets (Imagen / Veo, Phase H3).
    */
   geminiApiKey?: string | null;
+  /**
+   * Base URL of the self-hosted OpenSEO instance (Phase I2 — keyword research / rank tracking for the Cofounder). Set once the VPS container is up; env OPENSEO_URL overrides this value.
+   */
+  openSeoUrl?: string | null;
+  /**
+   * OpenSEO project id the Cofounder's seo_lookup tool reads from (research_keywords / get_ranked_keywords are project-scoped in OpenSEO). Env OPENSEO_PROJECT_ID overrides.
+   */
+  openSeoProjectId?: string | null;
+  /**
+   * DataForSEO BYOK key (base64 "email:password", https://app.dataforseo.com/api-access) consumed by the self-hosted OpenSEO instance. Stays in the DB / host env — never in the repo. Env DATAFORSEO_API_KEY overrides.
+   */
+  dataForSeoApiKey?: string | null;
+  /**
+   * Daily billable-row budget for the seo_lookup tool (DataForSEO bills PER ROW, not per call). Counted via seo_call audit events in agent-logs; 0 disables the cap. Env SEO_ROW_CAP_PER_DAY overrides.
+   */
+  seoRowCapPerDay?: number | null;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -3692,6 +3709,10 @@ export interface SystemSettingsSelect<T extends boolean = true> {
   exaApiKey?: T;
   elevenLabsApiKey?: T;
   geminiApiKey?: T;
+  openSeoUrl?: T;
+  openSeoProjectId?: T;
+  dataForSeoApiKey?: T;
+  seoRowCapPerDay?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

@@ -77,3 +77,18 @@ The private domain is managed by Viktor outside this repo. Do not use personal G
 | 2026-08-11 | LLM_API_KEY (OpenRouter) | rotated-out | `sk-or-v1-…d453d0` stored in .env + system-settings DB + Vercel prod (Sensitive); verified live |
 Rules: never commit real values; `.env.local` (local) + Vercel env (prod/preview) only;
 log key rotation in this file.
+
+---
+
+## Phase I2 — OpenSEO / DataForSEO (API keys)
+
+| Secret | Where it lives | Status |
+|---|---|---|
+| `dataForSeoApiKey` (DataForSEO base64 `email:password`, https://app.dataforseo.com/api-access) | SystemSettings global (admin-only) **and/or** VPS host `.env` for the open-seo container | ⏳ PENDING — Viktor to add |
+| `openSeoUrl` | SystemSettings global / `OPENSEO_URL` env | ⏳ PENDING — set when the VPS container is up |
+| `openSeoProjectId` | SystemSettings global / `OPENSEO_PROJECT_ID` env | ⏳ PENDING — create a project in the open-seo UI |
+
+> Keys are never committed to the repo (`.env.example` holds placeholders only).
+> Paste `dataForSeoApiKey` once in `/admin/globals/system-settings` and every
+> host reads it from the DB.
+

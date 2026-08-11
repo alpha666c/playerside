@@ -70,6 +70,8 @@ describe('T7 run_pipeline_agent', () => {
         'close_ticket',
         'run_pipeline_agent',
         'draft_delegation',
+        // I2 — read-only SEO intel, dispatcher-handled + audited like the rest
+        'seo_lookup',
       ]).toContain(name)
     }
   })

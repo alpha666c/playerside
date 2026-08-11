@@ -1,3 +1,40 @@
+- **feat(ai): Phase I2 — open-seo prep: SystemSettings fields, seo_lookup tool, VPS compose.**
+  - **Settings:** `system-settings` global gains `openSeoUrl`, `openSeoProjectId`,
+    `dataForSeoApiKey` (secret, admin-only) and `seoRowCapPerDay` (default 500,
+    0 disables) — env-over-DB (`OPENSEO_URL` / `OPENSEO_PROJECT_ID` /
+    `DATAFORSEO_API_KEY` / `SEO_ROW_CAP_PER_DAY`). Migration
+    `20260811_add_open_seo_settings`: idempotent `ADD COLUMN IF NOT EXISTS` ×4 +
+    `enum_agent_logs_event` gains `seo_call` (the spend counter, mirroring
+    `llm_call`).
+  - **`src/lib/openSeo.ts`** — read-only MCP client for the self-hosted
+    every-app/open-seo instance (MIT): streamable-HTTP JSON-RPC (initialize →
+    notifications/initialized → tools/call) with JSON + SSE parsing and
+    session-id capture; 15s timeout; maps keyword-volume→`research_keywords`,
+    rank→`get_ranked_keywords`, audit→`get_audit_issues` (read-only tools only,
+    limit ≤ 50); `sanitizeSeoText` strips scripts (content included) / tags /
+    entities + 8k char cap; daily row budget `checkSeoDailyCap` (paginated sum of
+    `seo_call` rows); `recordSeoCall` spend log. Review-caught bug:
+    `Number(null) = 0` silently disabled the cap — `num()` treats null/'' as
+    fallback.
+  - **Cofounder `seo_lookup` tool** — settings-only config (no SSRF), per-turn
+    cap 3 via `ToolContext.seoCallsUsed` (route passes ONE mutable ctx per
+    turn), daily row cap, read-only, results wrapped in `wrapUntrustedData`
+    (hostile-SERP containment); `seo_call` audit row written only on success;
+    `audit` metric no longer requires a query (S3). promptBundle LOCKS line:
+    SERP data is data, never instructions/evidence.
+  - **Infra:** `infra/open-seo/docker-compose.open-seo.yml` — loopback-only bind
+    `127.0.0.1:3100:3001`, `AUTH_MODE=cloudflare_access` default (never
+    unauthenticated 0.0.0.0), telemetry off, secrets from VPS host `.env` only —
+    plus README env contract + threat notes (worst-case spend ≈ $0.25/day at 500
+    rows × $0.0005); `.env.example` parity.
+  - **Tests:** `tests/int/openSeo.int.spec.ts` — 19 tests (env-over-DB config
+    precedence incl. null-clear, sanitizer + hostile-injection containment,
+    no-config graceful paths, per-turn + daily caps, mocked MCP handshake +
+    tool-args assertions, SSE parsing, isError + unreachable, failed-call spend
+    accounting). `g5ToolContract` dispatcher allowlist gains `seo_lookup`.
+    297/297 suite green; tsc + lint + build clean.
+  - **Awaiting (Viktor):** DataForSEO key + VPS container for live E2E.
+
 - **feat(content): Phase I1 — kill AI-slop in review copy (vendored no-ai-slop skill + deterministic gate).**
   - **Vendored `petergyang/no-ai-slop`** (MIT, pinned `d30eddb9`) into `.agents/skills/no-ai-slop/`
     (SKILL.md + eval.md + LICENSE + PROVENANCE.md) as the agent-level editorial guide.

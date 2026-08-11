@@ -1,0 +1,53 @@
+# Phase I2 — self-hosted OpenSEO (every-app/open-seo, MIT) for the Cofounder's
+# seo_lookup tool. Run from the VPS host (NOT Vercel — open-seo is a
+# long-running service with its own worker/D1 store).
+#
+# Hardening (spec I2.1, reviewer S2):
+# - Binds to 127.0.0.1 ONLY — never published to 0.0.0.0. Put a Caddy /
+#   Cloudflare Tunnel / reverse proxy with REAL auth in front (recommended:
+#   AUTH_MODE=cloudflare_access so the proxy enforces the policy).
+# - AUTH_MODE=local_noauth ships with NO password (admin@localhost is
+#   injected) — only ever use it on a loopback bind behind your own auth.
+# - The DataForSEO key, Cloudflare TEAM_DOMAIN/POLICY_AUD and Better-Auth
+#   secrets live in the VPS host .env (this file forwards them) — they are
+#   NEVER in the playerside repo. See README.md in this directory.
+# - Telemetry off by default (OPENSEO_TELEMETRY_DISABLED=1).
+#
+# Usage on the VPS:
+#   cp /path/to/this/file ./docker-compose.open-seo.yml
+#   cp .env.example .env   # from the open-seo repo, then fill secrets
+#   docker compose -f docker-compose.open-seo.yml up -d
+#   # pin the image after first pull:
+#   docker inspect ghcr.io/every-app/open-seo --format '{{.RepoDigests}}'
+services:
+  open-seo:
+    image: ${OPEN_SEO_IMAGE:-ghcr.io/every-app/open-seo:latest}
+    restart: unless-stopped
+    env_file:
+      - .env
+    environment:
+      # Loopback-only bind: playerside (Vercel) reaches it via a private/tunnel
+      # URL, never over the public internet directly.
+      - PORT=${PORT:-3001}
+      - ALLOWED_HOST=${ALLOWED_HOST:-}
+      # cloudflare_access = validate Cloudflare Access JWTs (recommended).
+      # local_noauth = NO password — loopback-only behind your own auth.
+      - AUTH_MODE=${AUTH_MODE:-cloudflare_access}
+      - TEAM_DOMAIN=${TEAM_DOMAIN:-}
+      - POLICY_AUD=${POLICY_AUD:-}
+      - BETTER_AUTH_SECRET=${BETTER_AUTH_SECRET:-}
+      - BETTER_AUTH_URL=${BETTER_AUTH_URL:-}
+      - OPENSEO_TELEMETRY_DISABLED=${OPENSEO_TELEMETRY_DISABLED:-1}
+      - DO_NOT_TRACK=${DO_NOT_TRACK:-1}
+      # BYOK DataForSEO (base64 "email:password") — the actual billing key.
+      - DATAFORSEO_API_KEY=${DATAFORSEO_API_KEY}
+      # Optional: OpenRouter key for open-seo's in-app AI (SAM). Not needed for
+      # the Cofounder's seo_lookup (playerside calls the LLM itself).
+      - OPENROUTER_API_KEY=${OPENROUTER_API_KEY:-}
+    ports:
+      - '127.0.0.1:3100:3001'
+    volumes:
+      - open_seo_data:/app/.wrangler
+
+volumes:
+  open_seo_data:

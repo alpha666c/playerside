@@ -67,6 +67,13 @@ that reaches the review page. Fixing it here fixes every future review.
 
 ## PHASE I2 — open-seo: keyword research + rank tracking for the Cofounder (MEDIUM, needs keys)
 
+> **STATUS (2026-08-11):** prep SHIPPED — SystemSettings fields + migration
+> (`20260811_add_open_seo_settings`), `src/lib/openSeo.ts` read-only MCP client,
+> the Cofounder `seo_lookup` tool (per-turn cap, daily row budget, wrapUntrustedData),
+> hardened VPS compose in `infra/open-seo/`, `.env.example` parity, 19 tests.
+> **Remaining:** deploy the container on the VPS + paste the DataForSEO key in
+> System Settings, then live E2E of a Cofounder turn invoking `seo_lookup`.
+
 **Goal:** give the Cofounder + desk-researcher real SEO data (keyword volume, SERP rank, site audit)
 without a $100+/mo Semrush bill. Self-hosted open-seo (MIT) + BYOK DataForSEO (~$0.0005/query).
 

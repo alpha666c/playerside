@@ -19,6 +19,11 @@ export interface SystemSettingsDoc {
   exaApiKey?: string | null
   elevenLabsApiKey?: string | null
   geminiApiKey?: string | null
+  // Phase I2 — self-hosted OpenSEO + BYOK DataForSEO (Cofounder seo_lookup).
+  openSeoUrl?: string | null
+  openSeoProjectId?: string | null
+  dataForSeoApiKey?: string | null
+  seoRowCapPerDay?: number | null
 }
 
 export type SystemSecretKey =
@@ -26,6 +31,7 @@ export type SystemSecretKey =
   | 'exaApiKey'
   | 'elevenLabsApiKey'
   | 'geminiApiKey'
+  | 'dataForSeoApiKey'
 
 const CACHE_TTL_MS = 15_000
 

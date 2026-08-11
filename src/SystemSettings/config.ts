@@ -124,6 +124,49 @@ export const SystemSettings: GlobalConfig = {
         },
       ],
     },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'openSeoUrl',
+          type: 'text',
+          admin: {
+            description:
+              'Base URL of the self-hosted OpenSEO instance (Phase I2 — keyword research / rank tracking for the Cofounder). Set once the VPS container is up; env OPENSEO_URL overrides this value.',
+          },
+        },
+        {
+          name: 'openSeoProjectId',
+          type: 'text',
+          admin: {
+            description:
+              'OpenSEO project id the Cofounder\'s seo_lookup tool reads from (research_keywords / get_ranked_keywords are project-scoped in OpenSEO). Env OPENSEO_PROJECT_ID overrides.',
+          },
+        },
+      ],
+    },
+    {
+      type: 'row',
+      fields: [
+        {
+          name: 'dataForSeoApiKey',
+          type: 'text',
+          admin: {
+            description:
+              'DataForSEO BYOK key (base64 "email:password", https://app.dataforseo.com/api-access) consumed by the self-hosted OpenSEO instance. Stays in the DB / host env — never in the repo. Env DATAFORSEO_API_KEY overrides.',
+          },
+        },
+        {
+          name: 'seoRowCapPerDay',
+          type: 'number',
+          defaultValue: 500,
+          admin: {
+            description:
+              'Daily billable-row budget for the seo_lookup tool (DataForSEO bills PER ROW, not per call). Counted via seo_call audit events in agent-logs; 0 disables the cap. Env SEO_ROW_CAP_PER_DAY overrides.',
+          },
+        },
+      ],
+    },
   ],
   hooks: {
     afterChange: [

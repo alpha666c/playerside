@@ -20,6 +20,7 @@ import * as migration_20260809_203730 from './20260809_203730';
 import * as migration_20260809_210514 from './20260809_210514';
 import * as migration_20260809_211624 from './20260809_211624';
 import * as migration_20260810_add_system_settings_keys from './20260810_add_system_settings_keys';
+import * as migration_20260811_add_open_seo_settings from './20260811_add_open_seo_settings';
 
 export const migrations = [
   {
@@ -131,5 +132,10 @@ export const migrations = [
     up: migration_20260810_add_system_settings_keys.up,
     down: migration_20260810_add_system_settings_keys.down,
     name: '20260810_add_system_settings_keys',
+  },
+  {
+    up: migration_20260811_add_open_seo_settings.up,
+    down: migration_20260811_add_open_seo_settings.down,
+    name: '20260811_add_open_seo_settings',
   },
 ];

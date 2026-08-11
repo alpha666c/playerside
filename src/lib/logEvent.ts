@@ -19,6 +19,9 @@ export type AgentLogEvent =
   | 'ticket_status_change'
   // Phase G (G.3): Cofounder tool invocations (spec §7.2)
   | 'tool_call'
+  // Phase I2: seo_lookup spend rows (DataForSEO bills per row — doubles as
+  // the daily billable-row counter, mirroring llm_call). Operational class.
+  | 'seo_call'
   // Phase G (G.6): control-room delegation + publish audits (spec §12)
   | 'delegation_approved'
   | 'delegation_rejected'
