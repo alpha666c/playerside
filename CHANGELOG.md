@@ -1,3 +1,32 @@
+- **feat(content): Phase I1 — kill AI-slop in review copy (vendored no-ai-slop skill + deterministic gate).**
+  - **Vendored `petergyang/no-ai-slop`** (MIT, pinned `d30eddb9`) into `.agents/skills/no-ai-slop/`
+    (SKILL.md + eval.md + LICENSE + PROVENANCE.md) as the agent-level editorial guide.
+  - **New `src/lib/slopGate.ts`** — the deterministic enforcement point. `stripAiSlop()`:
+    token-protects evidence (URLs, licence refs, numbers+units, currency, timestamps,
+    RTP/ratios) before rules run and restores them after, so published facts ("avg 4.2h
+    payout", "35× wagering → $3,500", "MGA/CRP-123456") can never be mangled (S1);
+    sentence-initial opener removal incl. weasel attribution; grammar-safe
+    `SLOP_REPLACEMENTS` (game changer → major change, in terms of → for, …); filler +
+    deletable-adjective removal; binary contrasts ("It's not X, it's Y") intentionally
+    preserved (legit review rhetoric); empty-output guard; structurally idempotent.
+    Debug note: the first cut captured the internal `out` in the restore closure and
+    silently discarded every edit — restore now takes the caller's string (regression-
+    tested). `let's dive in to X` is left alone (mid-clause removal corrupts grammar);
+    the role-file rule prevents generation instead.
+  - **Wired into `buildEditorialDraft`** (`src/agents/editorialWriter.ts`) — exactly the four
+    prose fields (summary, heroHeadline, claimsVsReality, methodologyNote) pass through the
+    gate post-`str()`; `complianceBlock` + `categoryBreakdown` are byte-untouched.
+  - **`EDITORIAL-WRITER.md`** gained a No-AI-Slop writing-rules section (prevention; the gate
+    is the safety net).
+  - **Tests:** `tests/int/slopGate.int.spec.ts` — 23 tests (evidence byte-preservation,
+    idempotency, binary-contrast non-removal, mid-text openers, weasel non-strip pin,
+    empty guard, complianceBlock untouched, commission-wall regression). Fixed a pre-existing
+    fragile test in `llm.int.spec.ts` (promised "DEEPSEEK_* aliases when LLM_* unset" but
+    never cleared LLM_*; the 2026-08-11 key rotation added a real `LLM_API_KEY` to `.env`).
+  - Reviewer pass: APPROVE_WITH_FIXES — 4× S3 folded in (dead `report` code removed,
+    comment/code ordering aligned, `let's dive in` grammar case, mid-text + weasel pins).
+  - Verification: tsc + lint + **278/278 tests** + build exit 0 (48/48 static pages).
+
 - **chore(ai): rotate LLM API key + first Vex concept art (Gemini-replacement research landed).**
   - **Key rotation (2026-08-11):** new OpenRouter key stored in all three stores — local
     `.env` (`LLM_API_KEY`), the `system-settings` DB global (admin rotation path), and

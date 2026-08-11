@@ -823,3 +823,36 @@ issue, move to OpenRouter image models or Cloudflare Workers AI — both documen
 before_len=73 after_len=73), and Vercel production `LLM_API_KEY` (Sensitive). Verified
 live with a real chat completion. Rotation logged in CREDENTIAL-LOG.md; the old key
 is retired.
+## 2026-08-11 — Phase I1: no-ai-slop integration (repo integrations program)
+
+**Decision:** vendor `petergyang/no-ai-slop` (MIT, pinned `d30eddb9`) and enforce AI-slop
+removal deterministically at the editorial choke point, per the approved
+`2026-08-11-repo-integrations-plan.md` (reviewer verdict APPROVE_WITH_FIXES).
+
+**Key engineering decisions:**
+1. **Deterministic gate beats prompt-only.** The Editorial Writer already runs on a real
+   model; prompt-level rules reduce slop generation but the model fallback path (parse
+   failure → skeleton copy) can still carry canned phrasing. `stripAiSlop` is deterministic,
+   model-independent, and unit-tested — it fires even on fallback copy.
+2. **Evidence token-protection is the S1 lock.** URLs, licence refs, numbers+units,
+   currency, timestamps, RTP/ratios are placeholder-held before rules run and restored
+   after. A published fact ("avg 4.2h payout", "35× wagering → $3,500", "MGA/CRP-123456")
+   is byte-preserved. Regression-tested per class.
+3. **Conservative rule set.** Only sentence-initial openers, grammar-safe substitutions,
+   fillers and deletable adjectives. Binary contrasts are a legit review-rhetoric class and
+   are intentionally NOT stripped. Mid-clause removal that would corrupt grammar
+   ("let's dive in to X" → "to the terms") is refused at the gate; the role-file rule
+   prevents generation instead.
+4. **Scope: four prose fields only.** `complianceBlock` (18+/RG/licence) and
+   `categoryBreakdown` (computed scores) are byte-untouched — verified by test.
+5. **Integration point: `buildEditorialDraft`.** Fixing the single choke point where all
+   public-facing review prose is born fixes every future review; no per-page wiring.
+6. **Skills inventory updated.** no-ai-slop now lives in `.agents/skills/` with provenance
+   (source URL + pinned SHA + MIT license) so subagents doing content work load it.
+7. **Test hygiene fix.** `llm.int.spec.ts` "DEEPSEEK_* aliases" test promised "when LLM_*
+   are unset" but never cleared them — the 2026-08-11 key rotation added a real
+   `LLM_API_KEY` to `.env`, breaking the test. It now clears both LLM_* vars first
+   (honours its own contract; not a Phase I1 regression).
+
+**Deferred:** open-seo integration is Phase I2 (needs VPS + DataForSEO key). open-generative-ai
+and AutoGPT remain deferred per the plan.

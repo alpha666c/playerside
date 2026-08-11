@@ -82,6 +82,11 @@ describe('llm config', () => {
   })
 
   it('still reads the deprecated DEEPSEEK_* aliases when LLM_* are unset', async () => {
+    // Key-rotation (2026-08-11) put a real LLM_API_KEY in .env — clear the
+    // LLM_* vars so this test actually exercises the DEEPSEEK_* fallback it
+    // promises (LLM_* wins by design when both are set).
+    vi.stubEnv('LLM_API_KEY', '')
+    vi.stubEnv('LLM_MODEL', '')
     vi.stubEnv('DEEPSEEK_API_KEY', 'sk-legacy')
     vi.stubEnv('DEEPSEEK_MODEL', 'deepseek-chat')
     const c = await getLlmConfig(stubPayload() as never, stubReq() as never)

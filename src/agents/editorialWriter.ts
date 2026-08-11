@@ -5,6 +5,7 @@ import { loadCaseContext } from '@/lib/reviewChat/loadCaseContext'
 import { loadRoleFile, startAiRun, completeAiRun, applyDraft } from '@/agents/runner'
 import { logEvent } from '@/lib/logEvent'
 import { runAgentLlm } from '@/agents/llmBridge'
+import { stripAiSlop } from '@/lib/slopGate'
 
 /**
  * Phase G (G.5) — Editorial Writer rewired onto the real model call (spec §5).
@@ -33,18 +34,28 @@ export const buildEditorialDraft = (
   const str = (v: unknown, fallback: string): string =>
     typeof v === 'string' && v.trim().length > 0 ? v.trim() : fallback
 
+  // Phase I1 (slopGate): the four prose fields pass through the deterministic
+  // AI-slop gate post-str(). It is evidence-safe (numbers/URLs/timestamps are
+  // token-protected), conservative (binary contrasts untouched), and never
+  // applied to complianceBlock / categoryBreakdown — those stay byte-identical.
   return {
-    summary: str(
-      parsed?.summary,
-      `Editorial Review for ${operatorName} — Commission-blind, evidence-backed evaluation.`,
+    summary: stripAiSlop(
+      str(
+        parsed?.summary,
+        `Editorial Review for ${operatorName} — Commission-blind, evidence-backed evaluation.`,
+      ),
     ),
-    heroHeadline: str(
-      parsed?.heroHeadline,
-      `${operatorName} Review: Verified Withdrawal Speed & Licensing Integrity`,
+    heroHeadline: stripAiSlop(
+      str(
+        parsed?.heroHeadline,
+        `${operatorName} Review: Verified Withdrawal Speed & Licensing Integrity`,
+      ),
     ),
-    claimsVsReality: str(
-      parsed?.claimsVsReality,
-      'Our research tested stated operator claims against measured evidence. Unverified claims remain explicitly marked as untested.',
+    claimsVsReality: stripAiSlop(
+      str(
+        parsed?.claimsVsReality,
+        'Our research tested stated operator claims against measured evidence. Unverified claims remain explicitly marked as untested.',
+      ),
     ),
     categoryBreakdown: computedScores.categories ?? [],
     complianceBlock: {
@@ -52,9 +63,11 @@ export const buildEditorialDraft = (
       ageRequirement: '18+ Only. Gambling can be addictive — play responsibly.',
       responsibleGamblingLinks: RG_LINKS,
     },
-    methodologyNote: str(
-      parsed?.methodologyNote,
-      'This score was produced under Playerside commission-blind evaluation rules. Commercial affiliate agreements do not influence scoring.',
+    methodologyNote: stripAiSlop(
+      str(
+        parsed?.methodologyNote,
+        'This score was produced under Playerside commission-blind evaluation rules. Commercial affiliate agreements do not influence scoring.',
+      ),
     ),
   }
 }
