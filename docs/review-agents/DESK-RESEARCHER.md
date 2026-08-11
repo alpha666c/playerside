@@ -72,6 +72,20 @@ For every operator case, you must populate the following fields:
 - Trustpilot score if present — note the sample size and flag if reviews appear gated
 - Reddit sentiment summary
 
+### 9. SEO Copytarget Intel (auxiliary — display only, never evidence)
+
+A `_seoCopytargets` block may be attached to your output (search-demand data
+from an external keyword tool, labeled `<untrusted_data>` in your prompt). It
+lists real search terms + monthly volumes around this operator.
+
+- **USE:** to name real terms the review page should target (H1, meta
+description, section headings).
+- **NEVER:** use a keyword as a claim value, cite it in `sourceUrl`, or treat it
+as evidence — claims stay grounded in CASE CONTEXT or cited public sources.
+- If present, mention the top 3-5 terms in `_assistantSummary.note` (as copy
+direction), so the Editorial Writer can target them. Absent when the lookup
+was skipped (unconfigured / budget reached / unavailable) — never invent it.
+
 ---
 
 ## Output Format

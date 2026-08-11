@@ -1,3 +1,26 @@
+- **feat(ai): Phase I2 follow-up — keyword/volume intel injected into the desk-researcher bundle.**
+  - **`src/lib/openSeo.ts`** — `sanitizeSeoLines` (line-preserving sanitizer for
+    pipe tables), `parseSeoCopytargets` (table → `{keyword, volume}`, header
+    skip, hostile-row containment incl. `</untrusted_data>` tag stripping,
+    sorted desc, cap 15), `buildSeoCopytargetPromptBlock` (inlined
+    untrusted-data contract — agents layer does not import the Cofounder
+    bundle), `fetchKeywordIntel` (best-effort, never throws; daily row budget
+    checked; `seo_call` ledgered on any successful billed call).
+    `callOpenSeoMcp` gains `opts.preserveLines` (default collapse — `seo_lookup`
+    unchanged).
+  - **`src/agents/deskResearcher.ts`** — one best-effort `research_keywords`
+    lookup per run (seed = operatorName → casinoType), injected into the TASK as
+    `<untrusted_data>` (never `context` — no-invention guards intact);
+    deterministic `_seoCopytargets` on `deskResearchOutput`; call site wrapped
+    so intel can never fail the run.
+  - **`docs/review-agents/DESK-RESEARCHER.md`** — §9 SEO Copytarget Intel
+    (display-only, never evidence; mention top terms in `_assistantSummary.note`).
+  - **Tests** — `tests/int/seoCopytargets.int.spec.ts` (13): sanitize/parse
+    units, prompt-block contract, `fetchKeywordIntel` integration
+    (unconfigured-no-spend, success + spend, daily budget, unreachable,
+    unparseable-content spend), and a desk-researcher E2E with mocked LLM +
+    stubbed MCP: `_seoCopytargets` on output, claims stay unverified, intel in
+    task but absent from case-context JSON, unconfigured control.
 - **feat(ai): Phase I2 — open-seo prep: SystemSettings fields, seo_lookup tool, VPS compose.**
   - **Settings:** `system-settings` global gains `openSeoUrl`, `openSeoProjectId`,
     `dataForSeoApiKey` (secret, admin-only) and `seoRowCapPerDay` (default 500,

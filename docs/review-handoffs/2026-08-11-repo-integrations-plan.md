@@ -115,8 +115,9 @@ without a $100+/mo Semrush bill. Self-hosted open-seo (MIT) + BYOK DataForSEO (~
     never auto-write review fields (evidence discipline unchanged).
   - Graceful degradation (S3): clean "no key / no URL configured" path (mirror llm.ts) and a
     timeout/down-instance test.
-- Optional follow-up (defer unless Viktor wants it): inject keyword/volume intel into
-  `loadCaseContext` desk-researcher bundle for review-page SEO copy targeting.
+- ~~Optional follow-up~~ **SHIPPED (2026-08-11):** keyword/volume intel is injected into the
+  desk-researcher bundle (task-level `<untrusted_data>` block + deterministic
+  `_seoCopytargets` on `deskResearchOutput`) for review-page SEO copy targeting.
 
 ### I2.4 — Verification
 - Gate: tsc + lint + test:int (mocked open-seo client + tool schema tests) + build. Manual browser check

@@ -897,3 +897,34 @@ counter, mirroring llm.ts) · `Number(null) = 0` silent-cap-disable bug caught a
 fixed in `num()` · the g5ToolContract dispatcher allowlist gained `seo_lookup`
 (the governance drift-catcher did its job).
 
+## 2026-08-11 — Phase I2 follow-up: keyword/volume intel → desk-researcher bundle
+
+- **Scope:** the deferred I2 follow-up (plan §I2, "Optional follow-up") — inject
+  real search-demand data into the desk-researcher prompt so review-page copy
+  targets real SEO terms.
+- **Injection point (deliberate):** the intel is appended to the desk-researcher
+  TASK as an inlined `<untrusted_data>` block — deliberately NOT into `context`.
+  `contextValueSet` walks every scalar in `context`; a keyword landing there
+  would weaken `guardClaimValue` / evidence-register grounding (a keyword must
+  never stand in for a verified fact). Verified by test: the intel appears in
+  the user prompt but is absent from the `CASE CONTEXT (JSON)` section.
+- **Deterministic output:** `_seoCopytargets` is set on `deskResearchOutput`
+  post-merge from the REAL tool response (parse of the research_keywords
+  pipe-table `keyword | volume | KD | CPC | competition | intent`, sorted by
+  volume desc, cap 15) — the model can never author it. It flows to the
+  Editorial Writer via the existing allowlist (editorial reads
+  `deskResearchOutput`). No schema change (json field), no migration.
+- **Spend discipline:** exactly 1 seed per desk-research run (operator name,
+  fallback casino type); daily row budget checked via `checkSeoDailyCap`;
+  `seo_call` ledgered on ANY successful billed call including unparseable
+  content (reviewer S3 — the log IS the counter).
+- **Best-effort is total (reviewer S2):** the call site is wrapped in its own
+  try/catch — unconfigured / cap / unavailable / upstream DB blip never fail
+  the run and never mark it `complete-with-warning`.
+- **Client:** `callOpenSeoMcp` gained `opts.preserveLines` (default collapse —
+  the Cofounder `seo_lookup` path is byte-identical); `sanitizeSeoLines` is the
+  line-preserving sibling of `sanitizeSeoText`. Wrapper integrity: tag-stripping
+  runs before the `<untrusted_data>` wrapper, so a hostile keyword cell cannot
+  smuggle `</untrusted_data>`.
+- **Role file:** DESK-RESEARCHER.md §9 — intel is display-only copy direction,
+  never evidence; mention top 3-5 terms in `_assistantSummary.note`.
