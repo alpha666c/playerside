@@ -69,5 +69,11 @@ The private domain is managed by Viktor outside this repo. Do not use personal G
 | `EXA_API_KEY` | Trending research adapter T6 (Google/X/Reddit/AskGamblers/CasinoGuru) | https://dashboard.exa.ai -> API Keys | G.4 |
 | `LLM_SPEND_CAP_PER_DAY` | Daily call cap (default 1000, 0 = off) | — | G.1 |
 
+
+## Key rotation log
+
+| Date | Key | Old | New |
+|---|---|---|---|
+| 2026-08-11 | LLM_API_KEY (OpenRouter) | rotated-out | `sk-or-v1-…d453d0` stored in .env + system-settings DB + Vercel prod (Sensitive); verified live |
 Rules: never commit real values; `.env.local` (local) + Vercel env (prod/preview) only;
 log key rotation in this file.

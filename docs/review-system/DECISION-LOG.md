@@ -783,3 +783,43 @@ the shared database: paste once in `/admin/globals/system-settings`, works on Ve
 - **Magnetic state uses a symmetric enter/leave pair** (pointerout with relatedTarget
   check + document mouseleave). Single `clearMagnetic()` path guarantees the element
   always resets and the rAF loop never leaks (reviewer S2).
+
+## 2026-08-11 — Gemini replacement + H3 art path (research-backed)
+
+**Context:** Gemini key is valid but the Google Cloud project (`projects/362040979292`)
+is under an unpaid-bill (dunning) block — Imagen/Veo calls are denied server-side. Key
+still stored for when billing is resolved; it is NOT a blocker anymore.
+
+**Research executed (2026-08-11):** 2 web researchers + docs research + a live pull of
+the OpenRouter catalog (public `/api/v1/models` + authenticated key check).
+
+**Findings that matter:**
+- **OpenRouter hosts Google's image models** (`google/gemini-2.5-flash-image`,
+  `google/gemini-3.1-flash-image`, `gemini-3-pro-image`, `gpt-5-image-mini`) and bills
+  them through the OpenRouter balance — this **bypasses the Google billing block**.
+  Cost ≈ $0.001–0.01/image; Viktor's ~$0.30 balance ≈ 30–150 portraits. No `:free`
+  image models exist on OpenRouter (free suffix is text-only); video models are paid.
+- **Zero-key option:** Pollinations.ai (no key, `image.pollinations.ai`, flux, seeded,
+  `nologo=true`). Registered free account removes the watermark and raises limits.
+- **Cloudflare Workers AI** (10k neurons/day free, no credit card, Flux.1 Schnell) is
+  the best "truly free forever" production fallback if Pollinations watermark/uptime
+  ever becomes a constraint — needs a free Cloudflare account + token (5 min).
+
+**Decision (Viktor):** Pollinations for H3 concept art now (zero-key, instant). Five
+noir-ops portraits generated to `art-concepts/vex/` on the brand palette (ink / coral
+ledger #ff5d45 / evidence-blue #6ea8d8), 768×768 flux seeded, no watermark. OpenRouter
+stays the LLM brain provider (DeepSeek V4 Flash). If art quality/watermark becomes an
+issue, move to OpenRouter image models or Cloudflare Workers AI — both documented here.
+
+**Free chat-model notes for a future pipeline swap (no code change):**
+- `nvidia/nemotron-3-ultra-550b-a55b:free` — 1M ctx, $0. Strong orchestrator candidate
+  for the Cofounder ticket-brain; would need a guardrail re-review (banned phrases etc.)
+  before swapping from deepseek/deepseek-v4-flash.
+- `google/gemma-4-31b-it:free` (262K ctx) and `inclusionai/ling-3.0-tiny:free` (262K)
+  also available. Swap = one env var / admin field change (LLM_MODEL).
+
+**Key rotation (house rule):** rotated OpenRouter key stored in `.env` (local),
+`system-settings.llmDeepSeekApiKey` (DB — admin rotation path, verified round-trip
+before_len=73 after_len=73), and Vercel production `LLM_API_KEY` (Sensitive). Verified
+live with a real chat completion. Rotation logged in CREDENTIAL-LOG.md; the old key
+is retired.

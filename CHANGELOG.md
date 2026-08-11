@@ -1,3 +1,21 @@
+- **chore(ai): rotate LLM API key + first Vex concept art (Gemini-replacement research landed).**
+  - **Key rotation (2026-08-11):** new OpenRouter key stored in all three stores — local
+    `.env` (`LLM_API_KEY`), the `system-settings` DB global (admin rotation path), and
+    Vercel production env (Sensitive). Verified live: `deepseek/deepseek-v4-flash` returns
+    a real completion via the rotated key (provider SiliconFlow). Old key retired. No
+    secret values in git — see `docs/review-system/CREDENTIAL-LOG.md`.
+  - **Gemini replacement decided (research, 2026-08-11):** the Google Cloud project's
+    unpaid-bill (dunning) block blocks Imagen/Veo via the Gemini key. Live OpenRouter
+    catalog check: Google image models ARE hosted on OpenRouter (billed through the
+    OpenRouter balance — bypasses Google's billing entirely), but the cheapest path for
+    **Vex concept art is Pollinations.ai (zero-key)** — chosen by Viktor. Five noir-ops
+    portraits generated on the brand palette (ink / coral ledger / evidence-blue),
+    saved under `art-concepts/vex/` for review (768×768, flux, seeded).
+  - **Free-model findings for the pipeline:** `nvidia/nemotron-3-ultra-550b-a55b:free`
+    (1M ctx, $0) is a strong free orchestrator candidate for the Cofounder; `google/gemma-4-31b-it:free`
+    and `inclusionai/ling-3.0-tiny:free` also live on OpenRouter — logged in DECISION-LOG
+    for a future model swap; no code change made.
+
 - **feat(ui): Phase H2 — Wire Room hero 2.0 (view transitions, atmosphere, cursor signal).**
   `experimental.viewTransition` on for Next-native route cross-fades; persistent
   header/footer get their own transition identity (`vt-header`/`vt-footer`) so the
